@@ -3,9 +3,11 @@ from flask_wtf import FlaskForm
 from wtforms import StringField
 from wtforms.validators import DataRequired
 from datetime import datetime, timedelta
+from flask import flash
 
 from marketingBot import app
 from marketingBot.models.User import db, User
+from marketingBot.helpers.common import set_login_session, validate_session
 
 
 
@@ -15,21 +17,27 @@ class CreateForm(FlaskForm):
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-  print('[login]')
-  form = CreateForm(request.form)
-  if request.method == 'POST' and form.validate():
-    from marketingBot.models.User import User
-    user = User.authenticate(email=form.text.email, password=form.text.password)
-    print('[User]')
-    print(user)
-    return print('hey')
+  if validate_session():
+    return redirect('/dashboard')
+  if request.method == 'POST':
+    user = User.authenticate(email=request.form['email'], password=request.form['password'])
+    if user:
+      set_login_session(user)
+      return redirect("dashboard")
+    else:
+      flash('Invalid email address or password!')
+    # return print('hey')
 
-  return render_template('auth/login.html', form=form)
+  return render_template('auth/login.html')
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
-  print('[Register]')
   if request.method == 'POST':
+    user_with_email = User.query.filter_by(email=request.form['email']).first()
+    if user_with_email:
+      flash("Email already exists with other account!")
+      print(request.form)
+      return render_template('auth/register.html', form=request.form)
     new_user = User(
       name=request.form['name'],
       email=request.form['email'],
@@ -38,4 +46,4 @@ def register():
     db.session.add(new_user)
     db.session.commit()
     return render_template('auth/login.html')
-  return render_template('auth/register.html')
+  return render_template('auth/register.html', form=None)

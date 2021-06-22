@@ -4,26 +4,30 @@
     <form id="login-form"
       action="/register" method="post"
       style="padding: 2.2rem 2.2rem;">
+      {% for message in get_flashed_messages() %}
+        <div class="flash error">{{ message }}</div>
+      {% endfor %}
+      
         <div class="row">
           <div class="col-sm-12">
             <div class="form-group form-group-default">
                 <label>Name<span class="text-danger">*</span></label>
                 <input class="form-control" type="text" id="name" name="name"
-                        value="" placeholder="Type name" required/>
+                        value="{{ request.form['name'] }}" placeholder="Type name" required/>
             </div>
         </div>
           <div class="col-sm-12">
               <div class="form-group form-group-default">
                   <label>Email<span class="text-danger">*</span></label>
                   <input class="form-control" type="text" id="email" name="email"
-                          value="" placeholder="Type email" required/>
+                          value="{{ request.form['email'] }}" placeholder="Type email" required/>
               </div>
           </div>
           <div class="col-sm-12">
             <div class="form-group form-group-default">
                 <label>Password<span class="text-danger">*</span></label>
                 <input class="form-control" type="password" id="password" name="password"
-                        value="" placeholder="Type password" required/>
+                        value="{{ request.form['password'] }}" placeholder="Type password" required/>
             </div>
           </div>
         </div>
@@ -33,6 +37,7 @@
               Submit
           </button>
         </div>
+        <div>Already have an account? <a href="{{ url_for('login') }}"">Login now!</a></div>
     </form>
 {% endblock %}
 

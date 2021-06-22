@@ -1,4 +1,11 @@
 
 .auth-page {
-  
+
+}
+
+.flash.error {
+  background-color: #f5bdbd5e;
+  color: #e45656;
+  padding: 0.5rem 1rem;
+  margin-bottom: 1rem;
 }

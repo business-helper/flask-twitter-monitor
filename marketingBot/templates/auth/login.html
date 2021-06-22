@@ -1,34 +1,34 @@
 {% extends "layout/auth.html" %}
 {% block body %}
-    <h1 class="text-center mt-5">Login</h1>
-    <form id="login-form"
-      action="{{ url_for('login') }}" method="post"
-      style="padding: 2.2rem 2.2rem;">
-        <input type="hidden" id="site-id" name="id" value="-1"/>
-        <div class="row">
-          <div class="col-sm-12">
-              <div class="form-group form-group-default">
-                  <label>Email<span class="text-danger">*</span></label>
-                  <input class="form-control" type="text" id="email" name="email"
-                          value="" placeholder="Type email" required/>
-              </div>
-          </div>
-          <div class="col-sm-12">
+  <h1 class="text-center mt-5">Login</h1>
+  <form id="login-form"
+    action="{{ url_for('login') }}" method="post"
+    style="padding: 2.2rem 2.2rem;">
+      <input type="hidden" id="site-id" name="id" value="-1"/>
+      <div class="row">
+        <div class="col-sm-12">
             <div class="form-group form-group-default">
-                <label>Password<span class="text-danger">*</span></label>
-                <input class="form-control" type="password" id="password" name="password"
-                        value="" placeholder="Type password" required/>
+                <label>Email<span class="text-danger">*</span></label>
+                <input class="form-control" type="text" id="email" name="email"
+                        value="" placeholder="Type email" required/>
             </div>
+        </div>
+        <div class="col-sm-12">
+          <div class="form-group form-group-default">
+              <label>Password<span class="text-danger">*</span></label>
+              <input class="form-control" type="password" id="password" name="password"
+                      value="" placeholder="Type password" required/>
           </div>
         </div>
-        <!-- Submit Container -->
-        <div class="d-flex justify-content-end">
-          <button type="submit" class="btn btn-primary m-btn m-btn--custom m-btn--icon m-btn--air">
-              Submit
-          </button>
-        </div>
-        <div>Don't have an account? <a href="{{ url_for('register') }}"">Register now!</a></div>
-    </form>
+      </div>
+      <!-- Submit Container -->
+      <div class="d-flex justify-content-end">
+        <button type="submit" class="btn btn-primary m-btn m-btn--custom m-btn--icon m-btn--air">
+            Submit
+        </button>
+      </div>
+      <div>Don't have an account? <a href="{{ url_for('register') }}"">Register now!</a></div>
+  </form>
 {% endblock %}
 
 {% block styles %}

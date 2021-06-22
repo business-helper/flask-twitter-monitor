@@ -41,7 +41,6 @@ api = create_api(CONSUMER_KEY, CONSUMER_SECRET, ACCESS_TOKEN, ACCESS_TOKEN_SECRE
 # print(user.location)
 # print(user.status.text)
 
-temp = os.getenv('TEMP1')
-print(temp)
+
 
 
