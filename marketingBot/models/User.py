@@ -1,20 +1,21 @@
 from datetime import datetime
 from flask_sqlalchemy import SQLAlchemy
 from flask_bcrypt import generate_password_hash, check_password_hash
-
-db = SQLAlchemy()
+from marketingBot import app
+db = SQLAlchemy(app)
 
 class User(db.Model):
   __tablename__ = 'users'
   id = db.Column(db.Integer, primary_key=True)
-  created_at = db.Column(db.String(30), nullable=True)
-  updated_at = db.Column(db.String(30), nullable=True)
   name = db.Column(db.String(50), nullable=False)
   email = db.Column(db.String(50), unique=True, nullable=False)
   password = db.Column(db.String(100), nullable=False)
+  created_at = db.Column(db.String(30), nullable=True)
+  updated_at = db.Column(db.String(30), nullable=True)
 
 
-  def __init__(self, email, password, **args):
+  def __init__(self, email, password, name, **args):
+    self.name = name
     self.email = email
     self.password = generate_password_hash(password).decode('utf-8')
     self.created_at = datetime.utcnow()

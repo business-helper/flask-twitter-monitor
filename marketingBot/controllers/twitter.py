@@ -29,17 +29,17 @@ def create_api(consumer_key, consumer_secret, access_token, access_token_secret)
 
 api = create_api(CONSUMER_KEY, CONSUMER_SECRET, ACCESS_TOKEN, ACCESS_TOKEN_SECRET)
 
-try:
-  api.update_status("Did you get a vaccine?")
-except Exception as e:
-  print(e)
+# try:
+#   api.update_status("Did you get a vaccine?")
+# except Exception as e:
+#   print(e)
 
 
-user = api.get_user('AdWeek')
-print('User Details:')
-print(user.name)
-print(user.location)
-print(user.status.text)
+# user = api.get_user('AdWeek')
+# print('User Details:')
+# print(user.name)
+# print(user.location)
+# print(user.status.text)
 
 temp = os.getenv('TEMP1')
 print(temp)
