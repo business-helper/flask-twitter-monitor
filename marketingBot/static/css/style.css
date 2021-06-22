@@ -1,0 +1,32 @@
+/* 
+* 1. Panel Layout
+*/
+
+/* 1. Panel Layout */
+
+
+
+
+.auth-page {
+
+}
+
+.flash.error {
+  background-color: #f5bdbd5e;
+  color: #e45656;
+  padding: 0.5rem 1rem;
+  margin-bottom: 1rem;
+}
+
+#form-wrapper {
+  transition: all 0.3s;
+  overflow: hidden;
+}
+
+#form-wrapper._show {
+  max-height: unset;
+}
+
+#form-wrapper._hide {
+  max-height: 0;
+}

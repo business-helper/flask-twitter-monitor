@@ -1,0 +1,50 @@
+{% extends "layout/auth.html" %}
+{% block body %}
+    <h1 class="text-center mt-5">Registration</h1>
+    <form id="login-form"
+      action="/register" method="post"
+      style="padding: 2.2rem 2.2rem;">
+      {% for message in get_flashed_messages() %}
+        <div class="flash error">{{ message }}</div>
+      {% endfor %}
+      
+        <div class="row">
+          <div class="col-sm-12">
+            <div class="form-group form-group-default">
+                <label>Name<span class="text-danger">*</span></label>
+                <input class="form-control" type="text" id="name" name="name"
+                        value="{{ request.form['name'] }}" placeholder="Type name" required/>
+            </div>
+        </div>
+          <div class="col-sm-12">
+              <div class="form-group form-group-default">
+                  <label>Email<span class="text-danger">*</span></label>
+                  <input class="form-control" type="text" id="email" name="email"
+                          value="{{ request.form['email'] }}" placeholder="Type email" required/>
+              </div>
+          </div>
+          <div class="col-sm-12">
+            <div class="form-group form-group-default">
+                <label>Password<span class="text-danger">*</span></label>
+                <input class="form-control" type="password" id="password" name="password"
+                        value="{{ request.form['password'] }}" placeholder="Type password" required/>
+            </div>
+          </div>
+        </div>
+        <!-- Submit Container -->
+        <div class="d-flex justify-content-end">
+          <button type="submit" class="btn btn-primary m-btn m-btn--custom m-btn--icon m-btn--air">
+              Submit
+          </button>
+        </div>
+        <div>Already have an account? <a href="{{ url_for('login') }}"">Login now!</a></div>
+    </form>
+{% endblock %}
+
+{% block styles %}
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/login.css') }}">
+{% endblock %}
+
+{% block scripts %}
+    <div></div>
+{% endblock %}

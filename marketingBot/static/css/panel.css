@@ -1,0 +1,59 @@
+
+#header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.5rem;
+  background-color: #5a5a5a;
+}
+
+.logo-container {
+  display: flex;
+  align-items: center;
+  font-size: 20px;
+  font-weight: bold;
+  color: #fff;
+}
+
+#logo {
+  width: 50px;
+  margin-right: 1.5rem;
+}
+
+.menu-container {
+  display: flex;
+  align-items: center;
+  list-style: none;
+  margin-bottom: 0;
+}
+
+.menu-container > li {
+  font-size: 18px;
+  padding: 0.5rem 1rem;
+  margin: 0 0.5rem;
+}
+
+.menu-container > li >  a {
+  color: white;
+}
+
+.page {
+  padding: 1.5rem;
+}
+
+.information-box {
+  /* background-color: #efefef; */
+  margin-bottom: 1.5rem;
+}
+
+.information-box > .card {
+  padding: 1rem;
+}
+
+.information-box .info-text {
+  font-size: 18px;
+  font-weight: bold;
+  text-align: center;
+  margin-bottom: 1rem;
+
+}

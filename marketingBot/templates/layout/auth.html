@@ -1,0 +1,29 @@
+<!doctype html>
+    <head>
+        <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='theme/datatables.bundle.css') }}">
+        <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='theme/style.bundle.css') }}">
+        <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='theme/vendors.bundle.css') }}">
+        <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/style.css') }}">
+        {% block styles %}{% endblock %}
+        <script src="{{ url_for('static', filename='js/jquery.js') }}"></script>
+        <title>Marketing Bot</title>
+    </head>
+    <body>
+        <div class="auth-page">
+            <!-- {% for message in get_flashed_messages() %}
+                <div class="flash">{{ message }}</div>
+            {% endfor %} -->
+            {% macro render_error(field) %}
+                {% if field.errors %}
+                    {% for error in field.errors %}<span class='error'>{{ error }}</span>{% endfor %}
+                {% endif %}
+            {% endmacro %}
+            {% block body %}{% endblock %}
+        </div>
+
+        <script src="{{ url_for('static', filename='theme/scripts.bundle.js') }}"></script>
+        <script src="{{ url_for('static', filename='theme/vendors.bundle.js') }}"></script>
+        <script src="{{ url_for('static', filename='theme/datatables.bundle.js') }}"></script>
+        {% block scripts %}{% endblock %}
+    </body>
+</html>

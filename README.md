@@ -17,3 +17,40 @@ To run:
 
 [![Bitdeli Badge](https://d2weczhvl823v0.cloudfront.net/salimane/flask-mvc/trend.png)](https://bitdeli.com/free "Bitdeli Badge")
 
+## Twitter Libraries
+### [Tweepy](https://pypi.org/project/tweepy)
+
+[Github](https://github.com/tweepy/tweepy)
+
+- Fork 3.5k
+- Start 7.8k
+- watch 274
+- latest version Dec 26, 2020
+- Used By 2.59k
+- Contributors: 187
+- [Document](https://docs.tweepy.org/en/stable/index.html)
+
+### [twitter](https://pypi.org/project/twitter)
+
+[Github](https://github.com/python-twitter-tools/twitter)
+
+- Fork 547
+- Star 2.6k
+- watch 159
+- latest version: Jun 19, 2021
+- used by 2.9k
+- contributors: 64
+
+
+### [python-twitter](https://pypi.org/project/python-twitter)
+
+[Github](https://github.com/bear/python-twitter)
+
+- Fork: 960
+- Star: 3.2k
+- watch: 174
+- Latest Version: Sep 30, 2018
+- Used by: 5.5k
+- Contributors: 133
+
+

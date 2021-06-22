@@ -2,3 +2,10 @@ Flask
 Flask-WTF
 Jinja2
 Flask-DebugToolbar
+Flask_Bcrypt==0.7.1
+Flask-Session
+Flask-SQLAlchemy
+mysqlclient 
+python-dotenv
+PyJWT
+tweepy
