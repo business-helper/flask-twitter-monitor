@@ -9,6 +9,7 @@ def session_required(f):
   def _validate(*args, **kwargs):
     user = validate_session()
     if not user:
+      print('--------------------[Session] required!')
       flash('Please login again!')
       return redirect('/login')
     return f(user, *args, **kwargs)
