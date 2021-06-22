@@ -6,7 +6,7 @@ Flask_Bcrypt==0.7.1
 Flask-Session
 Flask-SQLAlchemy
 #mysqlclient
-python-mysqldb
+# python-mysqldb
 python-dotenv
 PyJWT
 tweepy
