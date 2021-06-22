@@ -10,7 +10,9 @@ from marketingBot.models.AppKey import db, AppKey
 from marketingBot.helpers.common import unset_login_session, validate_session
 from marketingBot.helpers.wrapper import session_required
 
-
+@app.route('/ping')
+def ping():
+  return jsonify({ "status": True, "message": "Pong" })
 
 @app.route('/dashboard', methods=['GET'])
 @session_required
