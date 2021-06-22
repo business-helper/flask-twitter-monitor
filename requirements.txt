@@ -5,7 +5,8 @@ Flask-DebugToolbar
 Flask_Bcrypt==0.7.1
 Flask-Session
 Flask-SQLAlchemy
-mysqlclient 
+#mysqlclient
+python-mysqldb
 python-dotenv
 PyJWT
 tweepy
