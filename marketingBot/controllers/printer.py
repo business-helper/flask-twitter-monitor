@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from marketingBot import app
-from flask import render_template, request
+from flask import render_template, request, redirect
 from flask_wtf import FlaskForm
 from wtforms import StringField
 from wtforms.validators import DataRequired
@@ -12,7 +12,8 @@ class CreateForm(FlaskForm):
 
 @app.route('/')
 def start():
-    return render_template('printer/index.html')
+  return redirect('/login')
+  # return render_template('printer/index.html')
 
 
 @app.route('/print', methods=['GET', 'POST'])
