@@ -4,3 +4,4 @@
 *.DS_STORE
 .env
 tmp
+# project.ini
