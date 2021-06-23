@@ -12,6 +12,7 @@ from marketingBot.helpers.wrapper import session_required
 
 @app.route('/ping')
 def ping():
+  print('[Ping] requested')
   return jsonify({ "status": True, "message": "Pong" })
 
 @app.route('/dashboard', methods=['GET'])
