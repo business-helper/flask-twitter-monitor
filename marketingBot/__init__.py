@@ -11,6 +11,6 @@ from marketingBot.models import db
 db.init_app(app)
 
 # app.config['SECRET_KEY'] = 'random'
-app.debug = True
+app.debug = False
 
 from marketingBot.controllers import *
