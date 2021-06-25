@@ -119,5 +119,5 @@
 {% endblock %}
 
 {% block scripts %}
-  <script src="{{ url_for('static', filename='js/bots.js')  }}"></script>
+  <script src="{{ url_for('static', filename='js/bots.js')  }}?v={{data.time}}"></script>
 {% endblock %}

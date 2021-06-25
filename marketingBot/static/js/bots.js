@@ -75,6 +75,7 @@ function initDataTable() {
               data: function(extra) {
                   extra.keyword = 'test';
               },
+              type: 'POST',
               dataSrc: 'data'
           },
 
