@@ -164,7 +164,7 @@ function addBot(data) {
 
 function getApiAppById(id) {
   return $.ajax({
-    url: `/api/api-apps/${id}`,
+    url: `/api/bots/${id}`,
     method: 'GET',
     // data: JSON.stringify(data),
     contentType: 'application/json; charset=utf-8',
@@ -174,7 +174,7 @@ function getApiAppById(id) {
 
 function deleteApiAppById(id) {
   return $.ajax({
-    url: `/api/api-apps/${id}`,
+    url: `/api/bots/${id}`,
     method: 'DELETE',
     // data: JSON.stringify(data),
     contentType: 'application/json; charset=utf-8',
@@ -197,13 +197,12 @@ function onEdit(id) {
   return getApiAppById(id).then((res) => {
     if (res.status) {
       const { data: app } = res;
-      $('#app-id').val(app.id);
+      $('#bot-id').val(app.id);
       $('#name').val(app.name);
-      $('#active').prop('checked', app.valid);
-      $('#consumer_key').val(app.consumer_key);
-      $('#consumer_secret').val(app.consumer_secret);
-      $('#access_token').val(app.access_token);
-      $('#access_token_secret').val(app.access_token_secret);
+      $('#targets').val(app.targets.join(','));
+      $('#api_keys').val(app.api_keys).trigger('change');
+      $('#inclusion_keywords').val(app.inclusion_keywords.join(','));
+      $('#exclusion_keywords').val(app.exclusion_keywords.join(','));
 
       $('#website-form button[type="submit"]').html('<i class="la la-save"></i>Update');
       $('#form-wrapper').removeClass('_hide').addClass('_show');

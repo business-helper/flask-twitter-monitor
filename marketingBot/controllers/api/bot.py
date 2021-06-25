@@ -53,11 +53,12 @@ def load_bots(self):
   })
 
 @api.route('/bots', methods=['POST'])
-def create_bot():
+@session_required
+def create_bot(self):
   payload = dict(request.get_json())
   
   bot = Bot(
-    user_id = 1,
+    user_id = self.id,
     name = payload['name'],
     api_keys = stringify(payload['api_keys']) if payload['api_keys'] else '[]',
     targets = stringify(payload['targets']) if payload['targets'] else '[]',
@@ -70,10 +71,44 @@ def create_bot():
   print('[Bot]', bot.to_dict(), bot.id)
   return jsonify({
     "status": True,
-    "message": "success",
+    "message": "A bot has been added!",
     "data": Bot.query.filter_by(id=bot.id).first().format().to_dict(),
   })
 
+@api.route('/bots/<id>', methods=['PUT'])
+@session_required
+def update_bot_by_id(self, id):
+  payload = dict(request.get_json())
+  bot = Bot.query.filter_by(id=id).first()
+  bot.name = payload['name']
+  bot.targets = stringify(payload['targets']) if 'targets' in payload else '[]'
+  bot.api_keys = stringify(payload['api_keys']) if 'api_keys' in payload else '[]'
+  bot.inclusion_keys = stringify(payload['inclusion_keys']) if 'inclusion_keys' in payload else '[]'
+  bot.exclusion_keys = stringify(payload['exclusion_keys']) if 'exclusion_keys' in payload else '[]'
+
+
+  db.session.commit()
+
+  return jsonify({
+    "status": True,
+    "message": "A bot has been added!",
+    "data": Bot.query.filter_by(id=bot.id).first().format().to_dict(),
+  })
+
+@api.route('/bots/<id>', methods=['GET'])
+@session_required
+def get_bot_by_id(self, id):
+  bot = Bot.query.filter_by(id=id).first()
+  if not bot:
+    return jsonify({
+      "status": False,
+      "message": "Bot does not exist!",
+    })
+  return jsonify({
+    "status": True,
+    "message": "success",
+    "data": bot.format().to_dict(),
+  })
 
 
 
