@@ -35,10 +35,12 @@ class AppKey(db.Model):
     return dict(
       id=self.id,
       user_id = self.user_id,
+      name = self.name,
       consumer_key = self.consumer_key,
       consumer_secret = self.consumer_secret,
       access_token = self.access_token,
       access_token_secret = self.access_token_secret,
+      valid=self.valid,
       created_at=self.created_at,
       updated_at=self.updated_at
     )

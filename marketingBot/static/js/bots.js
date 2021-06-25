@@ -5,6 +5,10 @@ $(function() {
 
   initDataTable();
 
+  $(".select2").select2({
+    placeholder: "Select here"
+  }); 
+
   $('#add-item').on('click', onClickAddButton);
 
   $('#website-form').submit(function(e) {
@@ -12,16 +16,15 @@ $(function() {
     if (!confirm('Are you sure to submit?')) return false;
     const formData = {
       name: $('#name').val(),
-      consumer_key: $('#consumer_key').val(),
-      consumer_secret: $('#consumer_secret').val(),
-      access_token: $('#access_token').val(),
-      access_token_secret: $('#access_token_secret').val(),
-      valid: $('#active').is(':checked') ? 1 : 0,
+      targets: $('#targets').val().split(',').filter((it) => !!it),
+      api_keys: $('#api_keys').val(),
+      inclusion_keywords: $('#inclusion_keywords').val().split(',').filter(it => it),
+      exclusion_keywords: $('#exclusion_keywords').val().split(',').filter(it => it),
     };
 
-    const id = Number($('#app-id').val());
+    const id = Number($('#bot-id').val());
 
-    const promise = id === -1 ? addApiApp(formData) : updateApiApp(id, formData);
+    const promise = id === -1 ? addBot(formData) : updateBot(id, formData);
     return promise.then((res) => {
       if (res.status) {
         toastr.success(res.message);
@@ -68,7 +71,7 @@ function initDataTable() {
           serverSide: true,
 
           ajax: {
-              url: "/load-api-apps",
+              url: "/api/bots",
               data: function(extra) {
                   extra.keyword = 'test';
               },
@@ -97,8 +100,8 @@ function initDataTable() {
                 targets: -2,
                 render: function (data, type, full, meta) {
                     const status = {
-                        'false': {'title': 'Inactive', 'class': 'm-badge--warning'},
-                        'true': {'title': 'Active', 'class': 'm-badge--success'},
+                        'IDLE': {'title': 'Idle', 'class': 'm-badge--info'},
+                        'RUNNING': {'title': 'Running', 'class': 'm-badge--success'},
                     };
                     data = data.toString();
                     if (typeof status[data] === 'undefined') {
@@ -107,35 +110,23 @@ function initDataTable() {
                     return '<span class="m-badge ' + status[data].class + ' m-badge--wide">' + status[data].title + '</span>';
                 },
               },
-              // {
-              //     targets: -3,
-              //     render: function(data, type, full, meta) {
-              //         const url_length = data.length;
-              //         if (url_length == 0) {
-              //             return `<span class="m-badge m-badge--danger m-badge--wide">Not specified</span>`;
-              //         } else {
-              //             let display_text = data;
-              //             if (url_length > 25) {
-              //                 display_text = display_text.substr(0, 25) + '...';
-              //             }
-              //             return `<a href="${data}" title="${data}" target="_blank">${display_text}</a>`;
-              //         }
-              //     },
-              // },
               {
                   targets: 2,
                   render: function(data, type, full, meta) {
-                    const keys = data.split(':');
-                    return `
-                      <div class="">
-                      <p>Consumer Key: ${keys[0]}</p>
-                      <p>Consumer Secret: ${keys[1]}</p>
-                      <p>Access Token: ${keys[2]}</p>
-                      <p>Access Token Secret: ${keys[3]}</p>
-                      </div>
-                    `;
+                    if (data.length) return data.join(',');
+                    return `<span class="m-badge m-badge--warning m-badge--wide">No Targets</span>`;
                   },
               },
+              {
+                targets: 3,
+                render: function(data, type, full, meta) {
+                  if (!data.length) {
+                    return `<span class="m-badge m-badge--danger m-badge--wide">None</span>`
+                  }
+                  const names = data.map((api_key) => api_key.name);
+                  return names.join(',');
+                },
+            },
           ]
       };
 
@@ -144,9 +135,9 @@ function initDataTable() {
   initTableWithDynamicRows();
 }
 
-function updateApiApp(id, data) {
+function updateBot(id, data) {
   return $.ajax({
-    url: `/api/api-apps/${id}`,
+    url: `/api/bots/${id}`,
     method: 'put',
     data: JSON.stringify(data),
     contentType: 'application/json; charset=utf-8',
@@ -154,9 +145,9 @@ function updateApiApp(id, data) {
   });
 }
 
-function addApiApp(data) {
+function addBot(data) {
   return $.ajax({
-    url: '/api-app',
+    url: '/api/bots',
     method: 'POST',
     data: JSON.stringify(data),
     contentType: 'application/json; charset=utf-8',
@@ -173,7 +164,7 @@ function addApiApp(data) {
 
 function getApiAppById(id) {
   return $.ajax({
-    url: `/api/api-apps/${id}`,
+    url: `/api/bots/${id}`,
     method: 'GET',
     // data: JSON.stringify(data),
     contentType: 'application/json; charset=utf-8',
@@ -183,7 +174,7 @@ function getApiAppById(id) {
 
 function deleteApiAppById(id) {
   return $.ajax({
-    url: `/api/api-apps/${id}`,
+    url: `/api/bots/${id}`,
     method: 'DELETE',
     // data: JSON.stringify(data),
     contentType: 'application/json; charset=utf-8',
@@ -206,13 +197,12 @@ function onEdit(id) {
   return getApiAppById(id).then((res) => {
     if (res.status) {
       const { data: app } = res;
-      $('#app-id').val(app.id);
+      $('#bot-id').val(app.id);
       $('#name').val(app.name);
-      $('#active').prop('checked', app.valid);
-      $('#consumer_key').val(app.consumer_key);
-      $('#consumer_secret').val(app.consumer_secret);
-      $('#access_token').val(app.access_token);
-      $('#access_token_secret').val(app.access_token_secret);
+      $('#targets').val(app.targets.join(','));
+      $('#api_keys').val(app.api_keys).trigger('change');
+      $('#inclusion_keywords').val(app.inclusion_keywords.join(','));
+      $('#exclusion_keywords').val(app.exclusion_keywords.join(','));
 
       $('#website-form button[type="submit"]').html('<i class="la la-save"></i>Update');
       $('#form-wrapper').removeClass('_hide').addClass('_show');
@@ -243,7 +233,7 @@ function onDelete(id) {
 
 function emptyForm() {
   $('#website-form').find("input[type=text], input[type=hidden], textarea").val("");
-  $('#app-id').val("-1");
+  $('#bot-id').val("-1");
   $('#website-form button[type="submit"]').html('<i class="la la-plus"></i>Add');
   $('#form-wrapper').addClass('_hide').removeClass('_show');
 }
