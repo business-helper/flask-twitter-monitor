@@ -7,7 +7,8 @@ from flask import flash
 
 from marketingBot import app
 from marketingBot.models.AppKey import db, AppKey
-from marketingBot.helpers.common import unset_login_session, validate_session
+from marketingBot.models.Bot import Bot
+from marketingBot.helpers.common import unset_login_session, validate_session, timestamp
 from marketingBot.helpers.wrapper import session_required
 
 @app.route('/ping')
@@ -81,3 +82,21 @@ def add_api_app(self):
     "status": True,
     "message": "Data has been added!",
   })
+
+
+@app.route('/bots', methods=['GET'])
+@session_required
+def bots_page(self):
+  api_keys = AppKey.query.filter_by(user_id=self.id,valid=True).all()
+  apps = []
+  for api_key in api_keys:
+    apps.append(api_key.to_dict())
+  # for ap in apps:
+  #   print('[Type]', type(ap))
+  print('[Apps]', apps)
+  data = {
+    "time": timestamp(),
+    "api_apps": apps,
+    "names": ['A', 'B']
+  }
+  return render_template('panel/bots.html', data=data)

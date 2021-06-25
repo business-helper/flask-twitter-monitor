@@ -1,4 +1,4 @@
-from flask import session
+from flask import session, json
 import time
 from marketingBot.models.User import User
 
@@ -29,3 +29,10 @@ def validate_session():
 
 def timestamp():
   return int(time.time() * 1000)
+
+def stringify(data):
+  return json.dumps(data, separators=(',', ':'))
+
+def json_parse(str):
+  print('[json_parse]', str)
+  return json.loads(str)
