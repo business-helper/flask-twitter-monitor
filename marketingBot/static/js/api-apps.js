@@ -87,6 +87,7 @@ function initDataTable() {
                       <i class="la la-edit"></i>
                     </span>
                     <span href="#" class="delete-row m-portlet__nav-link btn m-btn m-btn--hover-brand m-btn--icon m-btn--icon-only m-btn--pill" title="Remove"
+                      onclick="onDelete(${data})"
                       data-domain="${data}">
                       <i class="la la-trash"></i>
                     </span>`;
@@ -180,6 +181,16 @@ function getApiAppById(id) {
   });
 }
 
+function deleteApiAppById(id) {
+  return $.ajax({
+    url: `/api/api-apps/${id}`,
+    method: 'DELETE',
+    // data: JSON.stringify(data),
+    contentType: 'application/json; charset=utf-8',
+    dataType: 'json',
+  });
+}
+
 function onClickAddButton() {
   const isEditing = Number($('#app-id').val()) > -1;
   const opened = $('#form-wrapper').hasClass('_show');
@@ -192,8 +203,6 @@ function onClickAddButton() {
 }
 
 function onEdit(id) {
-  console.log('[onEdit]', id);
-
   return getApiAppById(id).then((res) => {
     if (res.status) {
       const { data: app } = res;
@@ -213,6 +222,22 @@ function onEdit(id) {
   })
   .catch((error) => {
     console.log('[Error]', error);
+  })
+}
+
+function onDelete(id) {
+  if (!confirm('Are you sure proceed to delete?')) return false;
+  return deleteApiAppById(id).then((res) => {
+    if (res.status) {
+      toastr.success(res.message);
+      refreshTable();
+    } else {
+      toastr.error(res.message);
+    }
+  })
+  .catch((error) => {
+    console.log('[Delete]', error);
+    toastr.error(error.message);
   })
 }
 
