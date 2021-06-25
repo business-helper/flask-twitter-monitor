@@ -71,7 +71,7 @@ function initDataTable() {
           serverSide: true,
 
           ajax: {
-              url: "/api/bots",
+              url: "/load-bots",
               data: function(extra) {
                   extra.keyword = 'test';
               },

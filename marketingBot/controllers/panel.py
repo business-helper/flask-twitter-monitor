@@ -100,3 +100,40 @@ def bots_page(self):
     "names": ['A', 'B']
   }
   return render_template('panel/bots.html', data=data)
+
+
+@app.route('/load-bots', methods=['GET'])
+@session_required
+def load_bots_root(self):
+  skip = request.args.get('start')
+  limit = request.args.get('length')
+  # sortCol = request.args.get('order[0][column]')
+  # sortDir = request.args.get('order[0][dir]')
+  user_id = self.id
+  # keyword = request.args.get('search[value]')
+
+  bots = Bot.query.filter_by(user_id=user_id).limit(limit).offset(skip)
+  app_keys = AppKey.query.filter_by(user_id=user_id).all()
+  dict_keys = {}
+  print('[App Keys]', app_keys)
+  for app_key in app_keys:
+    dict_keys[str(app_key.id)] = app_key.to_dict()
+  print('[Keys]', dict_keys)
+  data = []
+  for idx, bot in enumerate(bots):
+    bot = bot.format()
+    bot_keys = []
+    for key in bot.api_keys:
+      key = str(key)
+      if key in dict_keys:
+        bot_keys.append(dict_keys[key])
+
+    data.append([idx + 1, bot.name, bot.targets, bot_keys, bot.inclusion_keywords, bot.exclusion_keywords, bot.status, bot.id])
+
+  return jsonify({
+    'data': data,
+    'draw': request.args.get('draw'),
+    'iTotalRecords': 10,
+    'iTotalDisplayRecords':10,
+  })
+
