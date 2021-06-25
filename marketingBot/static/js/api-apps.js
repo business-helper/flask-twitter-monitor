@@ -26,6 +26,7 @@ $(function() {
       if (res.status) {
         toastr.success(res.message);
         refreshTable();
+        emptyForm();
       } else {
         toastr.error(res.message);
       }
@@ -81,7 +82,8 @@ function initDataTable() {
                   render: function(data, type, full, meta) {
                     return `
                       <span class="edit-row m-portlet__nav-link btn m-btn m-btn--hover-brand m-btn--icon m-btn--icon-only m-btn--pill" title="Edit"
-                      data-domain="${data}">
+                        onclick="onEdit(${data})"
+                        data-domain="${data}">
                       <i class="la la-edit"></i>
                     </span>
                     <span href="#" class="delete-row m-portlet__nav-link btn m-btn m-btn--hover-brand m-btn--icon m-btn--icon-only m-btn--pill" title="Remove"
@@ -143,7 +145,7 @@ function initDataTable() {
 
 function updateApiApp(id, data) {
   return $.ajax({
-    url: `/api-app/${id}`,
+    url: `/api/api-apps/${id}`,
     method: 'put',
     data: JSON.stringify(data),
     contentType: 'application/json; charset=utf-8',
@@ -168,6 +170,16 @@ function addApiApp(data) {
   // });
 }
 
+function getApiAppById(id) {
+  return $.ajax({
+    url: `/api/api-apps/${id}`,
+    method: 'GET',
+    // data: JSON.stringify(data),
+    contentType: 'application/json; charset=utf-8',
+    dataType: 'json',
+  });
+}
+
 function onClickAddButton() {
   const isEditing = Number($('#app-id').val()) > -1;
   const opened = $('#form-wrapper').hasClass('_show');
@@ -179,30 +191,29 @@ function onClickAddButton() {
   }
 }
 
-function onEdit(domain) {
-  let site, index;
-  _websites.forEach((s, i) => {
-    if (s.domain === domain) {
-      site = s;
-      index = i;
-    }
-  });
+function onEdit(id) {
+  console.log('[onEdit]', id);
 
-  $('#app-id').val(index);
+  return getApiAppById(id).then((res) => {
+    if (res.status) {
+      const { data: app } = res;
+      $('#app-id').val(app.id);
+      $('#name').val(app.name);
+      $('#active').prop('checked', app.valid);
+      $('#consumer_key').val(app.consumer_key);
+      $('#consumer_secret').val(app.consumer_secret);
+      $('#access_token').val(app.access_token);
+      $('#access_token_secret').val(app.access_token_secret);
 
-  $('#domain').val(site.domain);
-  $('#title').val(site.title);
-  $('#description').val(site.description);
-  $('#image').val(site.image);
-  $('#brand').val(site.brand);
-  $('#price').val(site.price);
-  $('#oldPrice').val(site.oldPrice);
-  $('#color').val(site.color);
-  $('#size').val(site.size);
-  $('#active').attr('checked', !!site.active);
-
-  $('#website-form button[type="submit"]').html('<i class="la la-save"></i>Update');
-  $('#form-wrapper').removeClass('_hide').addClass('_show');
+      $('#website-form button[type="submit"]').html('<i class="la la-save"></i>Update');
+      $('#form-wrapper').removeClass('_hide').addClass('_show');
+    } else {
+      toastr.error(res.message);
+    }    
+  })
+  .catch((error) => {
+    console.log('[Error]', error);
+  })
 }
 
 function emptyForm() {

@@ -1,4 +1,5 @@
 from flask import session
+import time
 from marketingBot.models.User import User
 
 def set_login_session(user):
@@ -25,3 +26,6 @@ def validate_session():
       return False
   else:
     return False
+
+def timestamp():
+  return int(time.time() * 1000)
