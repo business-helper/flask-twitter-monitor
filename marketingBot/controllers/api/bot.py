@@ -110,5 +110,21 @@ def get_bot_by_id(self, id):
     "data": bot.format().to_dict(),
   })
 
+@api.route('/bots/<id>', methods=['DELETE'])
+@session_required
+def delete_bot_by_id(self, id):
+  bot = Bot.query.filter_by(id=id).one()
+  if not bot:
+    return jsonify({
+      "status": False,
+      "message": 'Bot does not exist!',
+    })
+  
+  db.session.delete(bot)
+  db.session.commit()
 
+  return jsonify({
+    "status": True,
+    "message": "Bot has been deleted!",
+  })
 
