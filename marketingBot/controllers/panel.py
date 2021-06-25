@@ -102,16 +102,17 @@ def bots_page(self):
   return render_template('panel/bots.html', data=data)
 
 
-@app.route('/load-bots', methods=['GET'])
+@app.route('/load-bots', methods=['GET', 'POST'])
 @session_required
 def load_bots_root(self):
-  skip = request.args.get('start')
-  limit = request.args.get('length')
+  payload = request.form #dict(request.get_json())
+  skip = payload['start']
+  limit = payload['length']
   # sortCol = request.args.get('order[0][column]')
   # sortDir = request.args.get('order[0][dir]')
   user_id = self.id
   # keyword = request.args.get('search[value]')
-
+  print('[Limit]', skip, limit)
   bots = Bot.query.filter_by(user_id=user_id).limit(limit).offset(skip)
   app_keys = AppKey.query.filter_by(user_id=user_id).all()
   dict_keys = {}

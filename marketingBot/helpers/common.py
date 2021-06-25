@@ -34,5 +34,4 @@ def stringify(data):
   return json.dumps(data, separators=(',', ':'))
 
 def json_parse(str):
-  print('[json_parse]', str)
   return json.loads(str)
