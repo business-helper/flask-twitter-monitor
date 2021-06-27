@@ -1,3 +1,8 @@
+const EVENT = {
+  NEW_TWEET_FOUND: 'NEW_TWEET_FOUND',
+}
+
+
 
 var socket = io.connect('/');
 
@@ -15,4 +20,8 @@ socket.on( 'connect', function() {
 
 socket.on('PONG', args => {
   console.log('[EVENT][PONG]', args)
+})
+
+socket.on(EVENT.NEW_TWEET_FOUND, args => {
+  console.log('[New Tweet]', args);
 })

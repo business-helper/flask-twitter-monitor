@@ -11,6 +11,13 @@ from marketingBot.models.Bot import Bot
 from marketingBot.helpers.common import unset_login_session, validate_session, timestamp
 from marketingBot.helpers.wrapper import session_required
 
+@app.context_processor
+def my_utility_processor():
+  def time_now():
+    return timestamp()
+  
+  return dict(timestamp=time_now)
+
 @app.route('/ping')
 def ping():
   print('[Ping] requested')

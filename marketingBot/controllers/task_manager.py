@@ -4,12 +4,15 @@ import threading
 import tweepy
 
 from marketingBot import app
+from marketingBot.config.constants import socket_event
+from marketingBot.controllers.socket import io_notify_user
 from marketingBot.models.Bot import db, Bot
 from marketingBot.models.AppKey import AppKey
 
 botThreads = {}
 
 def initialize_bots():
+  print(f"[Tasks] initializing statuses...")
   Bot.query.update({ Bot.status: 'IDLE' });
   db.session.commit()
 
@@ -44,6 +47,7 @@ class BotThread(threading.Thread):
     
   def start(self):
     print(f"[Task] starting '{self.name}'")
+    
     self.stopped = False
     self.create_apis()
     self.validate_targets()
@@ -112,6 +116,7 @@ class BotThread(threading.Thread):
           users = api.lookup_users(self.targets)
           # print('[LookUp] Statuses ', users[0].status)
           print(f"[MonitorResult] {len(users)} targets, IDs: {list(map(lambda user:user.status.id, users))}")
+          io_notify_user(user_id=self.bot['user_id'], event=socket_event.NEW_TWEET_FOUND, args=list(map(lambda user: user.status.text, users)))
         except Exception as e:
           print('[LookUp] Error ', str(e))
           return False
