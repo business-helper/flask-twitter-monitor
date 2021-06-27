@@ -91,9 +91,6 @@ def bots_page(self):
   apps = []
   for api_key in api_keys:
     apps.append(api_key.to_dict())
-  # for ap in apps:
-  #   print('[Type]', type(ap))
-  print('[Apps]', apps)
   data = {
     "time": timestamp(),
     "api_apps": apps,
@@ -112,14 +109,14 @@ def load_bots_root(self):
   # sortDir = request.args.get('order[0][dir]')
   user_id = self.id
   # keyword = request.args.get('search[value]')
-  print('[Limit]', skip, limit)
+
   bots = Bot.query.filter_by(user_id=user_id).limit(limit).offset(skip)
   app_keys = AppKey.query.filter_by(user_id=user_id).all()
   dict_keys = {}
-  print('[App Keys]', app_keys)
+
   for app_key in app_keys:
     dict_keys[str(app_key.id)] = app_key.to_dict()
-  print('[Keys]', dict_keys)
+
   data = []
   for idx, bot in enumerate(bots):
     bot = bot.format()

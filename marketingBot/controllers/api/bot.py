@@ -64,6 +64,7 @@ def create_bot(self):
     targets = stringify(payload['targets']) if payload['targets'] else '[]',
     inclusion_keywords = stringify(payload['inclusion_keywords']) if payload['inclusion_keywords'] else '[]',
     exclusion_keywords = stringify(payload['exclusion_keywords']) if payload['exclusion_keywords'] else '[]',
+    period = 1.0 if 'period' not in payload else payload['period'],
     status= payload['status'] if 'status' in payload else 'IDLE',
   )
   db.session.add(bot)
@@ -85,7 +86,7 @@ def update_bot_by_id(self, id):
   bot.api_keys = stringify(payload['api_keys']) if 'api_keys' in payload else '[]'
   bot.inclusion_keys = stringify(payload['inclusion_keys']) if 'inclusion_keys' in payload else '[]'
   bot.exclusion_keys = stringify(payload['exclusion_keys']) if 'exclusion_keys' in payload else '[]'
-
+  bot.period = payload['period'] if 'period' in payload else 1.0
 
   db.session.commit()
 

@@ -85,10 +85,20 @@ function initDataTable() {
                   orderable: false,
                   render: function(data, type, full, meta) {
                     return `
-                      <span class="edit-row m-portlet__nav-link btn m-btn m-btn--hover-brand m-btn--icon m-btn--icon-only m-btn--pill" title="Edit"
+                    <span class="edit-row m-portlet__nav-link btn m-btn m-btn--hover-brand m-btn--icon m-btn--icon-only m-btn--pill" title="Edit"
                         onclick="onEdit(${data})"
                         data-domain="${data}">
                       <i class="la la-edit"></i>
+                    </span>
+                    <span href="#" class="delete-row m-portlet__nav-link btn m-btn m-btn--hover-brand m-btn--icon m-btn--icon-only m-btn--pill" title="Start"
+                      onclick="onDelete(${data})"
+                      data-domain="${data}">
+                      <i class="la la-play"></i>
+                    </span>
+                    <span href="#" class="delete-row m-portlet__nav-link btn m-btn m-btn--hover-brand m-btn--icon m-btn--icon-only m-btn--pill" title="Stop"
+                      onclick="onDelete(${data})"
+                      data-domain="${data}">
+                      <i class="la la-stop"></i>
                     </span>
                     <span href="#" class="delete-row m-portlet__nav-link btn m-btn m-btn--hover-brand m-btn--icon m-btn--icon-only m-btn--pill" title="Remove"
                       onclick="onDelete(${data})"

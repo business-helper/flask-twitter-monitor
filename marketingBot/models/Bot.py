@@ -14,18 +14,20 @@ class Bot(db.Model):
   targets = db.Column(db.JSON)
   inclusion_keywords = db.Column(db.JSON)
   exclusion_keywords = db.Column(db.JSON)
+  period = db.Column(db.Numeric(5, 1))
   status = db.Column(db.String(20), default='IDLE')
   created_at = db.Column(db.String(30), nullable=True)
   updated_at = db.Column(db.String(30), nullable=True)
 
 
-  def __init__(self, user_id, name, api_keys, targets, inclusion_keywords, exclusion_keywords, status, **args):
+  def __init__(self, user_id, name, api_keys, targets, inclusion_keywords, exclusion_keywords, period, status, **args):
     self.user_id = user_id
     self.name = name
     self.api_keys = api_keys
     self.targets = targets
     self.inclusion_keywords = inclusion_keywords
     self.exclusion_keywords = exclusion_keywords
+    self.period = period
     self.status = status
 
     self.created_at = datetime.utcnow()
@@ -52,6 +54,7 @@ class Bot(db.Model):
       targets = self.targets,
       inclusion_keywords = self.inclusion_keywords,
       exclusion_keywords = self.exclusion_keywords,
+      period = self.period,
       status=self.status,
       created_at=self.created_at,
       updated_at=self.updated_at
