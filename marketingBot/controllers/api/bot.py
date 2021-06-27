@@ -5,6 +5,7 @@ from datetime import datetime
 from marketingBot.models.Bot import db, Bot
 from marketingBot.models.AppKey import AppKey
 from marketingBot.controllers.api import api
+from marketingBot.controllers.task_manager import start_bot_execution, stop_bot_execution
 from marketingBot.helpers.common import stringify
 from marketingBot.helpers.wrapper import session_required
 
@@ -17,6 +18,7 @@ def api_ping_bot():
     "data": bot.to_dict(),
   })
 
+# deprecated
 @api.route('/bots', methods=['GET'])
 @session_required
 def load_bots(self):
@@ -60,10 +62,10 @@ def create_bot(self):
   bot = Bot(
     user_id = self.id,
     name = payload['name'],
-    api_keys = stringify(payload['api_keys']) if payload['api_keys'] else '[]',
-    targets = stringify(payload['targets']) if payload['targets'] else '[]',
-    inclusion_keywords = stringify(payload['inclusion_keywords']) if payload['inclusion_keywords'] else '[]',
-    exclusion_keywords = stringify(payload['exclusion_keywords']) if payload['exclusion_keywords'] else '[]',
+    api_keys = payload['api_keys'] if payload['api_keys'] else '[]',
+    targets = payload['targets'] if payload['targets'] else '[]',
+    inclusion_keywords = payload['inclusion_keywords'] if payload['inclusion_keywords'] else '[]',
+    exclusion_keywords = payload['exclusion_keywords'] if payload['exclusion_keywords'] else '[]',
     period = 1.0 if 'period' not in payload else payload['period'],
     status= payload['status'] if 'status' in payload else 'IDLE',
   )
@@ -80,19 +82,27 @@ def create_bot(self):
 @session_required
 def update_bot_by_id(self, id):
   payload = dict(request.get_json())
+  print('[Interval]', payload['interval'], payload['exclusion_keywords'])
+
+  stop_bot_execution(id)
+
   bot = Bot.query.filter_by(id=id).first()
   bot.name = payload['name']
-  bot.targets = stringify(payload['targets']) if 'targets' in payload else '[]'
-  bot.api_keys = stringify(payload['api_keys']) if 'api_keys' in payload else '[]'
-  bot.inclusion_keys = stringify(payload['inclusion_keys']) if 'inclusion_keys' in payload else '[]'
-  bot.exclusion_keys = stringify(payload['exclusion_keys']) if 'exclusion_keys' in payload else '[]'
-  bot.period = payload['period'] if 'period' in payload else 1.0
+  bot.targets = payload['targets'] if 'targets' in payload else '[]'
+  bot.api_keys = payload['api_keys'] if 'api_keys' in payload else '[]'
+  bot.inclusion_keywords = payload['inclusion_keywords'] if 'inclusion_keywords' in payload else '[]'
+  bot.exclusion_keywords = payload['exclusion_keywords'] if 'exclusion_keywords' in payload else '[]'
+  bot.period = payload['interval'] if 'interval' in payload else 1.0
+
 
   db.session.commit()
 
+  start_bot_execution(id)
+
   return jsonify({
     "status": True,
-    "message": "A bot has been added!",
+    "message": "A bot has been updated!",
+    "upData": bot.to_dict(),
     "data": Bot.query.filter_by(id=bot.id).first().format().to_dict(),
   })
 
@@ -108,7 +118,7 @@ def get_bot_by_id(self, id):
   return jsonify({
     "status": True,
     "message": "success",
-    "data": bot.format().to_dict(),
+    "data": bot.to_dict(),
   })
 
 @api.route('/bots/<id>', methods=['DELETE'])

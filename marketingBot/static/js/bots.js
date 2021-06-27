@@ -16,15 +16,18 @@ $(function() {
     if (!confirm('Are you sure to submit?')) return false;
     const formData = {
       name: $('#name').val(),
-      targets: $('#targets').val().split(',').filter((it) => !!it),
+      targets: $('#targets').val().split(',').filter((it) => !!it.trim()),
       api_keys: $('#api_keys').val(),
-      inclusion_keywords: $('#inclusion_keywords').val().split(',').filter(it => it),
-      exclusion_keywords: $('#exclusion_keywords').val().split(',').filter(it => it),
+      inclusion_keywords: $('#inclusion_keywords').val().split(',').filter(it => it.trim()),
+      exclusion_keywords: $('#exclusion_keywords').val().split(',').filter(it => it.trim()),
+      interval: $('#interval').val(),
     };
 
     const id = Number($('#bot-id').val());
 
-    const promise = id === -1 ? addBot(formData) : updateBot(id, formData);
+    console.log('[Testing values]', id, formData);
+
+    const promise = id === -1 ? addBotRequest(formData) : updateBotRequest(id, formData);
     return promise.then((res) => {
       if (res.status) {
         toastr.success(res.message);
@@ -40,6 +43,87 @@ $(function() {
     })
   });
 });
+
+function onClickAddButton() {
+  const isEditing = Number($('#app-id').val()) > -1;
+  const opened = $('#form-wrapper').hasClass('_show');
+  emptyForm();
+  if (opened && !isEditing) {
+    $('#form-wrapper').addClass('_hide').removeClass('_show');
+  } else {
+    $('#form-wrapper').removeClass('_hide').addClass('_show');
+  }
+}
+
+function onEdit(id) {
+  return getApiAppByIdRequest(id).then((res) => {
+    if (res.status) {
+      const { data: app } = res;
+      $('#bot-id').val(app.id);
+      $('#name').val(app.name);
+      $('#targets').val(app.targets.join(','));
+      $('#api_keys').val(app.api_keys).trigger('change');
+      $('#inclusion_keywords').val(app.inclusion_keywords.join(','));
+      $('#exclusion_keywords').val(app.exclusion_keywords.join(','));
+
+      $('#website-form button[type="submit"]').html('<i class="la la-save"></i>Update');
+      $('#form-wrapper').removeClass('_hide').addClass('_show');
+    } else {
+      toastr.error(res.message);
+    }    
+  })
+  .catch((error) => {
+    console.log('[Error]', error);
+  })
+}
+
+function onStartBot(id) {
+  return startBotByIdRequest(id).then((res) => {
+    if (res.status) {
+      toastr.success(res.message);
+      refreshTable();
+    } else {
+      toastr.error(res.message);
+    }
+  })
+  .catch((error) => {
+    console.log('[Task][Start]', id, error);
+    toastr.error(error.message);
+  });
+}
+
+function onStopBot(id) {
+  return stopBotByIdRequest(id).then((res) => {
+    if (res.status) {
+      toastr.success(res.message);
+      refreshTable();
+    } else {
+      toastr.error(res.message);
+    }
+  })
+  .catch((error) => {
+    console.log('[Task][Stop]', id, error);
+    toastr.error(error.message);
+  })
+}
+
+function onDelete(id) {
+  if (!confirm('Are you sure proceed to delete?')) return false;
+  return deleteApiAppByIdRequest(id).then((res) => {
+    if (res.status) {
+      toastr.success(res.message);
+      refreshTable();
+    } else {
+      toastr.error(res.message);
+    }
+  })
+  .catch((error) => {
+    console.log('[Delete]', error);
+    toastr.error(error.message);
+  })
+}
+
+
 
 function initDataTable() {
   // Initialize datatable with ability to add rows dynamically
@@ -91,12 +175,12 @@ function initDataTable() {
                       <i class="la la-edit"></i>
                     </span>
                     <span href="#" class="delete-row m-portlet__nav-link btn m-btn m-btn--hover-brand m-btn--icon m-btn--icon-only m-btn--pill" title="Start"
-                      onclick="onDelete(${data})"
+                      onclick="onStartBot(${data})"
                       data-domain="${data}">
                       <i class="la la-play"></i>
                     </span>
                     <span href="#" class="delete-row m-portlet__nav-link btn m-btn m-btn--hover-brand m-btn--icon m-btn--icon-only m-btn--pill" title="Stop"
-                      onclick="onDelete(${data})"
+                      onclick="onStopBot(${data})"
                       data-domain="${data}">
                       <i class="la la-stop"></i>
                     </span>
@@ -129,7 +213,7 @@ function initDataTable() {
                   },
               },
               {
-                targets: 3,
+                targets: 4,
                 render: function(data, type, full, meta) {
                   if (!data.length) {
                     return `<span class="m-badge m-badge--danger m-badge--wide">None</span>`
@@ -146,7 +230,7 @@ function initDataTable() {
   initTableWithDynamicRows();
 }
 
-function updateBot(id, data) {
+function updateBotRequest(id, data) {
   return $.ajax({
     url: `/api/bots/${id}`,
     method: 'put',
@@ -156,7 +240,7 @@ function updateBot(id, data) {
   });
 }
 
-function addBot(data) {
+function addBotRequest(data) {
   return $.ajax({
     url: '/api/bots',
     method: 'POST',
@@ -173,7 +257,25 @@ function addBot(data) {
   // });
 }
 
-function getApiAppById(id) {
+function startBotByIdRequest(id) {
+  return $.ajax({
+    url: `/tasks/${id}/start`,
+    method: 'POST',
+    contentType: 'application/json; charset=utf-8',
+    dataType: 'json',
+  });
+}
+
+function stopBotByIdRequest(id) {
+  return $.ajax({
+    url: `/tasks/${id}/stop`,
+    method: 'POST',
+    contentType: 'application/json; charset=utf-8',
+    dataType: 'json',
+  });
+}
+
+function getApiAppByIdRequest(id) {
   return $.ajax({
     url: `/api/bots/${id}`,
     method: 'GET',
@@ -183,7 +285,7 @@ function getApiAppById(id) {
   });
 }
 
-function deleteApiAppById(id) {
+function deleteApiAppByIdRequest(id) {
   return $.ajax({
     url: `/api/bots/${id}`,
     method: 'DELETE',
@@ -191,55 +293,6 @@ function deleteApiAppById(id) {
     contentType: 'application/json; charset=utf-8',
     dataType: 'json',
   });
-}
-
-function onClickAddButton() {
-  const isEditing = Number($('#app-id').val()) > -1;
-  const opened = $('#form-wrapper').hasClass('_show');
-  emptyForm();
-  if (opened && !isEditing) {
-    $('#form-wrapper').addClass('_hide').removeClass('_show');
-  } else {
-    $('#form-wrapper').removeClass('_hide').addClass('_show');
-  }
-}
-
-function onEdit(id) {
-  return getApiAppById(id).then((res) => {
-    if (res.status) {
-      const { data: app } = res;
-      $('#bot-id').val(app.id);
-      $('#name').val(app.name);
-      $('#targets').val(app.targets.join(','));
-      $('#api_keys').val(app.api_keys).trigger('change');
-      $('#inclusion_keywords').val(app.inclusion_keywords.join(','));
-      $('#exclusion_keywords').val(app.exclusion_keywords.join(','));
-
-      $('#website-form button[type="submit"]').html('<i class="la la-save"></i>Update');
-      $('#form-wrapper').removeClass('_hide').addClass('_show');
-    } else {
-      toastr.error(res.message);
-    }    
-  })
-  .catch((error) => {
-    console.log('[Error]', error);
-  })
-}
-
-function onDelete(id) {
-  if (!confirm('Are you sure proceed to delete?')) return false;
-  return deleteApiAppById(id).then((res) => {
-    if (res.status) {
-      toastr.success(res.message);
-      refreshTable();
-    } else {
-      toastr.error(res.message);
-    }
-  })
-  .catch((error) => {
-    console.log('[Delete]', error);
-    toastr.error(error.message);
-  })
 }
 
 function emptyForm() {

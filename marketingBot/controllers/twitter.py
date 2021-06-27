@@ -40,6 +40,9 @@ api = create_api(CONSUMER_KEY, CONSUMER_SECRET, ACCESS_TOKEN, ACCESS_TOKEN_SECRE
 # print(user.name)
 # print(user.location)
 # print(user.status.text)
+# print('[User] ID', user.id)
+# statuses = api.lookup_users([user.id])
+# print('[Statuses]', statuses[0].status)
 
 
 

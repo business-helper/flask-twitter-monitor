@@ -54,7 +54,7 @@ class Bot(db.Model):
       targets = self.targets,
       inclusion_keywords = self.inclusion_keywords,
       exclusion_keywords = self.exclusion_keywords,
-      period = self.period,
+      period = str(self.period),
       status=self.status,
       created_at=self.created_at,
       updated_at=self.updated_at
