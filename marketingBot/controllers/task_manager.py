@@ -3,6 +3,7 @@ from flask import jsonify, request
 import threading
 import time
 import tweepy
+# from uwsgidecorators import *
 
 from marketingBot import app
 from marketingBot.config.constants import socket_event
@@ -13,6 +14,7 @@ from marketingBot.helpers.common import translate
 
 botThreads = {}
 
+@app.before_first_request
 def initialize_bots():
   print(f"[Tasks] initializing statuses...")
   Bot.query.update({ Bot.status: 'IDLE' });
@@ -28,6 +30,7 @@ class BotDemo:
   def __init__(self, name, interval):
     self.name = name
     self.interval = interval
+
 
 
 class BotThread(threading.Thread):
@@ -70,7 +73,7 @@ class BotThread(threading.Thread):
     print(f"[Task] stopping '{self.name}'")
     self.stopped = True
 
-
+  # @postfork
   def create_apis(self):
     print('[API Keys]', self.bot['api_keys'], type(self.bot['api_keys']))
     if len(self.bot['api_keys']) > 0:
