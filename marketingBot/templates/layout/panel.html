@@ -36,9 +36,11 @@
             {% block body %}{% endblock %}
         </div>
 
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/1.7.3/socket.io.min.js"></script>
         <script src="{{ url_for('static', filename='theme/scripts.bundle.js') }}"></script>
         <script src="{{ url_for('static', filename='theme/vendors.bundle.js') }}"></script>
         <script src="{{ url_for('static', filename='theme/datatables.bundle.js') }}"></script>
+        <script src="{{ url_for('static', filename='js/socket.js') }}?v={{timestamp()}}"></script>
 
         {% block scripts %}{% endblock %}
     </body>

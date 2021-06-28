@@ -11,6 +11,13 @@ from marketingBot.models.Bot import Bot
 from marketingBot.helpers.common import unset_login_session, validate_session, timestamp
 from marketingBot.helpers.wrapper import session_required
 
+@app.context_processor
+def my_utility_processor():
+  def time_now():
+    return timestamp()
+  
+  return dict(timestamp=time_now)
+
 @app.route('/ping')
 def ping():
   print('[Ping] requested')
@@ -91,9 +98,6 @@ def bots_page(self):
   apps = []
   for api_key in api_keys:
     apps.append(api_key.to_dict())
-  # for ap in apps:
-  #   print('[Type]', type(ap))
-  print('[Apps]', apps)
   data = {
     "time": timestamp(),
     "api_apps": apps,
@@ -112,14 +116,14 @@ def load_bots_root(self):
   # sortDir = request.args.get('order[0][dir]')
   user_id = self.id
   # keyword = request.args.get('search[value]')
-  print('[Limit]', skip, limit)
+
   bots = Bot.query.filter_by(user_id=user_id).limit(limit).offset(skip)
   app_keys = AppKey.query.filter_by(user_id=user_id).all()
   dict_keys = {}
-  print('[App Keys]', app_keys)
+
   for app_key in app_keys:
     dict_keys[str(app_key.id)] = app_key.to_dict()
-  print('[Keys]', dict_keys)
+
   data = []
   for idx, bot in enumerate(bots):
     bot = bot.format()
@@ -129,7 +133,7 @@ def load_bots_root(self):
       if key in dict_keys:
         bot_keys.append(dict_keys[key])
 
-    data.append([idx + 1, bot.name, bot.targets, bot_keys, bot.inclusion_keywords, bot.exclusion_keywords, bot.status, bot.id])
+    data.append([idx + 1, bot.name, bot.targets, float(bot.period), bot_keys, bot.inclusion_keywords, bot.exclusion_keywords, bot.status, bot.id])
 
   return jsonify({
     'data': data,
