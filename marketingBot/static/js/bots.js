@@ -65,6 +65,7 @@ function onEdit(id) {
       $('#api_keys').val(app.api_keys).trigger('change');
       $('#inclusion_keywords').val(app.inclusion_keywords.join(','));
       $('#exclusion_keywords').val(app.exclusion_keywords.join(','));
+      $('#interval').val(app.period);
 
       $('#website-form button[type="submit"]').html('<i class="la la-save"></i>Update');
       $('#form-wrapper').removeClass('_hide').addClass('_show');

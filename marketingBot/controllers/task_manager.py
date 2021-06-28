@@ -1,6 +1,7 @@
 from datetime import datetime
 from flask import jsonify, request
 import threading
+import time
 import tweepy
 
 from marketingBot import app
@@ -8,6 +9,7 @@ from marketingBot.config.constants import socket_event
 from marketingBot.controllers.socket import io_notify_user
 from marketingBot.models.Bot import db, Bot
 from marketingBot.models.AppKey import AppKey
+from marketingBot.helpers.common import translate
 
 botThreads = {}
 
@@ -29,13 +31,17 @@ class BotDemo:
 
 
 class BotThread(threading.Thread):
-  name = ''
   thread = None
-  _interval = 5
   stopped = True
   _iterN = 0
+
+  name = ''
+  _interval = 5
+  bot = None
   apis = []
-  targets = []
+  targets = {}
+  last_tweet_ids = {}
+
   def __init__(self, bot, **args):
     threading.Thread.__init__(self)
     self.name = bot.name
@@ -43,7 +49,11 @@ class BotThread(threading.Thread):
     self.bot = bot.to_dict()
     # self.event = threading.Event()
     self.stopped = True
-    self.apis = []
+    for screen_name in self.bot['targets']:
+      self.last_tweet_ids[screen_name.strip()] = {
+        "now": None,
+        "prev": None,
+      }
     
   def start(self):
     print(f"[Task] starting '{self.name}'")
@@ -51,6 +61,9 @@ class BotThread(threading.Thread):
     self.stopped = False
     self.create_apis()
     self.validate_targets()
+    #if there is not api, then no need to proceed.
+    if len(self.apis) == 0:
+      return False
     self.execute_loop()
 
   def stop(self):
@@ -73,25 +86,25 @@ class BotThread(threading.Thread):
     if len(self.apis) == 0:
       return []
     for user_id in self.bot['targets']:
+      user_id = user_id.strip()
       try:
         user = self.apis[0].get_user(user_id)
-        self.targets.append(user.id)
+        # self.targets.append(user.id)
+        self.targets[str(user_id)] = user.id_str
       except Exception as e:
         pass
     print('[Targets]', type(self.bot['targets']), self.bot['targets'], self.targets)
       
-
   def execute_loop(self):
     def func_wrapper():
       if self.stopped:
         return False
       self.execute_loop()
       self.processor()
-    t = threading.Timer(self._interval, func_wrapper)
+    t = threading.Timer(self._interval * len(self.apis), func_wrapper)
     t.start()
 
   def processor(self):
-    self._iterN += 1
     print(f"[Processing] {self.name} {str(self._iterN)}")
     self.monitor_accounts()
 
@@ -110,17 +123,68 @@ class BotThread(threading.Thread):
 
   def monitor_accounts(self):
     print(f"[MonitorAccount]', Interval: {self._interval}s, APIs: {len(self.apis)}")
-    for api in self.apis:
+
+    for idx, api in enumerate(self.apis):
+      if idx > 0:
+        time.sleep(self._interval)
       if len(self.bot['targets']) > 0:
         try:
-          users = api.lookup_users(self.targets)
+          users = api.lookup_users(list(self.targets.values()), include_entities=True, tweet_mode="extended")
           # print('[LookUp] Statuses ', users[0].status)
           print(f"[MonitorResult] {len(users)} targets, IDs: {list(map(lambda user:user.status.id, users))}")
-          io_notify_user(user_id=self.bot['user_id'], event=socket_event.NEW_TWEET_FOUND, args=list(map(lambda user: user.status.text, users)))
+          for user in users:
+            self.process_monitor_result(user, api)
+          self._iterN += 1
         except Exception as e:
           print('[LookUp] Error ', str(e))
           return False
 
+  def process_monitor_result(self, user, api):
+    screen_name = user.screen_name
+    tweet_id = user.status.id_str
+
+    self.last_tweet_ids[screen_name] = {
+      "prev": self.last_tweet_ids[screen_name]['now'],
+      "now": tweet_id,
+    }
+    is_new_tweet = self.last_tweet_ids[screen_name]['now'] != self.last_tweet_ids[screen_name]['prev'] #(self._iterN > 0 and self.last_tweet_ids[screen_name] and tweet_id != self.last_tweet_ids[screen_name]) or self._iterN == 0
+
+    # update last tweet id
+    # self.last_tweet_ids[screen_name] = tweet_id
+
+    if is_new_tweet:
+      print(f"[NEW_TWEET_FOUND]", self.last_tweet_ids, tweet_id, self._iterN)
+      tweet = self.apis[0].get_status(tweet_id, tweet_mode = 'extended')
+
+      ## reference for full text
+      ## - https://docs.tweepy.org/en/latest/extended_tweets.html#handling-retweets
+      ## - https://github.com/tweepy/tweepy/issues/974
+      full_text = self.parse_full_text(tweet)
+      translated = translate(src_text=full_text)
+
+      notification = {
+        "user_name": screen_name,
+        "bot": self.name,
+        "tweet": tweet._json,
+        # "tweet": tweet.text,
+        "full": full_text,
+        "translated": translated,
+        "entities": tweet.entities,
+        # "extended_entities": tweet.extended_entities if 'extended_entities' in tweet else {},
+        "retweeted": tweet.retweeted,
+        # "quote_count": tweet.quote_count,
+        # "reply_count": tweet.reply_count,
+        "retweet_count": tweet.retweet_count,
+        "favorite_count": tweet.favorite_count,
+      }
+      io_notify_user(user_id=self.bot['user_id'], event=socket_event.NEW_TWEET_FOUND, args=notification)
+
+  def parse_full_text(self, status):
+    full_text = status.full_text
+    entities = status.entities
+    for url in entities['urls']:
+      full_text = full_text.replace(url['url'], url['display_url'])
+    return full_text
   # def set_interval(self, func, sec):
   #   def func_wrapper():
   #     if not self.stopped:
@@ -219,5 +283,9 @@ def add_new_bot():
     "message": "success",
   })
 
-
+@app.route('/translate', methods=['POST'])
+def test_translate():
+  payload = request.get_json()
+  txt = translate(src_text = payload['text'], target_lang = payload['lang'])
+  return jsonify({ "text": txt })
 

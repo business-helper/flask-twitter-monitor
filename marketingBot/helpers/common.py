@@ -1,6 +1,18 @@
 from flask import session, json
+import os
+import requests
 import time
+
 from marketingBot.models.User import User
+
+deepl_endpoint = {
+  "free": 'https://api-free.deepl.com/v2',
+  "pro": 'https://api-free.deepl.com/v2',
+}
+deepl_key = os.getenv('DEEPL_KEY')
+deepl_free = os.getenv('DEEPL_FREE')
+
+translation_endpoint = deepl_endpoint['free'] if deepl_free else deepl_endpoint['pro']
 
 def set_login_session(user):
   if not user:
@@ -35,3 +47,14 @@ def stringify(data):
 
 def json_parse(str):
   return json.loads(str)
+
+def translate(src_text, target_lang = 'JA'):
+  url = f"{translation_endpoint}/translate"
+  params = {
+    "auth_key": deepl_key,
+    "text": src_text,
+    "target_lang": target_lang,
+  }
+  res = requests.get(url = url, params = params)
+  data = res.json()
+  return data['translations'][0]['text']
