@@ -9,10 +9,10 @@ logger = logging.getLogger()
 
 logger.info(f"Processing tweet id ~")
 
-CONSUMER_KEY = "C8DpNFJYcFTr0MaZjPpSGEyzl"
-CONSUMER_SECRET = "tDicaBsTBIu3Oqdk4DmGDkGVpzkfr2UgIJdkqDgQkP8M5O0h4i"
-ACCESS_TOKEN = "1052098057922273280-ChPKjuaqHiFLapx3Y26g5EhXUyg7HZ"
-ACCESS_TOKEN_SECRET = "71AjifF18MLojnbR7kR8vyNUBHQVvjdL9ZJBLZREA6BL8"
+# CONSUMER_KEY = "C8DpNFJYcFTr0MaZjPpSGEyzl"
+# CONSUMER_SECRET = "tDicaBsTBIu3Oqdk4DmGDkGVpzkfr2UgIJdkqDgQkP8M5O0h4i"
+# ACCESS_TOKEN = "1052098057922273280-ChPKjuaqHiFLapx3Y26g5EhXUyg7HZ"
+# ACCESS_TOKEN_SECRET = "71AjifF18MLojnbR7kR8vyNUBHQVvjdL9ZJBLZREA6BL8"
 
 # # Authenticate to Twitter
 # auth = tweepy.OAuthHandler(CONSUMER_KEY, CONSUMER_SECRET)
@@ -27,7 +27,7 @@ def create_api(consumer_key, consumer_secret, access_token, access_token_secret)
   api = tweepy.API(auth, wait_on_rate_limit=True)
   return api
 
-api = create_api(CONSUMER_KEY, CONSUMER_SECRET, ACCESS_TOKEN, ACCESS_TOKEN_SECRET)
+# api = create_api(CONSUMER_KEY, CONSUMER_SECRET, ACCESS_TOKEN, ACCESS_TOKEN_SECRET)
 
 # try:
 #   api.update_status("Did you get a vaccine?")
