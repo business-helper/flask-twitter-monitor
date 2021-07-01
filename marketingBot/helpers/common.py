@@ -58,3 +58,22 @@ def translate(src_text, target_lang = 'JA'):
   res = requests.get(url = url, params = params)
   data = res.json()
   return data['translations'][0]['text']
+
+def splitString2Array(str):
+  try:
+    if not str:
+      return []
+
+    strings = []
+    # split by line
+    lines = str.splitlines()
+    for line in lines:
+      words = line.split(',')
+      for word in words:
+        word = word.strip()
+        if not word:
+          pass
+        strings.append(word)
+    return strings
+  except Exception as e:
+    return []

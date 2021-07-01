@@ -133,7 +133,7 @@ def load_bots_root(self):
       if key in dict_keys:
         bot_keys.append(dict_keys[key])
 
-    data.append([idx + 1, bot.name, bot.targets, float(bot.period), bot_keys, bot.inclusion_keywords, bot.exclusion_keywords, bot.status, bot.id])
+    data.append([idx + 1, bot.name, bot.type, bot.targets, [float(bot.period), bot.start_time, bot.end_time], bot_keys, bot.inclusion_keywords, bot.exclusion_keywords, bot.status, bot.id])
 
   return jsonify({
     'data': data,

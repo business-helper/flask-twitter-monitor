@@ -10,25 +10,33 @@ class Bot(db.Model):
   id = db.Column(db.Integer, primary_key=True)
   user_id = db.Column(db.Integer, nullable=False)
   name = db.Column(db.String(50), nullable=False)
+  type = db.Column(db.String(10), nullable=False)
   api_keys = db.Column(db.JSON)
   targets = db.Column(db.JSON)
   inclusion_keywords = db.Column(db.JSON)
   exclusion_keywords = db.Column(db.JSON)
   period = db.Column(db.Numeric(5, 1))
+  start_time = db.Column(db.String(30), nullable=True)
+  end_time = db.Column(db.String(30), nullable=True)
+  metrics = db.Column(db.JSON)
   last_tweets = db.Column(db.JSON)
   status = db.Column(db.String(20), default='IDLE')
   created_at = db.Column(db.String(30), nullable=True)
   updated_at = db.Column(db.String(30), nullable=True)
 
 
-  def __init__(self, user_id, name, api_keys, targets, inclusion_keywords, exclusion_keywords, period, status, last_tweets = [], **args):
+  def __init__(self, user_id, name, type, api_keys, targets, inclusion_keywords, exclusion_keywords, period, status, start_time, end_time, metrics = {}, last_tweets = [], **args):
     self.user_id = user_id
     self.name = name
+    self.type = type
     self.api_keys = api_keys
     self.targets = targets
     self.inclusion_keywords = inclusion_keywords
     self.exclusion_keywords = exclusion_keywords
     self.period = period
+    self.start_time = start_time
+    self.end_time = end_time
+    self.metrics = metrics
     self.status = status
     self.last_tweets = last_tweets
 
@@ -52,11 +60,15 @@ class Bot(db.Model):
       id=self.id,
       user_id = self.user_id,
       name = self.name,
+      type=self.type,
       api_keys = self.api_keys,
       targets = self.targets,
       inclusion_keywords = self.inclusion_keywords,
       exclusion_keywords = self.exclusion_keywords,
       period = str(self.period),
+      start_time = self.start_time,
+      end_time = self.end_time,
+      metrics = self.metrics,
       status=self.status,
       created_at=self.created_at,
       updated_at=self.updated_at

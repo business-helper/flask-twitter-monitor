@@ -30,3 +30,7 @@
 #form-wrapper._hide {
   max-height: 0;
 }
+
+span.select2.select2-container span.select2-selection.select2-selection--multiple {
+  height: 40px;
+}
