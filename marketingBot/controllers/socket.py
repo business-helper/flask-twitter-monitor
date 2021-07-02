@@ -31,11 +31,16 @@ def socket_connected(self):
   io_clients[str_user_id] = request.sid #request.namespace
   # print('[IO Clients]', io_clients)
 
-  user = User.query.filter_by(id=self.id).first()
-  user.socket_id = request.sid
-  user.updated_at = datetime.utcnow()
-  db.session.commit()
+  # user = User.query.filter_by(id=self.id).first()
+  # user.socket_id = request.sid
+  # user.updated_at = datetime.utcnow()
+  # db.session.commit()
 
+
+@socketio.on('disconnect')
+@session_required
+def socket_disconnect(self):
+  print('[Socket][Disconnected]', self)
 
 @socketio.on('PING')
 def handle_my_event(json, methods=['GET', 'POST']):

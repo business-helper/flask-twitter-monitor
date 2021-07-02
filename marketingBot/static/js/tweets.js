@@ -283,7 +283,7 @@ function initDataTable() {
           serverSide: true,
 
           ajax: {
-              url: "/load-bots",
+              url: "/load-tweets",
               data: function(extra) {
                   extra.keyword = 'test';
               },
@@ -319,57 +319,57 @@ function initDataTable() {
                     </span>`;
                   },
               },
-              {
-                targets: -2,
-                render: function (data, type, full, meta) {
-                    const status = {
-                        'IDLE': {'title': 'Idle', 'class': 'm-badge--info'},
-                        'RUNNING': {'title': 'Running', 'class': 'm-badge--success'},
-                    };
-                    data = data.toString();
-                    if (typeof status[data] === 'undefined') {
-                        return data;
-                    }
-                    return '<span class="m-badge ' + status[data].class + ' m-badge--wide">' + status[data].title + '</span>';
-                },
-              },
-              {
-                targets: 2,
-                render: function (data, type, full, meta) {
-                  const status = {
-                      'ONE_TIME': {'title': 'One Time', 'class': 'm-badge--info'},
-                      'REAL_TIME': {'title': 'Real Time', 'class': 'm-badge--success'},
-                  };
-                  if (typeof status[data] === 'undefined') {
-                      return data;
-                  }
-                  return '<span class="m-badge ' + status[data].class + ' m-badge--wide">' + status[data].title + '</span>';
-              },
-              },
-              {
-                  targets: 3,
-                  render: function(data, type, full, meta) {
-                    if (data.length) return data.join(',');
-                    return `<span class="m-badge m-badge--warning m-badge--wide">No Targets</span>`;
-                  },
-              },
-              {
-                  targets: 4,
-                  render: function(data, type, full, meta) {
-                    if (full[2] === 'REAL_TIME') return data[0];
-                    return `${data[1]}-${data[2]}`;
-                  },
-              },
-              {
-                targets: 5,
-                render: function(data, type, full, meta) {
-                  if (!data.length) {
-                    return `<span class="m-badge m-badge--danger m-badge--wide">None</span>`
-                  }
-                  const names = data.map((api_key) => api_key.name);
-                  return names.join(',');
-                },
-            },
+              // {
+              //   targets: -2,
+              //   render: function (data, type, full, meta) {
+              //       const status = {
+              //           'IDLE': {'title': 'Idle', 'class': 'm-badge--info'},
+              //           'RUNNING': {'title': 'Running', 'class': 'm-badge--success'},
+              //       };
+              //       data = data.toString();
+              //       if (typeof status[data] === 'undefined') {
+              //           return data;
+              //       }
+              //       return '<span class="m-badge ' + status[data].class + ' m-badge--wide">' + status[data].title + '</span>';
+              //   },
+              // },
+              // {
+              //   targets: 2,
+              //   render: function (data, type, full, meta) {
+              //     const status = {
+              //         'ONE_TIME': {'title': 'One Time', 'class': 'm-badge--info'},
+              //         'REAL_TIME': {'title': 'Real Time', 'class': 'm-badge--success'},
+              //     };
+              //     if (typeof status[data] === 'undefined') {
+              //         return data;
+              //     }
+              //     return '<span class="m-badge ' + status[data].class + ' m-badge--wide">' + status[data].title + '</span>';
+              // },
+              // },
+              // {
+              //     targets: 3,
+              //     render: function(data, type, full, meta) {
+              //       if (data.length) return data.join(',');
+              //       return `<span class="m-badge m-badge--warning m-badge--wide">No Targets</span>`;
+              //     },
+              // },
+              // {
+              //     targets: 4,
+              //     render: function(data, type, full, meta) {
+              //       if (full[2] === 'REAL_TIME') return data[0];
+              //       return `${data[1]}-${data[2]}`;
+              //     },
+              // },
+              // {
+              //   targets: 5,
+              //   render: function(data, type, full, meta) {
+              //     if (!data.length) {
+              //       return `<span class="m-badge m-badge--danger m-badge--wide">None</span>`
+              //     }
+              //     const names = data.map((api_key) => api_key.name);
+              //     return names.join(',');
+              //   },
+            // },
           ]
       };
 

@@ -1,4 +1,5 @@
 from flask import Flask, render_template, jsonify, redirect, url_for, escape, request
+from sqlalchemy.sql import text
 from flask_wtf import FlaskForm
 from wtforms import StringField
 from wtforms.validators import DataRequired
@@ -8,6 +9,7 @@ from flask import flash
 from marketingBot import app
 from marketingBot.models.AppKey import db, AppKey
 from marketingBot.models.Bot import Bot
+from marketingBot.models.Tweet import Tweet
 from marketingBot.helpers.common import unset_login_session, validate_session, timestamp
 from marketingBot.helpers.wrapper import session_required
 
@@ -133,7 +135,7 @@ def load_bots_root(self):
       if key in dict_keys:
         bot_keys.append(dict_keys[key])
 
-    data.append([idx + 1, bot.name, bot.targets, float(bot.period), bot_keys, bot.inclusion_keywords, bot.exclusion_keywords, bot.status, bot.id])
+    data.append([idx + 1, bot.name, bot.type, bot.targets, [float(bot.period), bot.start_time, bot.end_time], bot_keys, bot.inclusion_keywords, bot.exclusion_keywords, bot.status, bot.id])
 
   return jsonify({
     'data': data,
@@ -141,4 +143,60 @@ def load_bots_root(self):
     'iTotalRecords': 10,
     'iTotalDisplayRecords':10,
   })
+
+
+# 
+# Tweet Page
+@app.route('/tweets', methods=['GET'])
+@session_required
+def tweets_page(self):
+  return render_template('panel/tweets.html')
+
+@app.route('/load-tweets', methods=['GET', 'POST'])
+@session_required
+def load_tweets_root(self):
+  payload = request.form #dict(request.get_json())
+  skip = payload['start']
+  limit = payload['length']
+  sortCol = payload['order[0][column]']
+  sortDir = payload['order[0][dir]']
+  columns = ['tweets.id', 'bot_name', 'target', 'text', 'translated', 'tweeted', 'tweets.created_at']
+  print('[Order By]', sortCol, sortDir)
+  user_id = self.id
+  # keyword = request.args.get('search[value]')
+  # tweets = Tweet.query.filter_by(user_id = user_id).limit(limit).offset(skip)
+  order_by = text(f"{columns[int(sortCol)]} {sortDir}")
+  tweets = db.session.query(
+      Tweet, Bot
+    ).filter(Tweet.bot_id == Bot.id
+    ).filter(Tweet.user_id == user_id
+    ).with_entities(Tweet.id, Tweet.bot_id, Tweet.target, Tweet.text, Tweet.translated, Tweet.tweeted, Tweet.created_at, Bot.name.label('bot_name')
+    ).order_by(order_by).limit(limit).offset(skip)
+
+
+  bots = Bot.query.filter_by(user_id = user_id).all()
+  dict_bots = {}
+  for bot in bots:
+    dict_bots[str(bot.id)] = bot.to_dict()
+  
+  data = []
+  for idx, tweet in enumerate(tweets):
+    data.append([
+      idx + 1,
+      tweet.bot_name,
+      tweet.target,
+      tweet.text,
+      tweet.translated,
+      tweet.tweeted,
+      tweet.created_at,
+      tweet.id,
+    ])
+  return jsonify({
+    'data': data,
+    'draw': payload['draw'],
+    'iTotalRecords': 10,
+    'iTotalDisplayRecords':10,
+  })
+
+
 

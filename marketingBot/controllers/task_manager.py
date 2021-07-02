@@ -3,16 +3,19 @@ from flask import jsonify, request
 import threading
 import time
 import tweepy
+# from uwsgidecorators import *
 
 from marketingBot import app
 from marketingBot.config.constants import socket_event
 from marketingBot.controllers.socket import io_notify_user
 from marketingBot.models.Bot import db, Bot
 from marketingBot.models.AppKey import AppKey
+from marketingBot.models.Tweet import Tweet
 from marketingBot.helpers.common import translate
 
 botThreads = {}
 
+@app.before_first_request
 def initialize_bots():
   print(f"[Tasks] initializing statuses...")
   Bot.query.update({ Bot.status: 'IDLE' });
@@ -28,6 +31,7 @@ class BotDemo:
   def __init__(self, name, interval):
     self.name = name
     self.interval = interval
+
 
 
 class BotThread(threading.Thread):
@@ -57,10 +61,9 @@ class BotThread(threading.Thread):
     
   def start(self):
     print(f"[Task] starting '{self.name}'")
-    
     self.stopped = False
     self.create_apis()
-    self.validate_targets()
+    # self.validate_targets()
     #if there is not api, then no need to proceed.
     if len(self.apis) == 0:
       return False
@@ -70,7 +73,7 @@ class BotThread(threading.Thread):
     print(f"[Task] stopping '{self.name}'")
     self.stopped = True
 
-
+  # @postfork
   def create_apis(self):
     print('[API Keys]', self.bot['api_keys'], type(self.bot['api_keys']))
     if len(self.bot['api_keys']) > 0:
@@ -125,11 +128,13 @@ class BotThread(threading.Thread):
     print(f"[MonitorAccount]', Interval: {self._interval}s, APIs: {len(self.apis)}")
 
     for idx, api in enumerate(self.apis):
-      if idx > 0:
-        time.sleep(self._interval)
+
+      # if idx > 0:
+      #   time.sleep(self._interval)
       if len(self.bot['targets']) > 0:
         try:
-          users = api.lookup_users(list(self.targets.values()), include_entities=True, tweet_mode="extended")
+          # users = api.lookup_users(list(self.targets.values()), include_entities=True, tweet_mode="extended")
+          users = api.lookup_users(screen_names=self.bot['targets'], include_entities=True, tweet_mode="extended")
           # print('[LookUp] Statuses ', users[0].status)
           print(f"[MonitorResult] {len(users)} targets, IDs: {list(map(lambda user:user.status.id, users))}")
           for user in users:
@@ -147,37 +152,55 @@ class BotThread(threading.Thread):
       "prev": self.last_tweet_ids[screen_name]['now'],
       "now": tweet_id,
     }
+    # print('[Status]', user.status)
+    metrics = {
+      "verified": user.verified,
+      "followers": user.followers_count,
+      "friends": user.friends_count,
+      "listed": user.listed_count,
+      "favorites": user.favourites_count,
+      "statuses": user.statuses_count,
+      "tweet": {
+        # "retweeted": user.status.retweeted_status,
+        # "quotes": user.status.quote_count,
+        # "replies": user.status.reply_count,
+        "retweets": user.status.retweet_count,
+        "favorite": user.status.favorite_count,
+        "retweeted_by_me": user.status.retweeted,
+        "lang": user.status.lang,
+      },
+    }
+    # print('[Metrics]', type(user), metrics)
+
     is_new_tweet = self.last_tweet_ids[screen_name]['now'] != self.last_tweet_ids[screen_name]['prev'] #(self._iterN > 0 and self.last_tweet_ids[screen_name] and tweet_id != self.last_tweet_ids[screen_name]) or self._iterN == 0
 
     # update last tweet id
     # self.last_tweet_ids[screen_name] = tweet_id
 
-    if is_new_tweet:
+    metric_matches = self.satisfy_metrics(metrics)
+    print('[Satified Metrics] ? ', metric_matches)
+    if is_new_tweet and metric_matches:
+
       print(f"[NEW_TWEET_FOUND]", self.last_tweet_ids, tweet_id, self._iterN)
-      tweet = self.apis[0].get_status(tweet_id, tweet_mode = 'extended')
+      # tweet = self.apis[0].get_status(tweet_id, tweet_mode = 'extended')
 
-      ## reference for full text
-      ## - https://docs.tweepy.org/en/latest/extended_tweets.html#handling-retweets
-      ## - https://github.com/tweepy/tweepy/issues/974
-      full_text = self.parse_full_text(tweet)
-      translated = translate(src_text=full_text)
+      self.postprocess_new_tweet(user.status._json, screen_name)
 
-      notification = {
-        "user_name": screen_name,
-        "bot": self.name,
-        "tweet": tweet._json,
-        # "tweet": tweet.text,
-        "full": full_text,
-        "translated": translated,
-        "entities": tweet.entities,
-        # "extended_entities": tweet.extended_entities if 'extended_entities' in tweet else {},
-        "retweeted": tweet.retweeted,
-        # "quote_count": tweet.quote_count,
-        # "reply_count": tweet.reply_count,
-        "retweet_count": tweet.retweet_count,
-        "favorite_count": tweet.favorite_count,
-      }
-      io_notify_user(user_id=self.bot['user_id'], event=socket_event.NEW_TWEET_FOUND, args=notification)
+
+  def satisfy_metrics(self, metrics):
+    # if len(metrics.keys()) > 0:
+    #   return False;
+    if 'retweet' in self.bot['metrics'] and int(self.bot['metrics']['retweet']) > metrics['tweet']['retweets']:
+      return False
+    if 'follower' in self.bot['metrics'] and int(self.bot['metrics']['follower']) > metrics['followers']:
+      return False
+    if 'friend' in self.bot['metrics'] and int(self.bot['metrics']['friend']) > metrics['friends']: ## following
+      return False
+    if 'tweets' in self.bot['metrics'] and int(self.bot['metrics']['tweets']) > metrics['statuses']:
+      return False
+    if 'likes' in self.bot['metrics'] and int(self.bot['metrics']['likes']) > metrics['tweet']['favorite']:
+      return False
+    return True
 
   def parse_full_text(self, status):
     full_text = status.full_text
@@ -185,6 +208,52 @@ class BotThread(threading.Thread):
     for url in entities['urls']:
       full_text = full_text.replace(url['url'], url['display_url'])
     return full_text
+
+  def parse_full_text_v2(self, full_text, entities):
+    for url in entities['urls']:
+      full_text = full_text.replace(url['url'], url['display_url'])
+    return full_text
+  
+  def postprocess_new_tweet(self, tweet, screen_name):
+    ## reference for full text
+    ## - https://docs.tweepy.org/en/latest/extended_tweets.html#handling-retweets
+    ## - https://github.com/tweepy/tweepy/issues/974
+    # full_text = self.parse_full_text_v2(tweet['full_text'], tweet['entities'])
+    print('[Tweet]', tweet['retweeted_status'], tweet)
+    full_text = self.parse_full_text_v2(tweet['full_text'] if tweet['retweet_count'] == 0 else tweet['retweeted_status']['full_text'], tweet['entities'])
+    translated = translate(src_text=full_text)
+
+    notification = {
+      "user_name": screen_name,
+      "bot": self.name,
+      "tweet": tweet,
+      # "tweet": tweet.text,
+      "full": full_text,
+      "translated": translated,
+      "entities": tweet['entities'],
+      # "extended_entities": tweet.extended_entities if 'extended_entities' in tweet else {},
+      "retweeted": tweet['retweeted'],
+      # "quote_count": tweet.quote_count,
+      # "reply_count": tweet.reply_count,
+      "retweet_count": tweet['retweet_count'],
+      "favorite_count": tweet['favorite_count'],
+    }
+    io_notify_user(user_id=self.bot['user_id'], event=socket_event.NEW_TWEET_FOUND, args=notification)
+
+    twit = Tweet(
+      user_id = self.bot['user_id'],
+      bot_id = self.bot['id'],
+      target = screen_name,
+      text = full_text,
+      translated = translated,
+      entities = tweet,
+      tweeted = 0,
+    )
+    db.session.add(twit)
+    db.session.commit()
+
+
+
   # def set_interval(self, func, sec):
   #   def func_wrapper():
   #     if not self.stopped:

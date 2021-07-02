@@ -6,7 +6,7 @@ from marketingBot.models.Bot import db, Bot
 from marketingBot.models.AppKey import AppKey
 from marketingBot.controllers.api import api
 from marketingBot.controllers.task_manager import start_bot_execution, stop_bot_execution
-from marketingBot.helpers.common import stringify
+from marketingBot.helpers.common import stringify, splitString2Array, json_parse
 from marketingBot.helpers.wrapper import session_required
 
 @api.route('/ping-bot', methods=['GET'])
@@ -139,3 +139,65 @@ def delete_bot_by_id(self, id):
     "message": "Bot has been deleted!",
   })
 
+@api.route('/bot_form', methods=['POST'])
+@session_required
+def create_bot_form(self):
+  payload = dict(request.form)
+  str_targets = request.files.get('targets').read().decode('utf-8') if 'targets' in request.files else payload['targets']
+  str_in_keywords = request.files.get('inclusion_keywords').read().decode('utf-8') if 'inclusion_keywords' in request.files else payload['inclusion_keywords']
+  str_ex_keywords = request.files.get('exclusion_keywords').read().decode('utf-8') if 'exclusion_keywords' in request.files else payload['exclusion_keywords']
+
+  bot = Bot(
+    user_id = self.id,
+    name = payload['name'],
+    type = payload['type'],
+    targets = (splitString2Array(str_targets)),
+    api_keys = (splitString2Array(payload['api_keys'])),
+    inclusion_keywords = (splitString2Array(str_in_keywords)),
+    exclusion_keywords = (splitString2Array(str_ex_keywords)),
+    period = payload['interval'] if 'interval' in payload else 1.0,
+    start_time = payload['start_time'],
+    end_time = payload['end_time'],
+    metrics = json_parse(payload['metrics']),
+    status= payload['status'] if 'status' in payload else 'IDLE',
+  )
+
+  db.session.add(bot)
+  db.session.commit()
+  return jsonify({
+    "status": True,
+    "message": "A bot has been added!",
+    "data": Bot.query.filter_by(id=bot.id).first().format().to_dict(),
+  })
+
+@api.route('/bot_form/<id>', methods=['PUT'])
+@session_required
+def update_bot_form(self, id):
+  payload = dict(request.form)
+  str_targets = request.files.get('targets').read().decode('utf-8') if 'targets' in request.files else payload['targets']
+  str_in_keywords = request.files.get('inclusion_keywords').read().decode('utf-8') if 'inclusion_keywords' in request.files else payload['inclusion_keywords']
+  str_ex_keywords = request.files.get('exclusion_keywords').read().decode('utf-8') if 'exclusion_keywords' in request.files else payload['exclusion_keywords']
+
+  bot = Bot.query.filter_by(id=id).first()
+  bot.name = payload['name']
+  bot.type = payload['type']
+  bot.targets = (splitString2Array(str_targets))
+  bot.api_keys = (splitString2Array(payload['api_keys']))
+  bot.inclusion_keywords = (splitString2Array(str_in_keywords))
+  bot.exclusion_keywords = (splitString2Array(str_ex_keywords))
+  bot.period = payload['interval'] if 'interval' in payload else 1.0
+  bot.start_time = payload['start_time']
+  bot.end_time = payload['end_time']
+  print('[Metrics]', payload['metrics'])
+  bot.metrics = json_parse(payload['metrics'])
+
+  db.session.commit()
+
+  # start_bot_execution(id)
+
+  return jsonify({
+    "status": True,
+    "message": "A bot has been updated!",
+    "upData": bot.to_dict(),
+    "data": Bot.query.filter_by(id=bot.id).first().format().to_dict(),
+  })

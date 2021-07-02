@@ -54,9 +54,7 @@
                   <div class="form-group form-group-default">
                       <label>API Apps<span class="text-danger">*</span></label>
                       <select class="select2 form-control" id="api_keys" name="api_keys" multiple required style="width: 100%; height: 40px;">
-                        {% for key in data.api_apps %}
-                            <option class="flash" value="{{key['id']}}">{{ key['name'] }}</option>
-                        {% endfor %}
+
                       </select>
                   </div>
               </div>
@@ -185,20 +183,16 @@
             <thead>
             <tr>
                 <th>#</th>
-                <th>Name</th>
-                <th>Type</th>
-                <th>Targets</th>
-                <th>Period(s)</th>
-                <th>API Apps</th>
-                <th>Inclusion Keywords</th>
-                <th>Exclusion Keywords</th>
-                <th>Status</th>
+                <th>Bot</th>
+                <th>Target</th>
+                <th>Text</th>
+                <th>Translated</th>
+                <th>Tweeted</th>
+                <th>Time</th>
                 <th>Actions</th>
             </tr>
             </thead>
-            <tbody>
-
-            </tbody>
+            <tbody></tbody>
         </table>
       </div>
 
@@ -207,5 +201,5 @@
 {% endblock %}
 
 {% block scripts %}
-  <script src="{{ url_for('static', filename='js/bots.js')  }}?v={{data.time}}"></script>
+  <script src="{{ url_for('static', filename='js/tweets.js')  }}?v={{timestamp()}}"></script>
 {% endblock %}
