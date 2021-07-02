@@ -17,8 +17,10 @@ from marketingBot.helpers.wrapper import session_required
 def my_utility_processor():
   def time_now():
     return timestamp()
+  def current_route():
+    return request.url_rule.rule
   
-  return dict(timestamp=time_now)
+  return dict(timestamp=time_now, current_route = current_route)
 
 @app.route('/ping')
 def ping():

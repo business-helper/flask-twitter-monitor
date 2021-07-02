@@ -182,7 +182,7 @@ class BotThread(threading.Thread):
     if is_new_tweet and metric_matches:
       print(f"[NEW_TWEET_FOUND]", self.last_tweet_ids, tweet_id, self._iterN)
       # tweet = self.apis[0].get_status(tweet_id, tweet_mode = 'extended')
-      self.postprocess_new_tweet(user.status._json, screen_name)
+      self.postprocess_new_tweet(user.status._json, screen_name, metrics)
 
 
   def satisfy_metrics(self, metrics):
@@ -225,7 +225,7 @@ class BotThread(threading.Thread):
       full_text = full_text.replace(url['url'], url['display_url'])
     return full_text
   
-  def postprocess_new_tweet(self, tweet, screen_name):
+  def postprocess_new_tweet(self, tweet, screen_name, metrics):
     ## reference for full text
     ## - https://docs.tweepy.org/en/latest/extended_tweets.html#handling-retweets
     ## - https://github.com/tweepy/tweepy/issues/974
@@ -266,6 +266,7 @@ class BotThread(threading.Thread):
       translated = translated,
       entities = tweet,
       tweeted = 0,
+      metrics = metrics,
     )
     db.session.add(twit)
     db.session.commit()
