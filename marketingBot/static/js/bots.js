@@ -191,7 +191,7 @@ function botTypeSelected(type) {
 
 function onAddNewFilterWidget(e) {
   if ($('.metric-filter-wrapper').length === 5) {
-    toastr.error('You can add 5 metric filters at max!');
+    toastr.error('You can add 6 metric filters at max!');
     return false;
   }
   $('#filters').append(getNewMetricFilterWidget());
@@ -508,11 +508,16 @@ function getNewMetricFilterWidget() {
           </div>
           <select class="form-control select-metric" required>
             <option value="">- Selct a metric filter type -</option>
-            <option value="retweet">Retweets</option>
-            <option value="likes">Likes</option>
-            <option value="follower">Followers</option>
-            <option value="friend">Friends</option>
-            <option value="tweets">Total Tweets</option>
+            <optgroup label="User">
+              <option value="follower">Followers</option>
+              <option value="friend">Friends</option>
+              <option value="tweets">Total Tweets</option>
+              <option value="lists">Lists</option>
+            </optgroup>
+            <optgroup label="Tweet">
+              <option value="retweet">Retweets</option>
+              <option value="likes">Likes</option>
+            </optgroup>
           </select>
         </div>
       </div>
@@ -541,11 +546,16 @@ function getMetricFilterWidget(key, value) {
           </div>
           <select class="form-control select-metric" required>
             <option value="">- Selct a metric filter type -</option>
-            <option value="retweet" ${key === 'retweet' ? 'selected' : ''}>Retweets</option>
-            <option value="likes" ${key === 'likes' ? 'selected' : ''}>Likes</option>
-            <option value="follower" ${key === 'follower' ? 'selected' : ''}>Followers</option>
-            <option value="friend" ${key === 'friend' ? 'selected' : ''}>Friends</option>
-            <option value="tweets" ${key === 'tweets' ? 'selected' : ''}>Total Tweets</option>
+            <optgroup label="User">
+              <option value="follower" ${key === 'follower' ? 'selected' : ''}>Followers</option>
+              <option value="friend" ${key === 'friend' ? 'selected' : ''}>Friends</option>
+              <option value="tweets" ${key === 'tweets' ? 'selected' : ''}>Total Tweets</option>
+              <option value="lists" ${key === 'lists' ? 'selected' : ''}>Lists</option>
+            </optgroup>
+            <optgroup label="Tweet">
+              <option value="retweet" ${key === 'retweet' ? 'selected' : ''}>Retweets</option>
+              <option value="likes" ${key === 'likes' ? 'selected' : ''}>Likes</option>
+            </optgroup>
           </select>
         </div>
       </div>
