@@ -114,12 +114,16 @@ def load_bots_root(self):
   payload = request.form #dict(request.get_json())
   skip = payload['start']
   limit = payload['length']
-  # sortCol = request.args.get('order[0][column]')
-  # sortDir = request.args.get('order[0][dir]')
+  sortCol = payload['order[0][column]']
+  sortDir = payload['order[0][dir]']
   user_id = self.id
-  # keyword = request.args.get('search[value]')
 
-  bots = Bot.query.filter_by(user_id=user_id).limit(limit).offset(skip)
+  columns = ['bots.id', 'name', 'type', 'targets', '', 'api_keys', '', '', 'status']
+  order_by = text(f"{columns[int(sortCol)]} {sortDir}")
+
+  print('[Sort]', sortCol, sortDir)
+  bots = Bot.query.filter_by(user_id=user_id).order_by(order_by).limit(limit).offset(skip)
+
   app_keys = AppKey.query.filter_by(user_id=user_id).all()
   dict_keys = {}
 
@@ -161,7 +165,7 @@ def load_tweets_root(self):
   sortCol = payload['order[0][column]']
   sortDir = payload['order[0][dir]']
   columns = ['tweets.id', 'bot_name', 'target', 'text', 'translated', 'tweeted', 'tweets.created_at']
-  print('[Order By]', sortCol, sortDir)
+
   user_id = self.id
   # keyword = request.args.get('search[value]')
   # tweets = Tweet.query.filter_by(user_id = user_id).limit(limit).offset(skip)
