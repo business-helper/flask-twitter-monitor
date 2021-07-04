@@ -190,8 +190,8 @@ function botTypeSelected(type) {
 }
 
 function onAddNewFilterWidget(e) {
-  if ($('.metric-filter-wrapper').length === 3) {
-    toastr.error('You can add max 3 metric filters!');
+  if ($('.metric-filter-wrapper').length === 5) {
+    toastr.error('You can add 6 metric filters at max!');
     return false;
   }
   $('#filters').append(getNewMetricFilterWidget());
@@ -202,8 +202,9 @@ function onDeleteMetricFilterWidget(e) {
 }
 
 function onSelectMetricType(e) {
-  const values = [];
+  let values = [];
   $('.select-metric').each((i, item) => values.push(item.value));
+  values = values.filter((value) => !!value); console.log('[Values]', values)
   const unique_values = values.filter((value, i, self) => self.indexOf(value) === i);
   if (values.length > unique_values.length) {
     toastr.warning('You must select different filter types!', 'Metric Filter');
@@ -334,6 +335,20 @@ function initDataTable() {
                 },
               },
               {
+                targets: -3,
+                orderable: false,
+                render: function(data) {
+                  return data;
+                }
+              },
+              {
+                targets: -4,
+                orderable: false,
+                render: function(data) {
+                  return data;
+                }
+              },
+              {
                 targets: 2,
                 render: function (data, type, full, meta) {
                   const status = {
@@ -355,6 +370,7 @@ function initDataTable() {
               },
               {
                   targets: 4,
+                  orderable: false,
                   render: function(data, type, full, meta) {
                     if (full[2] === 'REAL_TIME') return data[0];
                     return `${data[1]}-${data[2]}`;
@@ -362,6 +378,7 @@ function initDataTable() {
               },
               {
                 targets: 5,
+                orderable: false,
                 render: function(data, type, full, meta) {
                   if (!data.length) {
                     return `<span class="m-badge m-badge--danger m-badge--wide">None</span>`
@@ -490,10 +507,17 @@ function getNewMetricFilterWidget() {
             </button>
           </div>
           <select class="form-control select-metric" required>
-            <option vlaue="">- Selct a metric filter type -</option>
-            <option value="retweet">Retweet</option>
-            <option value="likes">Likes</option>
-            <option value="follower">Follower</option>
+            <option value="">- Selct a metric filter type -</option>
+            <optgroup label="User">
+              <option value="follower">Followers</option>
+              <option value="friend">Friends</option>
+              <option value="tweets">Total Tweets</option>
+              <option value="lists">Lists</option>
+            </optgroup>
+            <optgroup label="Tweet">
+              <option value="retweet">Retweets</option>
+              <option value="likes">Likes</option>
+            </optgroup>
           </select>
         </div>
       </div>
@@ -521,10 +545,17 @@ function getMetricFilterWidget(key, value) {
             </button>
           </div>
           <select class="form-control select-metric" required>
-            <option vlaue="">- Selct a metric filter type -</option>
-            <option value="retweet" ${key === 'retweet' ? 'selected' : ''}>Retweet</option>
-            <option value="likes" ${key === 'likes' ? 'selected' : ''}>Likes</option>
-            <option value="follower" ${key === 'follower' ? 'selected' : ''}>Follower</option>
+            <option value="">- Selct a metric filter type -</option>
+            <optgroup label="User">
+              <option value="follower" ${key === 'follower' ? 'selected' : ''}>Followers</option>
+              <option value="friend" ${key === 'friend' ? 'selected' : ''}>Friends</option>
+              <option value="tweets" ${key === 'tweets' ? 'selected' : ''}>Total Tweets</option>
+              <option value="lists" ${key === 'lists' ? 'selected' : ''}>Lists</option>
+            </optgroup>
+            <optgroup label="Tweet">
+              <option value="retweet" ${key === 'retweet' ? 'selected' : ''}>Retweets</option>
+              <option value="likes" ${key === 'likes' ? 'selected' : ''}>Likes</option>
+            </optgroup>
           </select>
         </div>
       </div>

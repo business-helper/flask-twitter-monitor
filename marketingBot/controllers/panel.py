@@ -17,8 +17,10 @@ from marketingBot.helpers.wrapper import session_required
 def my_utility_processor():
   def time_now():
     return timestamp()
+  def current_route():
+    return request.url_rule.rule
   
-  return dict(timestamp=time_now)
+  return dict(timestamp=time_now, current_route = current_route)
 
 @app.route('/ping')
 def ping():
@@ -114,12 +116,16 @@ def load_bots_root(self):
   payload = request.form #dict(request.get_json())
   skip = payload['start']
   limit = payload['length']
-  # sortCol = request.args.get('order[0][column]')
-  # sortDir = request.args.get('order[0][dir]')
+  sortCol = payload['order[0][column]']
+  sortDir = payload['order[0][dir]']
   user_id = self.id
-  # keyword = request.args.get('search[value]')
 
-  bots = Bot.query.filter_by(user_id=user_id).limit(limit).offset(skip)
+  columns = ['bots.id', 'name', 'type', 'targets', '', 'api_keys', '', '', 'status']
+  order_by = text(f"{columns[int(sortCol)]} {sortDir}")
+
+  print('[Sort]', sortCol, sortDir)
+  bots = Bot.query.filter_by(user_id=user_id).order_by(order_by).limit(limit).offset(skip)
+  total = Bot.query.filter_by(user_id = user_id).count()
   app_keys = AppKey.query.filter_by(user_id=user_id).all()
   dict_keys = {}
 
@@ -140,8 +146,8 @@ def load_bots_root(self):
   return jsonify({
     'data': data,
     'draw': request.args.get('draw'),
-    'iTotalRecords': 10,
-    'iTotalDisplayRecords':10,
+    'iTotalRecords': total,
+    'iTotalDisplayRecords': total,
   })
 
 
@@ -161,7 +167,7 @@ def load_tweets_root(self):
   sortCol = payload['order[0][column]']
   sortDir = payload['order[0][dir]']
   columns = ['tweets.id', 'bot_name', 'target', 'text', 'translated', 'tweeted', 'tweets.created_at']
-  print('[Order By]', sortCol, sortDir)
+
   user_id = self.id
   # keyword = request.args.get('search[value]')
   # tweets = Tweet.query.filter_by(user_id = user_id).limit(limit).offset(skip)
@@ -170,9 +176,10 @@ def load_tweets_root(self):
       Tweet, Bot
     ).filter(Tweet.bot_id == Bot.id
     ).filter(Tweet.user_id == user_id
-    ).with_entities(Tweet.id, Tweet.bot_id, Tweet.target, Tweet.text, Tweet.translated, Tweet.tweeted, Tweet.created_at, Bot.name.label('bot_name')
+    ).with_entities(Tweet.id, Tweet.bot_id, Tweet.target, Tweet.text, Tweet.translated, Tweet.tweeted, Tweet.entities, Tweet.created_at, Bot.name.label('bot_name')
     ).order_by(order_by).limit(limit).offset(skip)
 
+  total = Tweet.query.filter_by(user_id = user_id).count()
 
   bots = Bot.query.filter_by(user_id = user_id).all()
   dict_bots = {}
@@ -189,13 +196,13 @@ def load_tweets_root(self):
       tweet.translated,
       tweet.tweeted,
       tweet.created_at,
-      tweet.id,
+      { "id": tweet.id, "tweet_id": tweet.entities['id_str'] },
     ])
   return jsonify({
     'data': data,
     'draw': payload['draw'],
-    'iTotalRecords': 10,
-    'iTotalDisplayRecords':10,
+    'iTotalRecords': total,
+    'iTotalDisplayRecords': total,
   })
 
 

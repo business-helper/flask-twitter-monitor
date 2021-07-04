@@ -19,10 +19,10 @@
             XBot
           </a>
           <ul class="menu-container">
-            <li><a href="/dashboard">Dashboard</a></li>
-            <li><a href="/api-apps">API Apps</a></li>
-            <li><a href="/bots">My Bots</a></li>
-            <li><a href="/tweets">Tweets</a></li>
+            <li><a href="/dashboard" class="{{ 'underline' if '/dashboard' in current_route() else '' }}">Dashboard</a></li>
+            <li><a href="/api-apps" class="{{ 'underline' if '/api-apps' in current_route() else '' }}">API Apps</a></li>
+            <li><a href="/bots" class="{{ 'underline' if '/bots' in current_route() else '' }}">My Bots</a></li>
+            <li><a href="/tweets" class="{{ 'underline' if '/tweets' in current_route() else '' }}">Tweets</a></li>
           </ul>
         </div>
 

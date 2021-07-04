@@ -5,33 +5,6 @@ $(function() {
 
   initDataTable();
 
-  botTypeSelected('REAL_TIME');
-
-  $(".select2").select2({
-    placeholder: "Select here"
-  });
-
-  // change event of bot type
-  $('#type').on('change', function(e) {
-    const type = $(this).val();
-    botTypeSelected(type);
-  });
-
-  // event to add new metric filter widget.
-  $('#add-new-filter-widget').on('click', onAddNewFilterWidget);
-
-  // event to delete metric filter widget
-  $('#website-form').on('click', '.btn-remove-filter', onDeleteMetricFilterWidget);
-
-  // select a metric type
-  $('#website-form').on('change', '.select-metric', onSelectMetricType)
-
-  // date time picker for start & end time.
-  $('.datetime-picker').datetimepicker({})
-
-  // button to toggle item form.
-  $('#add-item').on('click', onClickAddButton);
-
   $('#website-form').submit(function(e) {
     e.preventDefault();
     if (!confirm('Are you sure to submit?')) return false;
@@ -92,17 +65,6 @@ $(function() {
   });
 });
 
-function onClickAddButton() {
-  const isEditing = Number($('#app-id').val()) > -1;
-  const opened = $('#form-wrapper').hasClass('_show');
-  emptyForm();
-  if (opened && !isEditing) {
-    $('#form-wrapper').addClass('_hide').removeClass('_show');
-  } else {
-    $('#form-wrapper').removeClass('_hide').addClass('_show');
-  }
-}
-
 function onEdit(id) {
   return getApiAppByIdRequest(id).then((res) => {
     if (res.status) {
@@ -123,7 +85,6 @@ function onEdit(id) {
 
       addMetricFilter(app.metrics);
 
-      // botTypeSelected(app.type);
     } else {
       toastr.error(res.message);
     }    
@@ -133,39 +94,9 @@ function onEdit(id) {
   })
 }
 
-function onStartBot(id) {
-  return startBotByIdRequest(id).then((res) => {
-    if (res.status) {
-      toastr.success(res.message);
-      refreshTable();
-    } else {
-      toastr.error(res.message);
-    }
-  })
-  .catch((error) => {
-    console.log('[Task][Start]', id, error);
-    toastr.error(error.message);
-  });
-}
-
-function onStopBot(id) {
-  return stopBotByIdRequest(id).then((res) => {
-    if (res.status) {
-      toastr.success(res.message);
-      refreshTable();
-    } else {
-      toastr.error(res.message);
-    }
-  })
-  .catch((error) => {
-    console.log('[Task][Stop]', id, error);
-    toastr.error(error.message);
-  })
-}
-
 function onDelete(id) {
   if (!confirm('Are you sure proceed to delete?')) return false;
-  return deleteApiAppByIdRequest(id).then((res) => {
+  return deleteTweetByIdRequest(id).then((res) => {
     if (res.status) {
       toastr.success(res.message);
       refreshTable();
@@ -180,42 +111,6 @@ function onDelete(id) {
 }
 
 /// --------------- Scripts for UI Operation Events
-
-function botTypeSelected(type) {
-  // update status of the elements - interval, {star time, end time}
-  const isRealTime = type === 'REAL_TIME';
-  $('#start_time').attr('disabled', isRealTime);
-  $('#end_time').attr('disabled', isRealTime);
-  $('#interval').attr('disabled', !isRealTime);
-}
-
-function onAddNewFilterWidget(e) {
-  if ($('.metric-filter-wrapper').length === 3) {
-    toastr.error('You can add max 3 metric filters!');
-    return false;
-  }
-  $('#filters').append(getNewMetricFilterWidget());
-}
-
-function onDeleteMetricFilterWidget(e) {
-  $(this).closest('.metric-filter-wrapper').remove();
-}
-
-function onSelectMetricType(e) {
-  const values = [];
-  $('.select-metric').each((i, item) => values.push(item.value));
-  const unique_values = values.filter((value, i, self) => self.indexOf(value) === i);
-  if (values.length > unique_values.length) {
-    toastr.warning('You must select different filter types!', 'Metric Filter');
-  }
-}
-
-function addMetricFilter(metrics) {
-  $('#filters').html('');
-  Object.keys(metrics).forEach((key, index) => {
-    $('#filters').append(getMetricFilterWidget(key, metrics[key]));
-  });
-}
 
 function validateForm() {
   return true;
@@ -295,22 +190,19 @@ function initDataTable() {
               {
                   targets: -1,
                   orderable: false,
-                  render: function(data, type, full, meta) {
+                  render: function(obj, type, full, meta) {
+                    const data = obj.id;
+                    const tweet_id = obj.tweet_id;
+                    const tweet_link = `https://twitter.com/${full[2]}/status/${tweet_id}`;
                     return `
+                    <a class="edit-row m-portlet__nav-link btn m-btn m-btn--hover-brand m-btn--icon m-btn--icon-only m-btn--pill" title="Open Tweet"
+                        href="${tweet_link}" target="_blank">
+                      <i class="la la-external-link-square"></i>
+                    </a>
                     <span class="edit-row m-portlet__nav-link btn m-btn m-btn--hover-brand m-btn--icon m-btn--icon-only m-btn--pill" title="Edit"
                         onclick="onEdit(${data})"
                         data-domain="${data}">
                       <i class="la la-edit"></i>
-                    </span>
-                    <span href="#" class="delete-row m-portlet__nav-link btn m-btn m-btn--hover-brand m-btn--icon m-btn--icon-only m-btn--pill" title="Start"
-                      onclick="onStartBot(${data})"
-                      data-domain="${data}">
-                      <i class="la la-play"></i>
-                    </span>
-                    <span href="#" class="delete-row m-portlet__nav-link btn m-btn m-btn--hover-brand m-btn--icon m-btn--icon-only m-btn--pill" title="Stop"
-                      onclick="onStopBot(${data})"
-                      data-domain="${data}">
-                      <i class="la la-stop"></i>
                     </span>
                     <span href="#" class="delete-row m-portlet__nav-link btn m-btn m-btn--hover-brand m-btn--icon m-btn--icon-only m-btn--pill" title="Remove"
                       onclick="onDelete(${data})"
@@ -319,20 +211,21 @@ function initDataTable() {
                     </span>`;
                   },
               },
-              // {
-              //   targets: -2,
-              //   render: function (data, type, full, meta) {
-              //       const status = {
-              //           'IDLE': {'title': 'Idle', 'class': 'm-badge--info'},
-              //           'RUNNING': {'title': 'Running', 'class': 'm-badge--success'},
-              //       };
-              //       data = data.toString();
-              //       if (typeof status[data] === 'undefined') {
-              //           return data;
-              //       }
-              //       return '<span class="m-badge ' + status[data].class + ' m-badge--wide">' + status[data].title + '</span>';
-              //   },
-              // },
+              {
+                targets: -3,
+                render: function (data, type, full, meta) {
+                  data = data.toString()
+                    const status = {
+                        'true': {'title': 'True', 'class': 'm-badge--success'},
+                        'false': {'title': 'False', 'class': 'm-badge--danger'},
+                    };
+                    data = data.toString();
+                    if (typeof status[data] === 'undefined') {
+                        return data;
+                    }
+                    return '<span class="m-badge ' + status[data].class + ' m-badge--wide">' + status[data].title + '</span>';
+                },
+              },
               // {
               //   targets: 2,
               //   render: function (data, type, full, meta) {
@@ -425,24 +318,6 @@ function addBotRequest1(data) {
   });
 }
 
-function startBotByIdRequest(id) {
-  return $.ajax({
-    url: `/tasks/${id}/start`,
-    method: 'POST',
-    contentType: 'application/json; charset=utf-8',
-    dataType: 'json',
-  });
-}
-
-function stopBotByIdRequest(id) {
-  return $.ajax({
-    url: `/tasks/${id}/stop`,
-    method: 'POST',
-    contentType: 'application/json; charset=utf-8',
-    dataType: 'json',
-  });
-}
-
 function getApiAppByIdRequest(id) {
   return $.ajax({
     url: `/api/bots/${id}`,
@@ -453,9 +328,9 @@ function getApiAppByIdRequest(id) {
   });
 }
 
-function deleteApiAppByIdRequest(id) {
+function deleteTweetByIdRequest(id) {
   return $.ajax({
-    url: `/api/bots/${id}`,
+    url: `/api/tweets/${id}`,
     method: 'DELETE',
     // data: JSON.stringify(data),
     contentType: 'application/json; charset=utf-8',
@@ -475,66 +350,4 @@ function emptyForm() {
 
 function refreshTable() {
   _dataTable.api().ajax.reload();
-}
-
-function getNewMetricFilterWidget() {
-  return `
-  <div class="metric-filter-wrapper row">
-    <div class="col-sm-12 col-md-6">
-      <div class="form-group form-group-default">
-        <label>Metric Type<span class="text-danger">*</span></label>
-        <div style="display: flex; align-items: center;">
-          <div style="width: 80px;">
-            <button type="button" style="margin-right: 10px;" class="btn-remove-filter btn btn-danger m-btn m-btn--custom m-btn--icon m-btn--air" title="Remove this filter"
-              ><i class="la la-minus"></i>
-            </button>
-          </div>
-          <select class="form-control select-metric" required>
-            <option vlaue="">- Selct a metric filter type -</option>
-            <option value="retweet">Retweet</option>
-            <option value="likes">Likes</option>
-            <option value="follower">Follower</option>
-          </select>
-        </div>
-      </div>
-    </div>
-    <div class="col-sm-12 col-md-6">
-        <div class="form-group form-group-default">
-            <label>Min Number<span class="text-danger">*</span></label>
-            <input class="form-control min-metric" type="number" placeholder="50" required />
-        </div>
-    </div>
-  <div>
-  `;
-}
-
-function getMetricFilterWidget(key, value) {
-  return `
-  <div class="metric-filter-wrapper row">
-    <div class="col-sm-12 col-md-6">
-      <div class="form-group form-group-default">
-        <label>Metric Type<span class="text-danger">*</span></label>
-        <div style="display: flex; align-items: center;">
-          <div style="width: 80px;">
-            <button type="button" style="margin-right: 10px;" class="btn-remove-filter btn btn-danger m-btn m-btn--custom m-btn--icon m-btn--air" title="Remove this filter"
-              ><i class="la la-minus"></i>
-            </button>
-          </div>
-          <select class="form-control select-metric" required>
-            <option vlaue="">- Selct a metric filter type -</option>
-            <option value="retweet" ${key === 'retweet' ? 'selected' : ''}>Retweet</option>
-            <option value="likes" ${key === 'likes' ? 'selected' : ''}>Likes</option>
-            <option value="follower" ${key === 'follower' ? 'selected' : ''}>Follower</option>
-          </select>
-        </div>
-      </div>
-    </div>
-    <div class="col-sm-12 col-md-6">
-        <div class="form-group form-group-default">
-            <label>Min Number<span class="text-danger">*</span></label>
-            <input class="form-control min-metric" type="number" value="${value}" placeholder="50" required />
-        </div>
-    </div>
-  <div>
-  `;
 }

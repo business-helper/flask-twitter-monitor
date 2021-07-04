@@ -3,3 +3,4 @@ api = Blueprint('api', __name__)
 
 from .api_apps import *
 from .bot import *
+from .tweet import *

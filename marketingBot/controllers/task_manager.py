@@ -178,13 +178,11 @@ class BotThread(threading.Thread):
     # self.last_tweet_ids[screen_name] = tweet_id
 
     metric_matches = self.satisfy_metrics(metrics)
-    print('[Satified Metrics] ? ', metric_matches)
-    if is_new_tweet and metric_matches:
 
+    if is_new_tweet and metric_matches:
       print(f"[NEW_TWEET_FOUND]", self.last_tweet_ids, tweet_id, self._iterN)
       # tweet = self.apis[0].get_status(tweet_id, tweet_mode = 'extended')
-
-      self.postprocess_new_tweet(user.status._json, screen_name)
+      self.postprocess_new_tweet(user.status._json, screen_name, metrics)
 
 
   def satisfy_metrics(self, metrics):
@@ -200,7 +198,20 @@ class BotThread(threading.Thread):
       return False
     if 'likes' in self.bot['metrics'] and int(self.bot['metrics']['likes']) > metrics['tweet']['favorite']:
       return False
+    if 'lists' in self.bot['metrics'] and int(self.bot['metrics']['lists']) > metrics['listed']:
+      return False
     return True
+
+  def matches_keywords(self, text):
+    for keyword in self.bot['exclusion_keywords']:
+      if keyword in text:
+        return False;
+    
+    for keyword in self.bot['inclusion_keywords']:
+      if keyword in text:
+        return True
+    return False
+
 
   def parse_full_text(self, status):
     full_text = status.full_text
@@ -214,13 +225,20 @@ class BotThread(threading.Thread):
       full_text = full_text.replace(url['url'], url['display_url'])
     return full_text
   
-  def postprocess_new_tweet(self, tweet, screen_name):
+  def postprocess_new_tweet(self, tweet, screen_name, metrics):
     ## reference for full text
     ## - https://docs.tweepy.org/en/latest/extended_tweets.html#handling-retweets
     ## - https://github.com/tweepy/tweepy/issues/974
     # full_text = self.parse_full_text_v2(tweet['full_text'], tweet['entities'])
     print('[Tweet]', tweet['retweeted_status'], tweet)
     full_text = self.parse_full_text_v2(tweet['full_text'] if tweet['retweet_count'] == 0 else tweet['retweeted_status']['full_text'], tweet['entities'])
+    matches_keyword = self.matches_keywords(full_text)
+    
+    # check if text matches keywords(inclusion & exclusion)
+    if not matches_keyword:
+      print('[Metric] satisfied [Keywords] not satisfied.')
+      return "Keyword match failed!"
+
     translated = translate(src_text=full_text)
 
     notification = {
@@ -248,6 +266,7 @@ class BotThread(threading.Thread):
       translated = translated,
       entities = tweet,
       tweeted = 0,
+      metrics = metrics,
     )
     db.session.add(twit)
     db.session.commit()

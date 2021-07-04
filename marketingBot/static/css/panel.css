@@ -41,6 +41,10 @@
   color: white;
 }
 
+.menu-container > li > a.underline {
+  text-decoration: underline;
+}
+
 .page {
   padding: 1.5rem;
 }
