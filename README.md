@@ -53,4 +53,9 @@ To run:
 - Used by: 5.5k
 - Contributors: 133
 
+## Dependencies
+
+- Windows
+mysqlclient
+
 
