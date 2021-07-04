@@ -125,7 +125,7 @@ def load_bots_root(self):
 
   print('[Sort]', sortCol, sortDir)
   bots = Bot.query.filter_by(user_id=user_id).order_by(order_by).limit(limit).offset(skip)
-
+  total = Bot.query.filter_by(user_id = user_id).count()
   app_keys = AppKey.query.filter_by(user_id=user_id).all()
   dict_keys = {}
 
@@ -146,8 +146,8 @@ def load_bots_root(self):
   return jsonify({
     'data': data,
     'draw': request.args.get('draw'),
-    'iTotalRecords': 10,
-    'iTotalDisplayRecords':10,
+    'iTotalRecords': total,
+    'iTotalDisplayRecords': total,
   })
 
 
@@ -176,9 +176,10 @@ def load_tweets_root(self):
       Tweet, Bot
     ).filter(Tweet.bot_id == Bot.id
     ).filter(Tweet.user_id == user_id
-    ).with_entities(Tweet.id, Tweet.bot_id, Tweet.target, Tweet.text, Tweet.translated, Tweet.tweeted, Tweet.created_at, Bot.name.label('bot_name')
+    ).with_entities(Tweet.id, Tweet.bot_id, Tweet.target, Tweet.text, Tweet.translated, Tweet.tweeted, Tweet.entities, Tweet.created_at, Bot.name.label('bot_name')
     ).order_by(order_by).limit(limit).offset(skip)
 
+  total = Tweet.query.filter_by(user_id = user_id).count()
 
   bots = Bot.query.filter_by(user_id = user_id).all()
   dict_bots = {}
@@ -195,13 +196,13 @@ def load_tweets_root(self):
       tweet.translated,
       tweet.tweeted,
       tweet.created_at,
-      tweet.id,
+      { "id": tweet.id, "tweet_id": tweet.entities['id_str'] },
     ])
   return jsonify({
     'data': data,
     'draw': payload['draw'],
-    'iTotalRecords': 10,
-    'iTotalDisplayRecords':10,
+    'iTotalRecords': total,
+    'iTotalDisplayRecords': total,
   })
 
 
