@@ -20,6 +20,26 @@ $(function() {
     })
   });
 
+
+  $('#do-tweet').on('click', function(e) {
+    const tweet_id = $('#tweet-id').val();
+    const translated = $('#translated-tweet').val();
+
+    return doTweetById(tweet_id, { translated }).then((res) => {
+      if (res.status) {
+        toastr.success(res.message, 'Tweet');
+        refreshTable();
+      } else {
+        toastr.error(res.message, 'Tweet');
+      }
+    })
+    .catch((error) => {
+      console.log('[Tweet]', error);
+      toastr.error(error.message, 'Tweet');
+    })
+  });
+
+
   $('#website-form').submit(function(e) {
     e.preventDefault();
     if (!confirm('Are you sure to submit?')) return false;
@@ -350,6 +370,16 @@ function doRetweetById(id) {
     method: 'POST',
     // data: JSON.stringify(data),
     contentType: 'application/json; charset=utf-8',
+    dataType: 'json',
+  });
+}
+
+function doTweetById(id, { translated }) {
+  return $.ajax({
+    url: `/api/tweets/do-tweet/${id}`,
+    method: 'POST',
+    data: JSON.stringify({ translated }),
+    contentType: 'application/json, charset=utf-8',
     dataType: 'json',
   });
 }
