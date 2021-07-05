@@ -1,10 +1,12 @@
 from flask import request, jsonify
 from datetime import datetime
+import ast
 
 from marketingBot.controllers.api import api
 from marketingBot.models.Tweet import db, Tweet
 from marketingBot.controllers.api.api_apps import get_tweepy_instance
 from marketingBot.helpers.wrapper import session_required
+from marketingBot.helpers.common import json_parse
 
 
 @api.route('/ping-tweet', methods=['GET'])
@@ -46,7 +48,18 @@ def do_retweet(self, id):
       "status": False,
       "message": "Cound not create API connection!",
     })
-  _tweepy.retweet(tweet.entities['id_str'])
+  try:
+    _tweepy.retweet(tweet.entities['id_str'])
+  except Exception as e:
+    reason = ast.literal_eval(e.reason)
+    print('[Reason]', type(reason), reason[0]['message'])
+    return jsonify({
+      "status": False,
+      "message": reason[0]['message'],
+    })
+  tweet.updated_at = datetime.utcnow()
+  tweet.tweeted = 1
+  db.session.commit()
   return jsonify({
     "status": True,
     "message": "You retweeted a tweet!",
@@ -63,10 +76,6 @@ def do_tweet(self, id):
       "status": False,
       "message": 'Not found the tweet with ID',
     })
-  # update tweet record.
-  tweet.translated = payload['translated'] if 'translated' in payload else payload.translated
-  tweet.updated_at = datetime.utcnow() if 'translated' in payload else tweet.updated_at
-  db.session.commit()
   # get a tweepy instanace
   _tweepy = get_tweepy_instance()
   if not _tweepy:
@@ -74,7 +83,13 @@ def do_tweet(self, id):
       "status": False,
       "message": "Cound not create API connection!",
     })
+    
+  # update tweet record.
+  tweet.translated = payload['translated'] if 'translated' in payload else payload.translated
+  tweet.updated_at = datetime.utcnow()
+  tweet.tweeted = 2
   _tweepy.update_status(tweet.translated)
+  db.session.commit()
   return jsonify({
     "status": True,
     "message": "You posted a tweet!",
