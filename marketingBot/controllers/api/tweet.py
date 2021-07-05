@@ -56,7 +56,6 @@ def do_retweet(self, id):
   
 
 
-
 @api.route('/tweets/<id>', methods=['DELETE'])
 @session_required
 def delete_tweet_by_id(self, id):
