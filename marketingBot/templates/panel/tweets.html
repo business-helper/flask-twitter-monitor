@@ -68,17 +68,23 @@
                 <label>Origin Tweet (<span id="len-origin"></span>)</label>
                 <textarea class="form-control" type="text" id="origin-tweet" name="origin-tweet"
                       value="" placeholder="Origin Tweet" readonly></textarea>
+                <div class="flex-right mt-1">
+                  <button id="do-retweet" type="button" class="btn btn-info  btn-cons">Retweet</button>
+                </div>
             </div>
             <div class="form-group form-group-default">
               <label>Translated (<span id="len-translated"></span>)</label>
               <textarea class="form-control" type="text" id="translated-tweet" name="translated-tweet"
                     value="" placeholder="Translated Tweet"></textarea>
+              <div class="flex-right mt-1">
+                <button id="do-tweet" type="button" class="btn btn-info  btn-cons">Save & Tweet</button>
+              </div>
             </div>
           
         </form>
       </div>
       <div class="modal-footer">
-        <button id="add-category" type="button" class="btn btn-primary  btn-cons">Save</button>
+        <button id="do-save" type="button" class="btn btn-primary  btn-cons">Save</button>
         <button type="button" class="btn btn-cons" data-dismiss="modal">Cancel</button>
       </div>
     </div>

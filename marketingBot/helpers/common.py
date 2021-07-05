@@ -77,3 +77,4 @@ def splitString2Array(str):
     return strings
   except Exception as e:
     return []
+

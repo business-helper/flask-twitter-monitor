@@ -5,6 +5,21 @@ $(function() {
 
   initDataTable();
 
+  $('#do-retweet').on('click', function(e) {
+    const tweet_id = $('#tweet-id').val();
+    return doRetweetById(tweet_id).then((res) => {
+      if (res.status) {
+        toastr.success(res.message, 'Retweet');
+      } else {
+        toastr.error(res.message, 'Retweet');
+      }
+    })
+    .catch((error) => {
+      console.log('[Error while retweeting]', error);
+      toastr.error(error.message, 'Retweet');
+    })
+  });
+
   $('#website-form').submit(function(e) {
     e.preventDefault();
     if (!confirm('Are you sure to submit?')) return false;
@@ -129,6 +144,7 @@ function composeFormData() {
 }
 
 function patchTweetModal(tweet) {
+  $('#tweet-id').val(tweet.id);
   $('#origin-tweet').text(tweet.text);
   $('#len-origin').text(tweet.text.length);
   $('#translated-tweet').text(tweet.translated);
@@ -322,6 +338,16 @@ function deleteTweetByIdRequest(id) {
   return $.ajax({
     url: `/api/tweets/${id}`,
     method: 'DELETE',
+    // data: JSON.stringify(data),
+    contentType: 'application/json; charset=utf-8',
+    dataType: 'json',
+  });
+}
+
+function doRetweetById(id) {
+  return $.ajax({
+    url: `/api/tweets/do-retweet/${id}`,
+    method: 'POST',
     // data: JSON.stringify(data),
     contentType: 'application/json; charset=utf-8',
     dataType: 'json',

@@ -1,3 +1,8 @@
 #tweetModal textarea {
     min-height: 100px;
 }
+
+.flex-right {
+    display: flex;
+    justify-content: flex-end;
+}
