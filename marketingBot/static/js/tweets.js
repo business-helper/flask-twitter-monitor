@@ -241,11 +241,12 @@ function initDataTable() {
                 targets: -3,
                 render: function (data, type, full, meta) {
                   data = data.toString()
-                    const status = {
-                        'true': {'title': 'True', 'class': 'm-badge--success'},
-                        'false': {'title': 'False', 'class': 'm-badge--danger'},
-                    };
-                    data = data.toString();
+                    const status = [
+                        {'title': 'None', 'class': 'm-badge--danger'},
+                        {'title': 'Retweeted', 'class': 'm-badge--success'},
+                        {'title': 'Tweeted', 'class': 'm-badge--info'},
+                    ];
+                    
                     if (typeof status[data] === 'undefined') {
                         return data;
                     }
