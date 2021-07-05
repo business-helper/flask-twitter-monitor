@@ -64,6 +64,16 @@
         <form role="form" id="tweet-form" name="tweet-form">
           <input type="hidden" id="tweet-id" name="tweet-id" />
 
+            <div class="form-group form-group-default">
+                <label>Origin Tweet (<span id="len-origin"></span>)</label>
+                <textarea class="form-control" type="text" id="origin-tweet" name="origin-tweet"
+                      value="" placeholder="Origin Tweet" readonly></textarea>
+            </div>
+            <div class="form-group form-group-default">
+              <label>Translated (<span id="len-translated"></span>)</label>
+              <textarea class="form-control" type="text" id="translated-tweet" name="translated-tweet"
+                    value="" placeholder="Translated Tweet"></textarea>
+            </div>
           
         </form>
       </div>
@@ -76,6 +86,10 @@
   </div>
   <!-- /.modal-dialog -->
 </div>
+{% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/tweets.css') }}">
 {% endblock %}
 
 {% block scripts %}

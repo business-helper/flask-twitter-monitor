@@ -66,31 +66,14 @@ $(function() {
 });
 
 function onEdit(id) {
-  return getApiAppByIdRequest(id).then((res) => {
+  return getTweetByIdRequest(id).then((res) => {
     if (res.status) {
-      const { data: app } = res;
-      $('#bot-id').val(app.id);
-      $('#name').val(app.name);
-      $('#targets').val(app.targets.join(','));
-      $('#api_keys').val(app.api_keys).trigger('change');
-      $('#inclusion_keywords').val(app.inclusion_keywords.join(','));
-      $('#exclusion_keywords').val(app.exclusion_keywords.join(','));
-      $('#interval').val(app.period);
-
-      $('#website-form button[type="submit"]').html('<i class="la la-save"></i>Update');
-      $('#form-wrapper').removeClass('_hide').addClass('_show');
-      $('#type').val(app.type);
-      $('#start_time').val(app.start_time);
-      $('#end_time').val(app.end_time);
-
-      addMetricFilter(app.metrics);
-
+      const { data: tweet } = res;
+      patchTweetModal(tweet);
+      openTweetModal();
     } else {
-      toastr.error(res.message);
+      toastr.error(res.message, 'Get a Tweet');
     }    
-  })
-  .catch((error) => {
-    console.log('[Error]', error);
   })
 }
 
@@ -143,6 +126,13 @@ function composeFormData() {
   })
 
   return data;
+}
+
+function patchTweetModal(tweet) {
+  $('#origin-tweet').text(tweet.text);
+  $('#len-origin').text(tweet.text.length);
+  $('#translated-tweet').text(tweet.translated);
+  $('#len-translated').text(tweet.translated.length);
 }
 
 
@@ -318,9 +308,9 @@ function addBotRequest1(data) {
   });
 }
 
-function getApiAppByIdRequest(id) {
+function getTweetByIdRequest(id) {
   return $.ajax({
-    url: `/api/bots/${id}`,
+    url: `/api/tweets/${id}`,
     method: 'GET',
     // data: JSON.stringify(data),
     contentType: 'application/json; charset=utf-8',
@@ -350,4 +340,11 @@ function emptyForm() {
 
 function refreshTable() {
   _dataTable.api().ajax.reload();
+}
+
+function openTweetModal() {
+  $('#tweetModal').modal({
+    backdrop: 'static',
+    keyboard: false
+  });
 }

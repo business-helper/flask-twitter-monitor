@@ -14,6 +14,21 @@ def api_ping_tweet():
   })
 
 
+@api.route('/tweets/<id>', methods=['GET'])
+@session_required
+def get_tweet_by_id(self, id):
+  tweet = Tweet.query.filter_by(id=id).first()
+  if not tweet:
+    return jsonify({
+      "status": False,
+      "message": "Tweet does not exist!",
+    })
+  return jsonify({
+    "status": True,
+    "message": "success",
+    "data": tweet.to_dict(),
+  })
+
 @api.route('/tweets/<id>', methods=['DELETE'])
 @session_required
 def delete_tweet_by_id(self, id):
