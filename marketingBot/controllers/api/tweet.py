@@ -1,8 +1,6 @@
 from flask import request, jsonify
 from datetime import datetime
 
-from flask.globals import session
-
 from marketingBot.controllers.api import api
 from marketingBot.models.Tweet import db, Tweet
 from marketingBot.controllers.api.api_apps import get_tweepy_instance
