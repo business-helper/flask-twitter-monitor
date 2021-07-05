@@ -13,7 +13,7 @@ class Tweet(db.Model):
   text = db.Column(db.String(500), nullable=False)
   entities = db.Column(db.JSON)
   translated = db.Column(db.String(600), nullable=False)
-  tweeted = db.Column(db.Boolean, default=0)
+  tweeted = db.Column(db.SmallInteger, default=0)
   metrics = db.Column(db.JSON)
 
   created_at = db.Column(db.String(30), nullable=True)

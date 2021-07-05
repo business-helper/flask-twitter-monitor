@@ -15,7 +15,13 @@ To run:
     python wsgi.py
 
 
-[![Bitdeli Badge](https://d2weczhvl823v0.cloudfront.net/salimane/flask-mvc/trend.png)](https://bitdeli.com/free "Bitdeli Badge")
+# Database
+## Tweet
+### tweeted
+
+0: none <br/>
+1: retweet <br/>
+2: post <br/>
 
 ## Twitter Libraries
 ### [Tweepy](https://pypi.org/project/tweepy)
@@ -52,5 +58,10 @@ To run:
 - Latest Version: Sep 30, 2018
 - Used by: 5.5k
 - Contributors: 133
+
+## Dependencies
+
+- Windows
+mysqlclient
 
 

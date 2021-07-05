@@ -5,6 +5,41 @@ $(function() {
 
   initDataTable();
 
+  $('#do-retweet').on('click', function(e) {
+    const tweet_id = $('#tweet-id').val();
+    return doRetweetById(tweet_id).then((res) => {
+      if (res.status) {
+        toastr.success(res.message, 'Retweet');
+      } else {
+        toastr.error(res.message, 'Retweet');
+      }
+    })
+    .catch((error) => {
+      console.log('[Error while retweeting]', error);
+      toastr.error(error.message, 'Retweet');
+    })
+  });
+
+
+  $('#do-tweet').on('click', function(e) {
+    const tweet_id = $('#tweet-id').val();
+    const translated = $('#translated-tweet').val();
+
+    return doTweetById(tweet_id, { translated }).then((res) => {
+      if (res.status) {
+        toastr.success(res.message, 'Tweet');
+        refreshTable();
+      } else {
+        toastr.error(res.message, 'Tweet');
+      }
+    })
+    .catch((error) => {
+      console.log('[Tweet]', error);
+      toastr.error(error.message, 'Tweet');
+    })
+  });
+
+
   $('#website-form').submit(function(e) {
     e.preventDefault();
     if (!confirm('Are you sure to submit?')) return false;
@@ -66,31 +101,14 @@ $(function() {
 });
 
 function onEdit(id) {
-  return getApiAppByIdRequest(id).then((res) => {
+  return getTweetByIdRequest(id).then((res) => {
     if (res.status) {
-      const { data: app } = res;
-      $('#bot-id').val(app.id);
-      $('#name').val(app.name);
-      $('#targets').val(app.targets.join(','));
-      $('#api_keys').val(app.api_keys).trigger('change');
-      $('#inclusion_keywords').val(app.inclusion_keywords.join(','));
-      $('#exclusion_keywords').val(app.exclusion_keywords.join(','));
-      $('#interval').val(app.period);
-
-      $('#website-form button[type="submit"]').html('<i class="la la-save"></i>Update');
-      $('#form-wrapper').removeClass('_hide').addClass('_show');
-      $('#type').val(app.type);
-      $('#start_time').val(app.start_time);
-      $('#end_time').val(app.end_time);
-
-      addMetricFilter(app.metrics);
-
+      const { data: tweet } = res;
+      patchTweetModal(tweet);
+      openTweetModal();
     } else {
-      toastr.error(res.message);
+      toastr.error(res.message, 'Get a Tweet');
     }    
-  })
-  .catch((error) => {
-    console.log('[Error]', error);
   })
 }
 
@@ -143,6 +161,14 @@ function composeFormData() {
   })
 
   return data;
+}
+
+function patchTweetModal(tweet) {
+  $('#tweet-id').val(tweet.id);
+  $('#origin-tweet').text(tweet.text);
+  $('#len-origin').text(tweet.text.length);
+  $('#translated-tweet').text(tweet.translated);
+  $('#len-translated').text(tweet.translated.length);
 }
 
 
@@ -318,9 +344,9 @@ function addBotRequest1(data) {
   });
 }
 
-function getApiAppByIdRequest(id) {
+function getTweetByIdRequest(id) {
   return $.ajax({
-    url: `/api/bots/${id}`,
+    url: `/api/tweets/${id}`,
     method: 'GET',
     // data: JSON.stringify(data),
     contentType: 'application/json; charset=utf-8',
@@ -338,6 +364,26 @@ function deleteTweetByIdRequest(id) {
   });
 }
 
+function doRetweetById(id) {
+  return $.ajax({
+    url: `/api/tweets/do-retweet/${id}`,
+    method: 'POST',
+    // data: JSON.stringify(data),
+    contentType: 'application/json; charset=utf-8',
+    dataType: 'json',
+  });
+}
+
+function doTweetById(id, { translated }) {
+  return $.ajax({
+    url: `/api/tweets/do-tweet/${id}`,
+    method: 'POST',
+    data: JSON.stringify({ translated }),
+    contentType: 'application/json, charset=utf-8',
+    dataType: 'json',
+  });
+}
+
 // Scripts for minority
 
 function emptyForm() {
@@ -350,4 +396,11 @@ function emptyForm() {
 
 function refreshTable() {
   _dataTable.api().ajax.reload();
+}
+
+function openTweetModal() {
+  $('#tweetModal').modal({
+    backdrop: 'static',
+    keyboard: false
+  });
 }

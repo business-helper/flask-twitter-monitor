@@ -1,9 +1,14 @@
+from marketingBot.helpers.wrapper import session_required
 from flask import request, current_app, jsonify
 from datetime import datetime
+
+from flask.globals import session
 
 # from marketingBot.models import db
 from marketingBot.models.AppKey import db, AppKey
 from marketingBot.controllers.api import api
+from marketingBot.controllers.twitter import create_api as create_tweepy_instance
+from marketingBot.helpers.wrapper import session_required
 # from marketingBot.helpers.common import timestamp
 
 @api.route('/ping', methods=['GET'])
@@ -13,6 +18,18 @@ def api_ping():
     "message": "pong"
   })
 
+@session_required
+def get_tweepy_instance(self):
+  apps = AppKey.query.filter_by(user_id = self.id)
+  for app in apps:
+    print('[App]', app.id, app.consumer_key, app.consumer_secret, app.access_token, app.access_token_secret)
+    instance = create_tweepy_instance(consumer_key = app.consumer_key, consumer_secret = app.consumer_secret, access_token = app.access_token, access_token_secret = app.access_token_secret)
+    try:
+      timeline = instance.home_timeline()
+      return instance
+    except Exception as e:
+      pass
+  return False
 
 @api.route('/api-apps/<id>', methods=['GET'])
 def get_api_app_by_id(id):
@@ -68,3 +85,4 @@ def delete_api_app_by_id(id):
     "status": True,
     "message": "Api app has been deleted!",
   })
+
