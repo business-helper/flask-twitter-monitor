@@ -47,7 +47,7 @@ class BotThread(threading.Thread):
   apis_v2 = []
   targets = {}
   last_tweet_ids = {}
-  one_time_batch = 50
+  one_time_batch = 10
 
   def __init__(self, bot, **args):
     threading.Thread.__init__(self)
@@ -134,9 +134,16 @@ class BotThread(threading.Thread):
     if len(self.apis_v2) > 0:
       api_inst = self.apis_v2[0]
       for screen_name in self.bot['targets']:
+        if self.stopped:
+          break
         self.analyze_target(screen_name = screen_name, api_inst = api_inst)
     else:
       print(f"[Bot][{self.bot['name']}]No available API v2 instances")
+    bot = Bot.query.filter_by(id = self.bot['id']).first()
+    if bot:
+      bot.status = 'IDLE'
+      bot.updated_at = datetime.utcnow()
+      db.session.commit()
 
 
   def processor(self):
@@ -239,6 +246,8 @@ class BotThread(threading.Thread):
     # since_id = None #"1408485784840065028"
     try:
       while(True):
+        if self.stopped:
+          return False
         # if start time is later than end time, then break;
         if start_time > end_time:
           break;
@@ -292,9 +301,15 @@ class BotThread(threading.Thread):
 
         ## get tweets and check keyword match
         print('[Filtered]', filtered_tweet_ids)
+
+        if self.stopped:
+          return False
+
         full_tweets = api_v1.statuses_lookup(id_=filtered_tweet_ids, tweet_mode = 'extended')
         # print('[Full Tweets]', full_tweets)
         for full_tweet in full_tweets:
+          if self.stopped:
+            return False
           full_text = self.parse_full_text(full_tweet)
           # filtered_tweets[full_tweet.id_str]['full_text'] = full_text
           # filtered_tweets[full_tweet.id_str]['keyword_match'] = self.matches_keywords(full_text)
@@ -306,7 +321,8 @@ class BotThread(threading.Thread):
           translated = translate(src_text=full_text)
 
           if self.matches_keywords(full_text):
-            twit = Tweet(
+            # twit = Tweet(
+            twit_dict = dict(
               user_id = self.bot['user_id'],
               bot_id = self.bot['id'],
               target = screen_name,
@@ -316,10 +332,11 @@ class BotThread(threading.Thread):
               tweeted = 0,
               metrics = filtered_tweets[full_tweet.id_str]['metrics'],
             )
-            db.session.add(twit)
-            db.session.commit()
+            self.check_insert_tweet(twit_dict)
+            # db.session.add(twit)
+            # db.session.commit()
         
-        print('[filtered Tweetes][Full]', filtered_tweets)
+        # print('[filtered Tweetes][Full]', filtered_tweets)
       # mark the target as analyzed.
       print(f"[Target]{target_info.data.username} Finished")
     except Exception as e:
@@ -399,7 +416,8 @@ class BotThread(threading.Thread):
     }
     io_notify_user(user_id=self.bot['user_id'], event=socket_event.NEW_TWEET_FOUND, args=notification)
 
-    twit = Tweet(
+    # twit = Tweet(
+    twit_dict = dict(
       user_id = self.bot['user_id'],
       bot_id = self.bot['id'],
       target = screen_name,
@@ -409,13 +427,23 @@ class BotThread(threading.Thread):
       tweeted = 0,
       metrics = metrics,
     )
-    db.session.add(twit)
-    db.session.commit()
+    self.check_insert_tweet(twit_dict)
+    # db.session.add(twit)
+    # db.session.commit()
 
   def format_time_v2(self, str_dt):
     dt_arr = str_dt.split(' ')
     return f"{dt_arr[0].strip()}T{dt_arr[1].strip()}:00Z"
 
+  def check_insert_tweet(self, twit_dict):
+    # db.session.query(Tweet).filter(Tweet.entities['id_str'] == id).first()
+    tweet = db.session.query(Tweet).filter(Tweet.entities['id_str'] == twit_dict['entities']['id_str'], Tweet.user_id == twit_dict['user_id']).first()
+    if not tweet:
+      twit = Tweet(**twit_dict)
+      db.session.add(twit)
+      db.session.commit()
+    else:
+      pass
 
   # def set_interval(self, func, sec):
   #   def func_wrapper():
@@ -486,13 +514,13 @@ def start_bot_execution(id):
       "status": False,
       "message": "Not found the bot!",
     })
+  bot.status = 'RUNNING'
+  bot.updated_at = datetime.utcnow()
+  db.session.commit()
 
   botThread = BotThread(bot)
   botThread.start()
   botThreads[str(id)] = botThread
-  bot.status = 'RUNNING'
-  bot.updated_at = datetime.utcnow()
-  db.session.commit()
   
   # botThread.start()
   return jsonify({
