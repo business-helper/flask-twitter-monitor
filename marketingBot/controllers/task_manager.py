@@ -47,7 +47,7 @@ class BotThread(threading.Thread):
   apis_v2 = []
   targets = {}
   last_tweet_ids = {}
-  one_time_batch = 5
+  one_time_batch = 50
 
   def __init__(self, bot, **args):
     threading.Thread.__init__(self)
@@ -61,6 +61,7 @@ class BotThread(threading.Thread):
         "now": None,
         "prev": None,
       }
+    self.apis = self.apis_v2 = self.targets = self.last_tweet_ids = []
     
   def start(self):
     print(f"[Task] starting '{self.name}'")
