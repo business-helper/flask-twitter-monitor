@@ -324,7 +324,7 @@ class BotThread(threading.Thread):
   def satisfy_metrics(self, metrics):
     # if len(metrics.keys()) > 0:
     #   return False;
-    if 'retweet' in self.bot['metrics'] and int(self.bot['metrics']['retweet']) > metrics['tweet']['retweets']:
+    if self.bot['type'] == 'ONE_TIME' and 'retweet' in self.bot['metrics'] and int(self.bot['metrics']['retweet']) > metrics['tweet']['retweets']:
       return False
     if 'follower' in self.bot['metrics'] and int(self.bot['metrics']['follower']) > metrics['followers']:
       return False
@@ -332,7 +332,7 @@ class BotThread(threading.Thread):
       return False
     if 'tweets' in self.bot['metrics'] and int(self.bot['metrics']['tweets']) > metrics['statuses']:
       return False
-    if 'likes' in self.bot['metrics'] and int(self.bot['metrics']['likes']) > metrics['tweet']['favorite']:
+    if self.bot['type'] == 'ONE_TIME' and 'likes' in self.bot['metrics'] and int(self.bot['metrics']['likes']) > metrics['tweet']['favorite']:
       return False
     if 'lists' in self.bot['metrics'] and int(self.bot['metrics']['lists']) > metrics['listed']:
       return False
