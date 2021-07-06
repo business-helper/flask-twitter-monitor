@@ -9,6 +9,7 @@ Flask-SQLAlchemy
 # python-mysqldb
 # MySQLdb
 python-dotenv
+python-twitter-v2
 PyJWT
 requests
 tweepy

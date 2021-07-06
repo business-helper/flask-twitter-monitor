@@ -3,6 +3,7 @@ from flask import jsonify, request
 import threading
 import time
 import tweepy
+from pytwitter import Api
 # from uwsgidecorators import *
 
 from marketingBot import app
@@ -65,9 +66,13 @@ class BotThread(threading.Thread):
     self.create_apis()
     # self.validate_targets()
     #if there is not api, then no need to proceed.
-    if len(self.apis) == 0:
-      return False
-    self.execute_loop()
+    if self.bot['type'] == 'REAL_TIME':
+      if len(self.apis) == 0:
+        return False
+      self.execute_loop()
+    elif self.bot['type'] == 'ONE_TIME':
+      # self.
+      pass
 
   def stop(self):
     print(f"[Task] stopping '{self.name}'")
@@ -85,6 +90,21 @@ class BotThread(threading.Thread):
           return print('[API Instance] Failed to create.', api_key_id)
         self.apis.append(api_instance)
     
+  def create_v2_apis(self):
+    if len(self.bot['api_keys']) > 0:
+      for api_key_id in self.bot['api_keys']:
+        api_key = AppKey.query.filter_by(id=api_key_id).first()
+        try:
+          api = Api(bearer_token = api_key.bearer_token)
+          
+        except Exception as e:
+          pass
+        api_instance = self.create_tweepy_instance(api_key.consumer_key, api_key.consumer_secret, api_key.access_token, api_key.access_token_secret)
+        if not api_instance:
+          return print('[API Instance] Failed to create.', api_key_id)
+        self.apis.append(api_instance)
+
+
   def validate_targets(self):
     if len(self.apis) == 0:
       return []
@@ -106,6 +126,8 @@ class BotThread(threading.Thread):
       self.processor()
     t = threading.Timer(self._interval * len(self.apis), func_wrapper)
     t.start()
+
+
 
   def processor(self):
     print(f"[Processing] {self.name} {str(self._iterN)}")
@@ -342,12 +364,18 @@ def start_bot_execution(id):
       "status": False,
       "message": "Not found the bot!",
     })
-  botThread = BotThread(bot)
-  botThread.start()
-  botThreads[str(id)] = botThread
-  bot.status = 'RUNNING'
-  bot.updated_at = datetime.utcnow()
-  db.session.commit()
+  if bot.type == 'REAL_TIME':
+    botThread = BotThread(bot)
+    botThread.start()
+    botThreads[str(id)] = botThread
+    bot.status = 'RUNNING'
+    bot.updated_at = datetime.utcnow()
+    db.session.commit()
+  else:
+    return jsonify({
+      "status": False,
+      "message": "Coming soon!",
+    })
   
   # botThread.start()
   return jsonify({

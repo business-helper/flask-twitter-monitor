@@ -16,6 +16,7 @@ $(function() {
       consumer_secret: $('#consumer_secret').val(),
       access_token: $('#access_token').val(),
       access_token_secret: $('#access_token_secret').val(),
+      bearer_token: $('#bearer_token').val(),
       valid: $('#active').is(':checked') ? 1 : 0,
     };
 
@@ -128,10 +129,11 @@ function initDataTable() {
                     const keys = data.split(':');
                     return `
                       <div class="">
-                      <p>Consumer Key: ${keys[0]}</p>
-                      <p>Consumer Secret: ${keys[1]}</p>
-                      <p>Access Token: ${keys[2]}</p>
-                      <p>Access Token Secret: ${keys[3]}</p>
+                      <p><b>Consumer Key</b>: ${keys[0]}</p>
+                      <p><b>Consumer Secret</b>: ${keys[1]}</p>
+                      <p><b>Access Token</b>: ${keys[2]}</p>
+                      <p><b>Access Token Secret</b>: ${keys[3]}</p>
+                      <span style="overflow-wrap: anywhere;"><b>Bearer Token</b>: ${keys[4]}</span>
                       </div>
                     `;
                   },
@@ -213,6 +215,7 @@ function onEdit(id) {
       $('#consumer_secret').val(app.consumer_secret);
       $('#access_token').val(app.access_token);
       $('#access_token_secret').val(app.access_token_secret);
+      $('#bearer_token').val(app.bearer_token);
 
       $('#website-form button[type="submit"]').html('<i class="la la-save"></i>Update');
       $('#form-wrapper').removeClass('_hide').addClass('_show');

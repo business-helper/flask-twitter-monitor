@@ -64,7 +64,7 @@ def do_retweet(self, id):
     "status": True,
     "message": "You retweeted a tweet!",
   })
-  
+
 
 @api.route('/tweets/do-tweet/<id>', methods=['POST'])
 @session_required
