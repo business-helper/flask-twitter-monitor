@@ -61,7 +61,7 @@ class BotThread(threading.Thread):
         "now": None,
         "prev": None,
       }
-    self.apis = self.apis_v2 = self.targets = self.last_tweet_ids = []
+    # self.apis = self.apis_v2 = self.targets = self.last_tweet_ids = []
     
   def start(self):
     print(f"[Task] starting '{self.name}'")
@@ -224,8 +224,12 @@ class BotThread(threading.Thread):
     }
 
     api_v1 = self.apis[0]
-
+    print('[Screen Name]', screen_name)
     target_info = api_inst.get_user(username = screen_name, user_fields=['public_metrics'])
+
+    # api_v2 = create_api_v2(bearer_token = BEARER_TOKEN)
+    # user_v2 = api_v2.get_user(username = 'Adweek')
+
     target_metrics = target_info.data.public_metrics.__dict__
     # print('[Target Info]', target_info, target_info.data)
     target_id = target_info.data.id
