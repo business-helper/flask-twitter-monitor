@@ -11,7 +11,7 @@ Flask-SQLAlchemy
 python-dotenv
 python-twitter-v2
 PyJWT
-pytwitter
+# pytwitter
 requests
 tweepy
 Flask-SocketIO==4.3.1
