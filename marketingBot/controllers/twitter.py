@@ -10,11 +10,11 @@ logger = logging.getLogger()
 
 logger.info(f"Processing tweet id ~")
 
-CONSUMER_KEY = "rTyqeH43KVVA96eRHXJxnzMOS"
-CONSUMER_SECRET = "oQLAlEXs3DipiN8ow1kmrtggOahba9zyZuWF691Bm1kDgEFt7E"
-ACCESS_TOKEN = "1052098057922273280-JTBl0wNmvkcRvzXVUUkJHKvDQ5ae6Z"
-ACCESS_TOKEN_SECRET = "eqhupIfMr7uvklYHSHtu7IVvptlQrYY6tTN8YJxUps1IK"
-BEARER_TOKEN = "AAAAAAAAAAAAAAAAAAAAABgWEAEAAAAA8b6PoxoYNew%2BE4nnS7has9CofwA%3D9shXMqslVNrJecsYmW9iEuIvNi0rhNRLN73WGp9bQiEd9LmDRj"
+# CONSUMER_KEY = "rTyqeH43KVVA96eRHXJxnzMOS"
+# CONSUMER_SECRET = "oQLAlEXs3DipiN8ow1kmrtggOahba9zyZuWF691Bm1kDgEFt7E"
+# ACCESS_TOKEN = "1052098057922273280-JTBl0wNmvkcRvzXVUUkJHKvDQ5ae6Z"
+# ACCESS_TOKEN_SECRET = "eqhupIfMr7uvklYHSHtu7IVvptlQrYY6tTN8YJxUps1IK"
+# BEARER_TOKEN = "AAAAAAAAAAAAAAAAAAAAABgWEAEAAAAA8b6PoxoYNew%2BE4nnS7has9CofwA%3D9shXMqslVNrJecsYmW9iEuIvNi0rhNRLN73WGp9bQiEd9LmDRj"
 
 # # Authenticate to Twitter
 # auth = tweepy.OAuthHandler(CONSUMER_KEY, CONSUMER_SECRET)
@@ -68,16 +68,17 @@ def create_api_v2(bearer_token):
 # print('[Statuses]', statuses[0].status)
 
 ## ----------- V1
-api_v1 = create_api(
-  consumer_key = CONSUMER_KEY,
-  consumer_secret = CONSUMER_SECRET,
-  access_token = ACCESS_TOKEN,
-  access_token_secret = ACCESS_TOKEN_SECRET,
-  )
+# api_v1 = create_api(
+#   consumer_key = CONSUMER_KEY,
+#   consumer_secret = CONSUMER_SECRET,
+#   access_token = ACCESS_TOKEN,
+#   access_token_secret = ACCESS_TOKEN_SECRET,
+#   )
 
 # status = api_v1.get_status('1410639112613163009', tweet_mode = 'extended')
-statuses = api_v1.statuses_lookup(id_=['1410639112613163009'], tweet_mode = 'extended')
-status = statuses[0]
+# statuses = api_v1.statuses_lookup(id_=['1410639112613163009'], tweet_mode = 'extended')
+# status = statuses[0]
+
 # print('[V1][Status]', status.retweeted_status.full_text)
 
 # user_v1 = api_v1.get_user(screen_name = 'BusiHelper')
