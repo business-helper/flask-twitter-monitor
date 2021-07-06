@@ -13,19 +13,21 @@ class AppKey(db.Model):
   consumer_secret = db.Column(db.String(100), nullable=False)
   access_token = db.Column(db.String(100), nullable=False)
   access_token_secret = db.Column(db.String(100), nullable=False)
+  bearer_token = db.Column(db.String(255), nullable=False)
   valid = db.Column(db.Boolean, default=1)
 
   created_at = db.Column(db.String(30), nullable=True)
   updated_at = db.Column(db.String(30), nullable=True)
 
 
-  def __init__(self, user_id, name, consumer_key, consumer_secret, access_token, access_token_secret, valid, **args):
+  def __init__(self, user_id, name, consumer_key, consumer_secret, access_token, access_token_secret, bearer_token, valid, **args):
     self.user_id = user_id
     self.name = name
     self.consumer_key = consumer_key
     self.consumer_secret = consumer_secret
     self.access_token = access_token
     self.access_token_secret = access_token_secret
+    self.bearer_token = bearer_token
     self.valid = valid
 
     self.created_at = datetime.utcnow()
@@ -40,6 +42,7 @@ class AppKey(db.Model):
       consumer_secret = self.consumer_secret,
       access_token = self.access_token,
       access_token_secret = self.access_token_secret,
+      bearer_token = self.bearer_token,
       valid=self.valid,
       created_at=self.created_at,
       updated_at=self.updated_at

@@ -52,7 +52,7 @@ def load_api_apps(self):
   
   data = []
   for idx, app in enumerate(apps):
-    data.append([idx + 1, app.name, f"{app.consumer_key}:{app.consumer_secret}:{app.access_token}:{app.access_token_secret}", app.valid, app.id])
+    data.append([idx + 1, app.name, f"{app.consumer_key}:{app.consumer_secret}:{app.access_token}:{app.access_token_secret}:{app.bearer_token}", app.valid, app.id])
 
   return jsonify({
     'data': data,
@@ -83,6 +83,7 @@ def add_api_app(self):
     consumer_secret = payload['consumer_secret'],
     access_token = payload['access_token'],
     access_token_secret = payload['access_token_secret'],
+    bearer_token = payload['bearer_token'],
     name = payload['name'],
     valid = payload['valid'],
   )

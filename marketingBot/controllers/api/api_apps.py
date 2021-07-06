@@ -55,6 +55,7 @@ def update_api_app_by_id(id):
   api_key.consumer_secret = payload['consumer_secret']
   api_key.access_token = payload['access_token']
   api_key.access_token_secret = payload['access_token_secret']
+  api_key.bearer_token = payload['bearer_token']
   api_key.valid = payload['valid']
   api_key.name = payload['name']
   api_key.updated_at = datetime.utcnow()
