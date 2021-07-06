@@ -7,7 +7,7 @@ from flask import flash
 
 from marketingBot import app
 from marketingBot.models.User import db, User
-from marketingBot.helpers.common import set_login_session, validate_session
+from marketingBot.helpers.common import set_login_session, unset_login_session, validate_session
 
 
 
@@ -47,3 +47,8 @@ def register():
     db.session.commit()
     return render_template('auth/login.html')
   return render_template('auth/register.html', form=None)
+
+@app.route('/logout', methods=['GET'])
+def logout_session():
+  unset_login_session()
+  return redirect('/login')
