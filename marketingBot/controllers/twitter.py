@@ -14,7 +14,7 @@ logger.info(f"Processing tweet id ~")
 # CONSUMER_SECRET = "oQLAlEXs3DipiN8ow1kmrtggOahba9zyZuWF691Bm1kDgEFt7E"
 # ACCESS_TOKEN = "1052098057922273280-JTBl0wNmvkcRvzXVUUkJHKvDQ5ae6Z"
 # ACCESS_TOKEN_SECRET = "eqhupIfMr7uvklYHSHtu7IVvptlQrYY6tTN8YJxUps1IK"
-# BEARER_TOKEN = "AAAAAAAAAAAAAAAAAAAAABgWEAEAAAAA8b6PoxoYNew%2BE4nnS7has9CofwA%3D9shXMqslVNrJecsYmW9iEuIvNi0rhNRLN73WGp9bQiEd9LmDRj"
+BEARER_TOKEN = "AAAAAAAAAAAAAAAAAAAAABgWEAEAAAAA8b6PoxoYNew%2BE4nnS7has9CofwA%3D9shXMqslVNrJecsYmW9iEuIvNi0rhNRLN73WGp9bQiEd9LmDRj"
 
 # # Authenticate to Twitter
 # auth = tweepy.OAuthHandler(CONSUMER_KEY, CONSUMER_SECRET)
@@ -86,10 +86,10 @@ def create_api_v2(bearer_token):
 
 
 ## ----------- V2
-# api_v2 = create_api_v2(bearer_token = BEARER_TOKEN)
-# user_v2 = api_v2.get_user(username = 'BusiHelper')
+api_v2 = create_api_v2(bearer_token = BEARER_TOKEN)
+user_v2 = api_v2.get_user(username = 'Adweek')
 
-# print('[User] V2:', user_v2.__dict__['data'].id)
+print('[User] V2:', user_v2.__dict__['data'].id)
 
 # timelines = api_v2.get_timelines(user_id = user_v2.__dict__['data'].id, start_time="2021-07-01T00:00:00Z", end_time="2021-07-05T00:00:00Z",
 #   media_fields = ['url', 'public_metrics' ],

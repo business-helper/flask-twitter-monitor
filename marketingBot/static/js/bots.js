@@ -134,13 +134,14 @@ function onEdit(id) {
 }
 
 function onStartBot(id) {
-  return startBotByIdRequest(id).then((res) => {
-    if (res.status) {
-      toastr.success(res.message);
+  startBotByIdRequest(id)
+  return sleep(2000).then((res) => {
+    // if (res.status) {
+      toastr.success('A bot has been started!');
       refreshTable();
-    } else {
-      toastr.error(res.message);
-    }
+    // } else {
+    //   toastr.error(res.message);
+    // }
   })
   .catch((error) => {
     console.log('[Task][Start]', id, error);
@@ -568,4 +569,10 @@ function getMetricFilterWidget(key, value) {
     </div>
   <div>
   `;
+}
+
+async function sleep(ms) {
+  return new Promise((resolve) => {
+    resolve(true);
+  }, ms);
 }

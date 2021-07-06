@@ -33,6 +33,22 @@ def get_tweet_by_id(self, id):
   })
 
 
+# ref: https://stackoverflow.com/a/53266167/9644424
+@api.route('/tweets/by-id/<id>', methods=['GET'])
+# @session_required
+def get_tweet_by_status_id(id):
+  tweet = db.session.query(Tweet).filter(Tweet.entities['id_str'] == id).first()
+  if not tweet:
+    return jsonify({
+      "status": False,
+      "message": "Not found the tweet",
+    })
+  return jsonify({
+    "status": True,
+    "message": "Found it!",
+    "data": tweet.to_dict(),
+  })
+
 @api.route('/tweets/do-retweet/<id>', methods=['POST'])
 @session_required
 def do_retweet(self, id):
