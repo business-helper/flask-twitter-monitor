@@ -44,8 +44,10 @@ class BotThread(threading.Thread):
   _interval = 5
   bot = None
   apis = []
+  apis_v2 = []
   targets = {}
   last_tweet_ids = {}
+  one_time_batch = 5
 
   def __init__(self, bot, **args):
     threading.Thread.__init__(self)
@@ -64,15 +66,16 @@ class BotThread(threading.Thread):
     print(f"[Task] starting '{self.name}'")
     self.stopped = False
     self.create_apis()
+    if len(self.apis) == 0:
+      return False
     # self.validate_targets()
     #if there is not api, then no need to proceed.
     if self.bot['type'] == 'REAL_TIME':
-      if len(self.apis) == 0:
-        return False
       self.execute_loop()
     elif self.bot['type'] == 'ONE_TIME':
-      # self.
-      pass
+      self.create_v2_apis()
+      self.start_one_time_batch()
+
 
   def stop(self):
     print(f"[Task] stopping '{self.name}'")
@@ -94,15 +97,14 @@ class BotThread(threading.Thread):
     if len(self.bot['api_keys']) > 0:
       for api_key_id in self.bot['api_keys']:
         api_key = AppKey.query.filter_by(id=api_key_id).first()
+        if not api_key.bearer_token:
+          continue
         try:
-          api = Api(bearer_token = api_key.bearer_token)
-          
+          inst = Api(bearer_token = api_key.bearer_token)
+          self.apis_v2.append(inst)
         except Exception as e:
-          pass
-        api_instance = self.create_tweepy_instance(api_key.consumer_key, api_key.consumer_secret, api_key.access_token, api_key.access_token_secret)
-        if not api_instance:
-          return print('[API Instance] Failed to create.', api_key_id)
-        self.apis.append(api_instance)
+          print(f"[Bot][{self.bot['name']}][API V2] failed to create... {api_key_id}")
+
 
 
   def validate_targets(self):
@@ -117,7 +119,7 @@ class BotThread(threading.Thread):
       except Exception as e:
         pass
     print('[Targets]', type(self.bot['targets']), self.bot['targets'], self.targets)
-      
+
   def execute_loop(self):
     def func_wrapper():
       if self.stopped:
@@ -127,6 +129,13 @@ class BotThread(threading.Thread):
     t = threading.Timer(self._interval * len(self.apis), func_wrapper)
     t.start()
 
+  def start_one_time_batch(self):
+    if len(self.apis_v2) > 0:
+      api_inst = self.apis_v2[0]
+      for screen_name in self.bot['targets']:
+        self.analyze_target(screen_name = screen_name, api_inst = api_inst)
+    else:
+      print(f"[Bot][{self.bot['name']}]No available API v2 instances")
 
 
   def processor(self):
@@ -206,6 +215,111 @@ class BotThread(threading.Thread):
       # tweet = self.apis[0].get_status(tweet_id, tweet_mode = 'extended')
       self.postprocess_new_tweet(user.status._json, screen_name, metrics)
 
+  def analyze_target(self, screen_name, api_inst):
+    ## analysis data
+    tweets = {
+      "total": 0,
+      "filtered": 0,
+    }
+
+    api_v1 = self.apis[0]
+
+    target_info = api_inst.get_user(username = screen_name, user_fields=['public_metrics'])
+    target_metrics = target_info.data.public_metrics.__dict__
+    # print('[Target Info]', target_info, target_info.data)
+    target_id = target_info.data.id
+    print('[Target Id]', target_id)
+    start_time = self.format_time_v2(self.bot['start_time'])
+    end_time = self.format_time_v2(self.bot['end_time'])
+    # since_id = None #"1408485784840065028"
+    try:
+      while(True):
+        # if start time is later than end time, then break;
+        if start_time > end_time:
+          break;
+        timelines = api_inst.get_timelines(
+          user_id = target_id,
+          start_time=start_time,
+          end_time=end_time,
+          # since_id = since_id,
+          max_results = self.one_time_batch,
+          media_fields = ['url', 'public_metrics' ],
+          expansions=['author_id', 'referenced_tweets.id', 'referenced_tweets.id.author_id'],
+          tweet_fields = ['author_id', 'entities', 'id', 'lang', 'public_metrics', 'text', 'created_at', 'referenced_tweets'],
+          user_fields = ['id', 'name', 'public_metrics', 'verified']
+        )
+        # print('[timelines]', timelines)
+        print('[End Time] Old: ', end_time)
+        end_time = timelines.data[len(timelines.data) - 1].created_at
+        print('[End Time] New: ', end_time)
+
+        ## analysis
+        tweets['total'] += len(timelines.data)
+
+        ## check the metrics match first
+        filtered_tweets = {}
+        for tweet in timelines.data:
+          # print('[Tweet]', tweet.created_at)
+          # print('[public metrics]', tweet.id, tweet.public_metrics.__dict__)
+
+          tweet_id = tweet.id
+          metrics = {
+            "verified": target_info.data.verified,
+            "followers": target_metrics['followers_count'],
+            "friends": target_metrics['following_count'],
+            "listed": target_metrics['listed_count'],
+            "favorites": target_metrics['favorite_count'] if 'favorite_count' in target_metrics else None,
+            "statuses": target_metrics['tweet_count'],
+            "tweet": {
+              "retweets": tweet.public_metrics.retweet_count,
+              "favorite": tweet.public_metrics.like_count,
+              "quotes": tweet.public_metrics.quote_count,
+              "retweeted_by_me": False,
+              "lang": tweet.lang,
+            },
+          }
+          # print('[Metrics]', metrics)
+          if self.satisfy_metrics(metrics):
+            filtered_tweets[tweet_id] = { "metrics": metrics }
+        filtered_tweet_ids = list(filtered_tweets.keys())
+        if len(filtered_tweet_ids) == 0:
+          break;
+
+        ## get tweets and check keyword match
+        print('[Filtered]', filtered_tweet_ids)
+        full_tweets = api_v1.statuses_lookup(id_=filtered_tweet_ids, tweet_mode = 'extended')
+        # print('[Full Tweets]', full_tweets)
+        for full_tweet in full_tweets:
+          full_text = self.parse_full_text(full_tweet)
+          # filtered_tweets[full_tweet.id_str]['full_text'] = full_text
+          # filtered_tweets[full_tweet.id_str]['keyword_match'] = self.matches_keywords(full_text)
+          # filtered_tweets[full_tweet.id_star] = {
+          #   "full_text": full_text,
+          #   "keyword_matched": self.matches_keywords(full_text),
+          #   "entities": full_text._json,
+          # }
+          translated = translate(src_text=full_text)
+
+          if self.matches_keywords(full_text):
+            twit = Tweet(
+              user_id = self.bot['user_id'],
+              bot_id = self.bot['id'],
+              target = screen_name,
+              text = full_text,
+              translated = translated,
+              entities = full_tweet._json,
+              tweeted = 0,
+              metrics = filtered_tweets[full_tweet.id_str]['metrics'],
+            )
+            db.session.add(twit)
+            db.session.commit()
+        
+        print('[filtered Tweetes][Full]', filtered_tweets)
+      # mark the target as analyzed.
+      print(f"[Target]{target_info.data.username} Finished")
+    except Exception as e:
+      print('[Error] Timeline', screen_name, str(e))
+
 
   def satisfy_metrics(self, metrics):
     # if len(metrics.keys()) > 0:
@@ -232,7 +346,7 @@ class BotThread(threading.Thread):
     for keyword in self.bot['inclusion_keywords']:
       if keyword in text:
         return True
-    return False
+    return True
 
 
   def parse_full_text(self, status):
@@ -293,6 +407,9 @@ class BotThread(threading.Thread):
     db.session.add(twit)
     db.session.commit()
 
+  def format_time_v2(self, str_dt):
+    dt_arr = str_dt.split(' ')
+    return f"{dt_arr[0].strip()}T{dt_arr[1].strip()}:00Z"
 
 
   # def set_interval(self, func, sec):
@@ -364,18 +481,13 @@ def start_bot_execution(id):
       "status": False,
       "message": "Not found the bot!",
     })
-  if bot.type == 'REAL_TIME':
-    botThread = BotThread(bot)
-    botThread.start()
-    botThreads[str(id)] = botThread
-    bot.status = 'RUNNING'
-    bot.updated_at = datetime.utcnow()
-    db.session.commit()
-  else:
-    return jsonify({
-      "status": False,
-      "message": "Coming soon!",
-    })
+
+  botThread = BotThread(bot)
+  botThread.start()
+  botThreads[str(id)] = botThread
+  bot.status = 'RUNNING'
+  bot.updated_at = datetime.utcnow()
+  db.session.commit()
   
   # botThread.start()
   return jsonify({
