@@ -1,9 +1,14 @@
+const columnConfigKey = 'marketingbot.tweets.columns';
 var _dataTable;
+const defaultColumnConfig = {
+  bot: true, target: true,
+  text: true, translated: true,
+  tweeted: true, time: true,
+};
+const columnNames = ['', 'bot', 'target', 'text', 'translated', 'tweeted', 'time', ''];
 
 $(function() {
   console.log('[Script][Loaded] API Apps');
-
-  initDataTable();
 
   $('#do-retweet').on('click', function(e) {
     const tweet_id = $('#tweet-id').val();
@@ -65,6 +70,12 @@ $(function() {
     });
   });
 
+  $('#col-show-bot,#col-show-target,#col-show-text,#col-show-translated,#col-show-tweeted,#col-show-time').on('change', function(e) {
+    console.log('[Toggle][Column]', $(this).attr('id'))
+    storeColumnConfig();
+    refreshColumnShow();
+  });
+
   // deprecated.
   // submit action in the item form.
   $('#website-form1').submit(function(e) {
@@ -98,6 +109,8 @@ $(function() {
       toastr.error(error.message);
     })
   });
+
+  initDataTable();
 });
 
 function onEdit(id) {
@@ -294,6 +307,7 @@ function initDataTable() {
       };
 
       _dataTable.dataTable(settings);
+      refreshColumnShow();
   }
   initTableWithDynamicRows();
 }
@@ -403,5 +417,37 @@ function openTweetModal() {
   $('#tweetModal').modal({
     backdrop: 'static',
     keyboard: false
+  });
+}
+
+function setColumnVisibility(index, show) {
+  _dataTable.fnSetColumnVis(index, show);
+}
+
+function loadColumnConfig() {
+  try {
+    const strConfig = window.localStorage.getItem(columnConfigKey);
+    if (!strConfig) return defaultColumnConfig;
+    return JSON.parse(strConfig);
+  } catch (e) {
+    return defaultColumnConfig;
+  }
+}
+
+function storeColumnConfig() {
+  const names = ['bot', 'target', 'text', 'translated', 'tweeted', 'time'];
+  const config = {};
+  names.forEach((name) => {
+    config[name] = $(`#col-show-${name}`).is(':checked');
+  });
+  window.localStorage.setItem(columnConfigKey, JSON.stringify(config));
+}
+
+function refreshColumnShow() {
+  const config = loadColumnConfig();
+  Object.keys(config).forEach((key) => {
+    const index = columnNames.indexOf(key);
+    setColumnVisibility(index, config[key]);
+    $(`#col-show-${key}`).prop('checked', config[key]);
   });
 }

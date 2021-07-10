@@ -34,3 +34,15 @@
 span.select2.select2-container span.select2-selection.select2-selection--multiple {
   height: 40px;
 }
+
+/* Column Filter */
+.col-filter {
+  display: flex;
+  align-items: center;
+
+}
+
+.col-filter label {
+  margin-bottom: 0;
+  padding-left: 0.5rem;
+}
