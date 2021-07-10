@@ -3,9 +3,12 @@ var _dataTable;
 const defaultColumnConfig = {
   bot: true, target: true,
   text: true, translated: true,
+  followers: true, friends: true,
+  statuses: true, lists: true,
+  retweets: true, likes: true,
   tweeted: true, time: true,
 };
-const columnNames = ['', 'bot', 'target', 'text', 'translated', 'tweeted', 'time', ''];
+const columnNames = ['', 'bot', 'target', 'text', 'translated', 'followers', 'friends', 'statuses', 'lists', 'retweets', 'likes', 'tweeted', 'time', ''];
 
 $(function() {
   console.log('[Script][Loaded] API Apps');
@@ -15,6 +18,7 @@ $(function() {
     return doRetweetById(tweet_id).then((res) => {
       if (res.status) {
         toastr.success(res.message, 'Retweet');
+        refreshTable();
       } else {
         toastr.error(res.message, 'Retweet');
       }
@@ -70,7 +74,7 @@ $(function() {
     });
   });
 
-  $('#col-show-bot,#col-show-target,#col-show-text,#col-show-translated,#col-show-tweeted,#col-show-time').on('change', function(e) {
+  $('.col-show-checkbox').on('change', function(e) {
     console.log('[Toggle][Column]', $(this).attr('id'))
     storeColumnConfig();
     refreshColumnShow();
@@ -435,7 +439,7 @@ function loadColumnConfig() {
 }
 
 function storeColumnConfig() {
-  const names = ['bot', 'target', 'text', 'translated', 'tweeted', 'time'];
+  const names = ['bot', 'target', 'text', 'translated', 'followers', 'friends', 'statuses', 'lists', 'retweets', 'likes', 'tweeted', 'time'];
   const config = {};
   names.forEach((name) => {
     config[name] = $(`#col-show-${name}`).is(':checked');

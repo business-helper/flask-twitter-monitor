@@ -167,7 +167,14 @@ def load_tweets_root(self):
   limit = payload['length']
   sortCol = payload['order[0][column]']
   sortDir = payload['order[0][dir]']
-  columns = ['tweets.id', 'bot_name', 'target', 'text', 'translated', 'tweeted', 'tweets.created_at']
+  columns = ['tweets.id', 'bot_name', 'target', 'text', 'translated',
+    "JSON_EXTRACT(tweets.metrics, '$.followers')",
+    "JSON_EXTRACT(tweets.metrics, '$.friends')",
+    "JSON_EXTRACT(tweets.metrics, '$.statuses')",
+    "JSON_EXTRACT(tweets.metrics, '$.listed')",
+    "JSON_EXTRACT(tweets.metrics, '$.tweet.retweets')",
+    "JSON_EXTRACT(tweets.metrics, '$.tweet.favorite')",
+    'tweeted', 'tweets.created_at']
 
   user_id = self.id
   # keyword = request.args.get('search[value]')
@@ -177,7 +184,7 @@ def load_tweets_root(self):
       Tweet, Bot
     ).filter(Tweet.bot_id == Bot.id
     ).filter(Tweet.user_id == user_id
-    ).with_entities(Tweet.id, Tweet.bot_id, Tweet.target, Tweet.text, Tweet.translated, Tweet.tweeted, Tweet.entities, Tweet.created_at, Bot.name.label('bot_name')
+    ).with_entities(Tweet.id, Tweet.bot_id, Tweet.target, Tweet.text, Tweet.translated, Tweet.tweeted, Tweet.entities, Tweet.created_at, Tweet.metrics, Bot.name.label('bot_name')
     ).order_by(order_by).limit(limit).offset(skip)
 
   total = Tweet.query.filter_by(user_id = user_id).count()
@@ -195,6 +202,12 @@ def load_tweets_root(self):
       tweet.target,
       tweet.text,
       tweet.translated,
+      tweet.metrics['followers'] if 'followers' in tweet.metrics else 0,
+      tweet.metrics['friends'] if 'friends' in tweet.metrics else 0,
+      tweet.metrics['statuses'] if 'statuses' in tweet.metrics else 0,
+      tweet.metrics['listed'] if 'listed' in tweet.metrics else 0,
+      tweet.metrics['tweet']['retweets'] if 'tweet' in tweet.metrics else 0,
+      tweet.metrics['tweet']['favorite'] if 'tweet' in tweet.metrics else 0,
       tweet.tweeted,
       tweet.created_at,
       { "id": tweet.id, "tweet_id": tweet.entities['id_str'] },
