@@ -133,10 +133,12 @@ function onEdit(id) {
       $('#type').val(app.type);
       $('#start_time').val(app.start_time);
       $('#end_time').val(app.end_time);
+      $('#schedule_interval').val(app.schedule_interval);
+      $('#schedule_time').val(app.schedule_time);
 
       addMetricFilter(app.metrics);
 
-      // botTypeSelected(app.type);
+      botTypeSelected(app.type);
     } else {
       toastr.error(res.message);
     }    
@@ -200,6 +202,8 @@ function botTypeSelected(type) {
   const isRealTime = type === 'REAL_TIME';
   $('#start_time').attr('disabled', isRealTime);
   $('#end_time').attr('disabled', isRealTime);
+  $('#schedule_interval').attr('disabled', isRealTime);
+  $('#schedule_time').attr('disabled', isRealTime);
   $('#interval').attr('disabled', !isRealTime);
 }
 
@@ -246,6 +250,8 @@ function composeFormData() {
   data.append('api_keys', $('#api_keys').val());
   data.append('start_time', $('#start_time').val());
   data.append('end_time', $('#end_time').val());
+  data.append('schedule_interval', $('#schedule_interval').val());
+  data.append('schedule_time', $('#schedule_time').val());
 
   const metricKeys = [];
   const metricValues = [];

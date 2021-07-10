@@ -18,6 +18,8 @@ class Bot(db.Model):
   period = db.Column(db.Numeric(5, 1))
   start_time = db.Column(db.String(30), nullable=True)
   end_time = db.Column(db.String(30), nullable=True)
+  schedule_interval = db.Column(db.Integer, default=0)
+  schedule_time = db.Column(db.Integer, default=0)
   metrics = db.Column(db.JSON)
   last_tweets = db.Column(db.JSON)
   status = db.Column(db.String(20), default='IDLE')
@@ -25,7 +27,7 @@ class Bot(db.Model):
   updated_at = db.Column(db.String(30), nullable=True)
 
 
-  def __init__(self, user_id, name, type, api_keys, targets, inclusion_keywords, exclusion_keywords, period, status, start_time, end_time, metrics = {}, last_tweets = [], **args):
+  def __init__(self, user_id, name, type, api_keys, targets, inclusion_keywords, exclusion_keywords, period, status, start_time, end_time, metrics = {}, schedule_interval = 0, schedule_time = 0, last_tweets = [], **args):
     self.user_id = user_id
     self.name = name
     self.type = type
@@ -36,6 +38,8 @@ class Bot(db.Model):
     self.period = period
     self.start_time = start_time
     self.end_time = end_time
+    self.schedule_interval = schedule_interval
+    self.schedule_time = schedule_time
     self.metrics = metrics
     self.status = status
     self.last_tweets = last_tweets
@@ -68,6 +72,8 @@ class Bot(db.Model):
       period = str(self.period),
       start_time = self.start_time,
       end_time = self.end_time,
+      schedule_interval = self.schedule_interval,
+      schedule_time = self.schedule_time,
       metrics = self.metrics,
       status=self.status,
       created_at=self.created_at,

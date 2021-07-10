@@ -160,6 +160,8 @@ function composeFormData() {
   data.append('api_keys', $('#api_keys').val());
   data.append('start_time', $('#start_time').val());
   data.append('end_time', $('#end_time').val());
+  data.append('schedule_interval', $('#schedule_interval').val());
+  data.append('schedule_time', Number($('#schedule_time').val()));
 
   const metricKeys = [];
   const metricValues = [];
