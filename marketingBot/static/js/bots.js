@@ -615,7 +615,7 @@ function storeColumnConfig() {
 }
 
 function refreshColumnShow() {
-  const config = loadColumnConfig();console.log('[Config]', config)
+  const config = loadColumnConfig();
   Object.keys(config).forEach((key) => {
     const index = columnNames.indexOf(key);
     setColumnVisibility(index, config[key]);
