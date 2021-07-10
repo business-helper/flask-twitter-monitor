@@ -1,4 +1,11 @@
 var _dataTable;
+const columnConfigKey = 'marketingbot.api-apps.columns';
+const defaultColumnConfig = {
+  name: true, keys: true,
+  active: true,
+};
+const columnNames = ['', 'name', 'keys', 'active', ''];
+
 
 $(function() {
   console.log('[Script][Loaded] API Apps');
@@ -36,6 +43,11 @@ $(function() {
       console.log('[Error]', error);
       toastr.error(error.message);
     })
+  });
+
+  $('.col-show-checkbox').on('change', function(e) {
+    storeColumnConfig();
+    refreshColumnShow();
   });
 });
 
@@ -144,6 +156,7 @@ function initDataTable() {
       _dataTable.dataTable(settings);
   }
   initTableWithDynamicRows();
+  refreshColumnShow();
 }
 
 function updateApiApp(id, data) {
@@ -255,4 +268,34 @@ function refreshTable() {
   _dataTable.api().ajax.reload();
 }
 
+function setColumnVisibility(index, show) {
+  _dataTable.fnSetColumnVis(index, show);
+}
 
+function loadColumnConfig() {
+  try {
+    const strConfig = window.localStorage.getItem(columnConfigKey);
+    if (!strConfig) return defaultColumnConfig;
+    return JSON.parse(strConfig);
+  } catch (e) {
+    return defaultColumnConfig;
+  }
+}
+
+function storeColumnConfig() {
+  const names = Object.keys(defaultColumnConfig);
+  const config = {};
+  names.forEach((name) => {
+    config[name] = $(`#col-show-${name}`).is(':checked');
+  });
+  window.localStorage.setItem(columnConfigKey, JSON.stringify(config));
+}
+
+function refreshColumnShow() {
+  const config = loadColumnConfig();
+  Object.keys(config).forEach((key) => {
+    const index = columnNames.indexOf(key);
+    setColumnVisibility(index, config[key]);
+    $(`#col-show-${key}`).prop('checked', config[key]);
+  });
+}
