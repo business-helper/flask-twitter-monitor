@@ -75,7 +75,6 @@ $(function() {
   });
 
   $('.col-show-checkbox').on('change', function(e) {
-    console.log('[Toggle][Column]', $(this).attr('id'))
     storeColumnConfig();
     refreshColumnShow();
   });
