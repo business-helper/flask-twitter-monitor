@@ -188,6 +188,8 @@ def update_bot_form(self, id):
   bot.period = payload['interval'] if 'interval' in payload else 1.0
   bot.start_time = payload['start_time']
   bot.end_time = payload['end_time']
+  bot.schedule_interval = payload['schedule_interval']
+  bot.schedule_time = payload['schedule_time']
   print('[Metrics]', payload['metrics'])
   bot.metrics = json_parse(payload['metrics'])
 
