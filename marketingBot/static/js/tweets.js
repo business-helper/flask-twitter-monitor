@@ -48,6 +48,24 @@ $(function() {
     })
   });
 
+  $('#do-save').on('click', function(e) {
+    const tweet_id = $('#tweet-id').val();
+    const translated = $('#translated-tweet').val();
+
+    return updateTranslationById(tweet_id, translated).then(res => {
+      if (res.status) {
+        toastr.success(res.message, 'Save Transaltion');
+        refreshTable();
+      } else {
+        toastr.error(res.message, 'Tweet');
+      }
+    })
+    .catch(error => {
+      console.log('[Tweet]', error);
+      toastr.error(error.message, 'Save Translation');
+    });
+  });
+
 
   $('#website-form').submit(function(e) {
     e.preventDefault();
@@ -183,9 +201,9 @@ function composeFormData() {
 
 function patchTweetModal(tweet) {
   $('#tweet-id').val(tweet.id);
-  $('#origin-tweet').text(tweet.text);
+  $('#origin-tweet').val(tweet.text);
   $('#len-origin').text(tweet.text.length);
-  $('#translated-tweet').text(tweet.translated);
+  $('#translated-tweet').val(tweet.translated);
   $('#len-translated').text(tweet.translated.length);
 }
 
@@ -398,6 +416,16 @@ function doTweetById(id, { translated }) {
   return $.ajax({
     url: `/api/tweets/do-tweet/${id}`,
     method: 'POST',
+    data: JSON.stringify({ translated }),
+    contentType: 'application/json, charset=utf-8',
+    dataType: 'json',
+  });
+}
+
+function updateTranslationById(id, translated) {
+  return $.ajax({
+    url: `/api/tweets/translate/${id}`,
+    method: 'PUT',
     data: JSON.stringify({ translated }),
     contentType: 'application/json, charset=utf-8',
     dataType: 'json',
