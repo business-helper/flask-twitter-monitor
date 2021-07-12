@@ -112,6 +112,25 @@ def do_tweet(self, id):
   })
 
 
+@api.route('/tweets/translate/<id>', methods=['PUT'])
+@session_required
+def save_tweet_translation(self, id):
+  payload = dict(request.get_json())
+  tweet = Tweet.query.filter_by(id = id).first()
+  if not tweet:
+    return jsonify({
+      "status": False,
+      "message": "Not found the tweet with ID!",
+    })
+  tweet.translated = payload['translated']
+  tweet.updated_at = datetime.utcnow()
+  db.session.commit()
+  return jsonify({
+    "status": True,
+    "message": "success",
+  })
+
+
 @api.route('/tweets/<id>', methods=['DELETE'])
 @session_required
 def delete_tweet_by_id(self, id):

@@ -158,6 +158,8 @@ def create_bot_form(self):
     period = payload['interval'] if 'interval' in payload else 1.0,
     start_time = payload['start_time'],
     end_time = payload['end_time'],
+    schedule_interval = payload['schedule_interval'],
+    schedule_time = payload['schedule_time'],
     metrics = json_parse(payload['metrics']),
     status= payload['status'] if 'status' in payload else 'IDLE',
   )
