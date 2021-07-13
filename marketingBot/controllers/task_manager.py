@@ -1,7 +1,7 @@
 from datetime import datetime
 from flask import jsonify, request
 import threading
-import time
+import time, traceback, sys
 import tweepy
 from pytwitter import Api
 # from uwsgidecorators import *
@@ -139,6 +139,7 @@ class BotThread(threading.Thread):
         self.analyze_target(screen_name = screen_name, api_inst = api_inst)
     else:
       print(f"[Bot][{self.bot['name']}]No available API v2 instances")
+    # after the bot is finished or stopped by error.
     bot = Bot.query.filter_by(id = self.bot['id']).first()
     if bot:
       bot.status = 'IDLE'
@@ -251,21 +252,28 @@ class BotThread(threading.Thread):
         # if start time is later than end time, then break;
         if start_time > end_time:
           break;
-        timelines = api_inst.get_timelines(
-          user_id = target_id,
-          start_time=start_time,
-          end_time=end_time,
-          # since_id = since_id,
-          max_results = self.one_time_batch,
-          media_fields = ['url', 'public_metrics' ],
-          expansions=['author_id', 'referenced_tweets.id', 'referenced_tweets.id.author_id'],
-          tweet_fields = ['author_id', 'entities', 'id', 'lang', 'public_metrics', 'text', 'created_at', 'referenced_tweets'],
-          user_fields = ['id', 'name', 'public_metrics', 'verified']
-        )
-        # print('[timelines]', timelines)
-        print('[End Time] Old: ', end_time)
+        
+        timelines = False
+        try:
+          timelines = api_inst.get_timelines(
+            user_id = target_id,
+            start_time=start_time,
+            end_time=end_time,
+            # since_id = since_id,
+            max_results = self.one_time_batch,
+            media_fields = ['url', 'public_metrics' ],
+            expansions=['author_id', 'referenced_tweets.id', 'referenced_tweets.id.author_id'],
+            tweet_fields = ['author_id', 'entities', 'id', 'lang', 'public_metrics', 'text', 'created_at', 'referenced_tweets'],
+            user_fields = ['id', 'name', 'public_metrics', 'verified']
+          )
+        except Exception as e:
+          print('[Timelines][Error]', str(e))
+          break
+
+        print('[timelines]', len(timelines.data))
+        # print('[End Time] Old: ', end_time)
         end_time = timelines.data[len(timelines.data) - 1].created_at
-        print('[End Time] New: ', end_time)
+        # print('[End Time] New: ', end_time)
 
         ## analysis
         tweets['total'] += len(timelines.data)
@@ -295,6 +303,7 @@ class BotThread(threading.Thread):
           # print('[Metrics]', metrics)
           if self.satisfy_metrics(metrics):
             filtered_tweets[tweet_id] = { "metrics": metrics }
+
         filtered_tweet_ids = list(filtered_tweets.keys())
         if len(filtered_tweet_ids) == 0:
           break;
@@ -302,6 +311,7 @@ class BotThread(threading.Thread):
         ## get tweets and check keyword match
         print('[Filtered]', filtered_tweet_ids)
 
+        # check if the bot has stopped.
         if self.stopped:
           return False
 
@@ -338,9 +348,14 @@ class BotThread(threading.Thread):
         
         # print('[filtered Tweetes][Full]', filtered_tweets)
       # mark the target as analyzed.
+      print('[Finished]')
       print(f"[Target]{target_info.data.username} Finished")
     except Exception as e:
-      print('[Error] Timeline', screen_name, str(e))
+      # exc_type, exc_obj, exc_tb = sys.exc_info()
+      # tb = traceback.extract_tb(exc_tb)[-1]
+      # print(exc_type, tb[2], tb[1])
+      print('[Error] Timeline: ', screen_name, str(e))
+      raise e
 
 
   def satisfy_metrics(self, metrics):
@@ -442,8 +457,13 @@ class BotThread(threading.Thread):
       twit = Tweet(**twit_dict)
       db.session.add(twit)
       db.session.commit()
+      print('[Check & Insert Tweet][Inserted]')
     else:
-      pass
+      tweet.metrics = twit_dict['metrics']
+      tweet.entities = twit_dict['entities']
+      tweet.updated_at = datetime.utcnow()
+      db.session.commit()
+      print('[Check & Insert Tweet][Updated]')
 
   # def set_interval(self, func, sec):
   #   def func_wrapper():
