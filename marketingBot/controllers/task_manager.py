@@ -3,6 +3,7 @@ from flask import jsonify, request
 import threading
 import time, traceback, sys
 import tweepy
+import threading
 from pytwitter import Api
 # from uwsgidecorators import *
 
@@ -524,15 +525,15 @@ def stop_bot_execution(id):
 @app.route('/tasks/<id>/start', methods=['GET', 'POST'])
 def start_bot_execution(id):
   bot = Bot.query.filter_by(id=id).first()
-  if bot.status == 'RUNNING':
-    return jsonify({
-      "status": True,
-      "message": "Bot already running!",
-    })
   if not bot:
     return jsonify({
       "status": False,
       "message": "Not found the bot!",
+    })
+  if bot.status == 'RUNNING':
+    return jsonify({
+      "status": True,
+      "message": "Bot already running!",
     })
   bot.status = 'RUNNING'
   bot.updated_at = datetime.utcnow()
@@ -570,3 +571,30 @@ def test_translate():
   txt = translate(src_text = payload['text'], target_lang = payload['lang'])
   return jsonify({ "text": txt })
 
+
+def run_bot_as_thread(id):
+  bot = Bot.query.filter_by(id=id).first()
+  if not bot:
+    print(f"[Cron][Bot]{id} Not Fouond...")
+    return False
+  if bot.status == 'RUNNING':
+    print(f"[Cron][BOt]{id} Stopped: already running")
+    return True
+  try:
+    # update db
+    bot.status = 'RUNNING'
+    bot.udpated_at = datetime.utcnow()
+    db.session.commit()
+    def run_botThread():
+      botThread = BotThread(bot)
+      botThread.start()
+      botThread[str(id)] = botThread
+    threading.Thread(target = run_botThread).start()
+
+  except Exception as e:
+    print(f"[Cron][Bot]{id} Stopped By Error", str(e))
+    bot.status = 'IDLE'
+    bot.updated_at = datetime.utcnow()
+    db.sesssion.add(bot)
+    db.session.commit()
+    return False
