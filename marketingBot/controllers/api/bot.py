@@ -6,6 +6,7 @@ from marketingBot.models.Bot import db, Bot
 from marketingBot.models.AppKey import AppKey
 from marketingBot.controllers.api import api
 from marketingBot.controllers.task_manager import start_bot_execution, stop_bot_execution
+from marketingBot.controllers.cron import schedule_bot_running
 from marketingBot.helpers.common import stringify, splitString2Array, json_parse
 from marketingBot.helpers.wrapper import session_required
 
@@ -142,35 +143,42 @@ def delete_bot_by_id(self, id):
 @api.route('/bot_form', methods=['POST'])
 @session_required
 def create_bot_form(self):
-  payload = dict(request.form)
-  str_targets = request.files.get('targets').read().decode('utf-8') if 'targets' in request.files else payload['targets']
-  str_in_keywords = request.files.get('inclusion_keywords').read().decode('utf-8') if 'inclusion_keywords' in request.files else payload['inclusion_keywords']
-  str_ex_keywords = request.files.get('exclusion_keywords').read().decode('utf-8') if 'exclusion_keywords' in request.files else payload['exclusion_keywords']
+  try:
+    payload = dict(request.form)
+    str_targets = request.files.get('targets').read().decode('utf-8') if 'targets' in request.files else payload['targets']
+    str_in_keywords = request.files.get('inclusion_keywords').read().decode('utf-8') if 'inclusion_keywords' in request.files else payload['inclusion_keywords']
+    str_ex_keywords = request.files.get('exclusion_keywords').read().decode('utf-8') if 'exclusion_keywords' in request.files else payload['exclusion_keywords']
 
-  bot = Bot(
-    user_id = self.id,
-    name = payload['name'],
-    type = payload['type'],
-    targets = (splitString2Array(str_targets)),
-    api_keys = (splitString2Array(payload['api_keys'])),
-    inclusion_keywords = (splitString2Array(str_in_keywords)),
-    exclusion_keywords = (splitString2Array(str_ex_keywords)),
-    period = payload['interval'] if 'interval' in payload else 1.0,
-    start_time = payload['start_time'],
-    end_time = payload['end_time'],
-    schedule_interval = payload['schedule_interval'],
-    schedule_time = payload['schedule_time'],
-    metrics = json_parse(payload['metrics']),
-    status= payload['status'] if 'status' in payload else 'IDLE',
-  )
+    bot = Bot(
+      user_id = self.id,
+      name = payload['name'],
+      type = payload['type'],
+      targets = (splitString2Array(str_targets)),
+      api_keys = (splitString2Array(payload['api_keys'])),
+      inclusion_keywords = (splitString2Array(str_in_keywords)),
+      exclusion_keywords = (splitString2Array(str_ex_keywords)),
+      period = payload['interval'] if 'interval' in payload else 1.0,
+      start_time = payload['start_time'],
+      end_time = payload['end_time'],
+      schedule_interval = payload['schedule_interval'],
+      schedule_time = payload['schedule_time'],
+      metrics = json_parse(payload['metrics']),
+      status= payload['status'] if 'status' in payload else 'IDLE',
+    )
 
-  db.session.add(bot)
-  db.session.commit()
-  return jsonify({
-    "status": True,
-    "message": "A bot has been added!",
-    "data": Bot.query.filter_by(id=bot.id).first().format().to_dict(),
-  })
+    db.session.add(bot)
+    db.session.commit()
+    schedule_bot_running(bot)
+    return jsonify({
+      "status": True,
+      "message": "A bot has been added!",
+      "data": Bot.query.filter_by(id=bot.id).first().format().to_dict(),
+    })
+  except Exception as e:
+    return jsonify({
+      "status": False,
+      "message": 'Failed to add a bot',
+    })
 
 @api.route('/bot_form/<id>', methods=['PUT'])
 @session_required

@@ -19,7 +19,7 @@ class Bot(db.Model):
   start_time = db.Column(db.String(30), nullable=True)
   end_time = db.Column(db.String(30), nullable=True)
   schedule_interval = db.Column(db.Integer, default=0)
-  schedule_time = db.Column(db.Integer, default=0)
+  schedule_time = db.Column(db.String(30), nullable=False)
   metrics = db.Column(db.JSON)
   last_tweets = db.Column(db.JSON)
   status = db.Column(db.String(20), default='IDLE')

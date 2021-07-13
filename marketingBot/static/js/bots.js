@@ -42,9 +42,13 @@ $(function() {
 
   $('#website-form').submit(function(e) {
     e.preventDefault();
-    if (!confirm('Are you sure to submit?')) return false;
     const is_form_valid = validateForm();
 
+    if (!is_form_valid) {
+      return false;
+    }
+
+    if (!confirm('Are you sure to submit?')) return false;
     const data = composeFormData();
 
     const bot_id = Number($('#bot-id').val());
@@ -237,7 +241,38 @@ function addMetricFilter(metrics) {
 }
 
 function validateForm() {
-  return true;
+  let valid = true;
+  
+  const type = $('#type').val();
+  if (type === 'REAL_TIME') {
+    const interval = $('#interval').val();
+    if (!interval || Number(interval) <= 0) {
+      toastr.error('The field is required or must be greater than 0.', 'Interval');
+      valid = false;
+    }
+  } else if (type === 'ONE_TIME') {
+    const start_time = $('#start_time').val();
+    const end_time = $('#end_time').val();
+    const schedule_interval = $("#schedule_interval").val();
+    const schedule_time = $('#schedule_time').val();
+    if (!start_time) {
+      toastr.error('The field is required!', 'Start Time');
+      valid = false;
+    }
+    if (!end_time) {
+      toastr.error('The field is required!', 'End Time');
+      valid = false;
+    }
+    if (!schedule_interval && Number(schedule_interval) < 0) {
+      toastr.error('The field must not be smaller than 0', 'Schedule Interval');
+      valid = false;
+    }
+    if (!schedule_time) {
+      toastr.error('The field is required!', 'Schedule Time');
+      valid = false;
+    }
+  }
+  return valid;
 }
 
 function composeFormData() {
