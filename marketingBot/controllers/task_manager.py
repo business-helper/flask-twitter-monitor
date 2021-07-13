@@ -573,6 +573,7 @@ def test_translate():
 
 
 def run_bot_as_thread(id):
+  print('[Run Bot As Thread]', id)
   bot = Bot.query.filter_by(id=id).first()
   if not bot:
     print(f"[Cron][Bot]{id} Not Fouond...")
@@ -588,7 +589,7 @@ def run_bot_as_thread(id):
     def run_botThread():
       botThread = BotThread(bot)
       botThread.start()
-      botThread[str(id)] = botThread
+      botThreads[str(id)] = botThread
     threading.Thread(target = run_botThread).start()
 
   except Exception as e:

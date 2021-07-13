@@ -2,50 +2,19 @@
 from flask import jsonify
 # ref: https://apscheduler.readthedocs.io/en/latest/modules/triggers/combining.html#module-apscheduler.triggers.combining
 from apscheduler.schedulers.background import BackgroundScheduler
-from apscheduler.triggers.combining import AndTrigger
+# from apscheduler.triggers.combining import AndTrigger
 from apscheduler.triggers.interval import IntervalTrigger
 from apscheduler.triggers.cron import CronTrigger
 import threading
 from datetime import datetime
 from pytz import timezone
-import time
+
 from marketingBot.controllers.task_manager import run_bot_as_thread
+from marketingBot.models.Notification import Notification, db
+from marketingBot.models.Bot import Bot
 from marketingBot import app
 
 scheduler = BackgroundScheduler()
-
-def test_job():
-    print('I am working...')
-    # CronTrigger(start_date="2021-07-13", timezone="+0900")
-    # # start_date: datetime
-    # # days: int
-    # IntervalTrigger()
-
-
-def run_as_thread():
-  print('[Thread][Init]')
-  threading.Thread(target = test_job).start()
-
-  print('[Thread][Slept]')
-  threading.Thread(target = test_job).start()
-
-def schedule_bot_running(bot):
-  if bot.schedule_interval == 0:
-    print(f"[Schedule][Bot {bot.id}] is unable to schdule")
-    return False
-  try:
-    trigger = CronTrigger(
-      start_date=convert_strignt_JST(bot.schedule_time),
-      timezone=timezone('Asia/Tokyo'),
-      day=bot.schedule_interval,
-    )
-    def run_bot():
-      run_bot_as_thread(bot.id)
-    job = scheduler.add_job(run_bot, trigger=trigger, id=bot.id)
-    return job
-  except Exception as e:
-    print(f"[Schedule][Bot {bot.id}] Error:", str(e))
-    pass
 
 def convert_strignt_JST(str_datetime):
   try:
@@ -56,26 +25,131 @@ def convert_strignt_JST(str_datetime):
     print(f"[Datetime][FormatError] {str_datetime} can't be converted!")
     return False
 
+def schedule_bot_running(bot, reboot = False):
+  if bot.schedule_interval == 0:
+    print(f"[Schedule][Bot {bot.id}] is unable to schdule")
+    return False
+  try:
+    # trigger = CronTrigger(
+    #   start_date=convert_strignt_JST(bot.schedule_time),
+    # )
+    trigger = IntervalTrigger(
+      start_date=convert_strignt_JST(bot.schedule_time),
+      timezone=timezone('Asia/Tokyo'),
+      # days=bot.schedule_interval,
+      minutes=5,
+    )
+    def run_bot():
+      run_bot_as_thread(bot.id)
+    print(f"[Schedule][Bot]${bot.id}")
+    job = scheduler.add_job(run_bot, trigger=trigger, id=str(bot.id), replace_existing=True)
+    if not reboot:
+      # notification of job added.
+      notification = Notification(
+        user_id=bot.user_id,
+        text=f"The Bot [{bot.name}] has been scheduled!",
+        payload={"type": "BOT_SCHEDULED", "bot": bot.id},
+      )
+      db.session.add(notification)
+      db.session.commit()
+    return job
+  except Exception as e:
+    print(f"[Schedule][Bot {bot.id}] Error:", str(e))
+    raise e
 
-
-## remove all jobs
-for job in scheduler.get_jobs():
+def modify_bot_schedule(bot):
+  if bot.schedule_interval == 0:
+    print(f"[Schedule][Bot {bot.id}] is unable to schdule")
+    return False
+  job = scheduler.get_job(job_id = str(bot.id))
   job.remove()
+  try:
+    trigger = IntervalTrigger(
+      start_date=convert_strignt_JST(bot.schedule_time),
+      timezone=timezone('Asia/Tokyo'),
+      # days=bot.schedule_interval,
+      minutes=5,
+    )
+    def run_bot():
+      run_bot_as_thread(bot.id)
+    print(f"[Schedule][Bot][Modify] {bot.id}")
+    scheduler.add_job(run_bot, trigger=trigger, id=str(bot.id), replace_existing=True)
+
+    # notification of job added.
+    notification = Notification(
+      user_id=bot.user_id,
+      text=f"The schedule for the Bot [{bot.name}] has been reset!",
+      payload={"type": "BOT_SCHEDULE_UPDATED", "bot": bot.id},
+    )
+    db.session.add(notification)
+    db.session.commit()
+    return job
+  except Exception as e:
+    print(f"[Schedule][Bot {bot.id}] Error:", str(e))
+    raise e
+
+def initialize_schedule():
+  # remove all jobs
+  for job in scheduler.get_jobs():
+    job.remove()
+  
+  one_time_bots = Bot.query.filter_by(type='ONE_TIME').all()
+  print(f"[Found {len(one_time_bots)} One-Time Bots]")
+  for bot in one_time_bots:
+    schedule_bot_running(bot, reboot = True)
+  print('[Booting System] Initialized schedule for one-time bots...')
+
+initialize_schedule()
+
+def remove_bot_from_schedule(bot):
+  try:
+    job = scheduler.get_job(job_id = str(bot.id))
+    job.remove()
+    notification = Notification(
+      text=f"A schedule for the Bot [{bot.name}] has been removed!",
+      user_id = bot.user_id,
+      payload={
+        "type": "SCHEDULE_REMOVED",
+        "bot": bot.id,
+      },
+    )
+    db.session.add(notification)
+    db.session.commit()
+    return True
+  except Exception as e:
+    print(f"[Delete Job] Failed:", str(e))
+    return False
+
+# @test
+def test_job():
+    print('I am working...')
+    # CronTrigger(start_date="2021-07-13", timezone="+0900")
+    # # start_date: datetime
+    # # days: int
+    # IntervalTrigger()
+
+# @test
+def run_as_thread():
+  print('[Thread][Init]')
+  threading.Thread(target = test_job).start()
+
+  print('[Thread][Slept]')
+  threading.Thread(target = test_job).start()
 
 
-job = scheduler.add_job(run_as_thread, 'interval', minutes=1, id='test_job_label')
-jobs = scheduler.get_jobs()
-# print('[Job]', job)
-# print('[Job]', job.id)
-# job_by_id = scheduler.get_job(job_id = 'test_job_label')
-# print('[Jobs]', jobs, job_by_id)
-print('[Job Status]', job.id, job.name)
-scheduler.start()
+# job = scheduler.add_job(run_as_thread, 'interval', minutes=1, id='test_job_label')
+# jobs = scheduler.get_jobs()
+# # print('[Job]', job)
+# # print('[Job]', job.id)
+# # job_by_id = scheduler.get_job(job_id = 'test_job_label')
+# # print('[Jobs]', jobs, job_by_id)
+# print('[Job Status]', job.id, job.name)
+# scheduler.start()
 
 
 @app.route('/list-jobs')
 def list_jobs():
   jobs = scheduler.get_jobs()
-  ids = list(map(lambda x: x.id, jobs))
+  ids = list(map(lambda x: {"id": x.id, "next_time": x.next_time}, jobs))
   return jsonify(ids)
 

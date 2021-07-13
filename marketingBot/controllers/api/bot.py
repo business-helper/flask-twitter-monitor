@@ -6,7 +6,7 @@ from marketingBot.models.Bot import db, Bot
 from marketingBot.models.AppKey import AppKey
 from marketingBot.controllers.api import api
 from marketingBot.controllers.task_manager import start_bot_execution, stop_bot_execution
-from marketingBot.controllers.cron import schedule_bot_running
+from marketingBot.controllers.cron import schedule_bot_running, remove_bot_from_schedule, modify_bot_schedule
 from marketingBot.helpers.common import stringify, splitString2Array, json_parse
 from marketingBot.helpers.wrapper import session_required
 
@@ -131,7 +131,7 @@ def delete_bot_by_id(self, id):
       "status": False,
       "message": 'Bot does not exist!',
     })
-  
+  remove_bot_from_schedule(bot)
   db.session.delete(bot)
   db.session.commit()
 
@@ -204,7 +204,7 @@ def update_bot_form(self, id):
   bot.metrics = json_parse(payload['metrics'])
 
   db.session.commit()
-
+  modify_bot_schedule(bot)
   # start_bot_execution(id)
 
   return jsonify({
