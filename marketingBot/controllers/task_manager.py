@@ -1,5 +1,6 @@
 from datetime import datetime
 from flask import jsonify, request
+import pytz
 import threading
 import time, traceback, sys
 import tweepy
@@ -12,6 +13,7 @@ from marketingBot.config.constants import socket_event
 from marketingBot.controllers.socket import io_notify_user
 from marketingBot.models.Bot import db, Bot
 from marketingBot.models.AppKey import AppKey
+from marketingBot.models.Notification import Notification
 from marketingBot.models.Tweet import Tweet
 from marketingBot.helpers.common import translate
 
@@ -49,14 +51,16 @@ class BotThread(threading.Thread):
   targets = {}
   last_tweet_ids = {}
   one_time_batch = 10
+  from_schedule = False
 
-  def __init__(self, bot, **args):
+  def __init__(self, bot, from_schedule = False, **args):
     threading.Thread.__init__(self)
     self.name = bot.name
     self._interval = bot.period
     self.bot = bot.to_dict()
     # self.event = threading.Event()
     self.stopped = True
+    self.from_schedule = from_schedule
     for screen_name in self.bot['targets']:
       self.last_tweet_ids[screen_name.strip()] = {
         "now": None,
@@ -108,7 +112,6 @@ class BotThread(threading.Thread):
           print(f"[Bot][{self.bot['name']}][API V2] failed to create... {api_key_id}")
 
 
-
   def validate_targets(self):
     if len(self.apis) == 0:
       return []
@@ -146,6 +149,7 @@ class BotThread(threading.Thread):
       bot.status = 'IDLE'
       bot.updated_at = datetime.utcnow()
       db.session.commit()
+    print(f"[BotThread][One Time Bot][Finished] {bot.id}-{bot.name}")      
 
 
   def processor(self):
@@ -243,8 +247,16 @@ class BotThread(threading.Thread):
     # print('[Target Info]', target_info, target_info.data)
     target_id = target_info.data.id
     print('[Target Id]', target_id)
-    start_time = self.format_time_v2(self.bot['start_time'])
-    end_time = self.format_time_v2(self.bot['end_time'])
+
+    now = datetime.now() #pytz.timezone('Asia/Tokyo')
+    start_time0 = now
+    if self.from_schedule and self.bot['schedule_time']:
+      start_time0 = datetime.fromisoformat(self.bot['schedule_time'])
+      # start_time0.astimezone(pytz.timezone('Asia/Tokyo'))
+    delta = now - start_time0
+    start_time = self.format_time_v2(self.bot['start_time'], delta)
+    end_time = self.format_time_v2(self.bot['end_time'], delta)
+    # print('[Start & End Time]', start_time, end_time)
     # since_id = None #"1408485784840065028"
     try:
       while(True):
@@ -447,9 +459,15 @@ class BotThread(threading.Thread):
     # db.session.add(twit)
     # db.session.commit()
 
-  def format_time_v2(self, str_dt):
+  def format_time_v2(self, str_dt, delta):
+    # print('[Format Time][Delta]', delta)
+    # ref: https://medium.com/easyread/understanding-about-rfc-3339-for-datetime-formatting-in-software-engineering-940aa5d5f68a
     dt_arr = str_dt.split(' ')
-    return f"{dt_arr[0].strip()}T{dt_arr[1].strip()}:00Z"
+    # dt = datetime.fromisoformat('2010-11-06T00:00:00+09:00')
+    # dt.isoformat
+    # return f"{dt_arr[0].strip()}T{dt_arr[1].strip()}:00Z"
+    dt = datetime.fromisoformat(f"{dt_arr[0].strip()}T{dt_arr[1].strip()}:00+09:00") + delta
+    return f"{dt.year}-{str(dt.month).zfill(2)}-{str(dt.day).zfill(2)}T{str(dt.hour).zfill(2)}:{str(dt.minute).zfill(2)}:{str(dt.second).zfill(2)}+09:00"
 
   def check_insert_tweet(self, twit_dict):
     # db.session.query(Tweet).filter(Tweet.entities['id_str'] == id).first()
@@ -578,24 +596,37 @@ def run_bot_as_thread(id):
   if not bot:
     print(f"[Cron][Bot]{id} Not Fouond...")
     return False
-  if bot.status == 'RUNNING':
-    print(f"[Cron][BOt]{id} Stopped: already running")
-    return True
+
+  # to-do: analyze
+  # if bot.status == 'RUNNING':
+  #   print('[Run as Thread][Bot]', bot.to_dict())
+  #   print(f"[Cron][BOt]{id} Stopped: already running")
+  #   return True
   try:
     # update db
     bot.status = 'RUNNING'
     bot.udpated_at = datetime.utcnow()
     db.session.commit()
     def run_botThread():
-      botThread = BotThread(bot)
-      botThread.start()
+      bot = Bot.query.filter_by(id=id).first()
+      botThread = BotThread(bot= bot, from_schedule = True)
       botThreads[str(id)] = botThread
+      botThread.start()
     threading.Thread(target = run_botThread).start()
-
+    notification = Notification(
+      user_id = bot.user_id,
+      text = f"The bot [{bot.name}] has been triggered by schedule!",
+      payload = {
+        "type": "SCHEDULE_RUN",
+        "bot": bot.id,
+      },
+    )
+    db.session.add(notification)
+    db.session.commit()
   except Exception as e:
     print(f"[Cron][Bot]{id} Stopped By Error", str(e))
     bot.status = 'IDLE'
     bot.updated_at = datetime.utcnow()
-    db.sesssion.add(bot)
+    # db.session.add(bot)
     db.session.commit()
     return False

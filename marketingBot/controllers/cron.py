@@ -13,6 +13,8 @@ from marketingBot.controllers.task_manager import run_bot_as_thread
 from marketingBot.models.Notification import Notification, db
 from marketingBot.models.Bot import Bot
 from marketingBot import app
+TEST_INTERVAL = 2
+CRON_TEST = False
 
 scheduler = BackgroundScheduler()
 
@@ -36,8 +38,8 @@ def schedule_bot_running(bot, reboot = False):
     trigger = IntervalTrigger(
       start_date=convert_strignt_JST(bot.schedule_time),
       timezone=timezone('Asia/Tokyo'),
-      # days=bot.schedule_interval,
-      minutes=5,
+      days=bot.schedule_interval if not CRON_TEST else 0,
+      minutes=TEST_INTERVAL if CRON_TEST else 0,
     )
     def run_bot():
       run_bot_as_thread(bot.id)
@@ -67,8 +69,8 @@ def modify_bot_schedule(bot):
     trigger = IntervalTrigger(
       start_date=convert_strignt_JST(bot.schedule_time),
       timezone=timezone('Asia/Tokyo'),
-      # days=bot.schedule_interval,
-      minutes=5,
+      days=bot.schedule_interval if not CRON_TEST else 0,
+      minutes=TEST_INTERVAL if CRON_TEST else 0,
     )
     def run_bot():
       run_bot_as_thread(bot.id)
@@ -98,6 +100,7 @@ def initialize_schedule():
   for bot in one_time_bots:
     schedule_bot_running(bot, reboot = True)
   print('[Booting System] Initialized schedule for one-time bots...')
+  scheduler.start()
 
 initialize_schedule()
 
@@ -150,6 +153,11 @@ def run_as_thread():
 @app.route('/list-jobs')
 def list_jobs():
   jobs = scheduler.get_jobs()
-  ids = list(map(lambda x: {"id": x.id, "next_time": x.next_time}, jobs))
+  ids = list(map(lambda x: {"id": x.id}, jobs))
   return jsonify(ids)
+
+@app.route('/run-as-thread/<id>')
+def run_a_bot_as_thread(id):
+  run_bot_as_thread(id)
+  return jsonify({"status": True})
 
