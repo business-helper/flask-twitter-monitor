@@ -9,6 +9,7 @@ from flask import flash
 from marketingBot import app
 from marketingBot.models.AppKey import db, AppKey
 from marketingBot.models.Bot import Bot
+from marketingBot.models.Notification import Notification
 from marketingBot.models.Tweet import Tweet
 from marketingBot.helpers.common import unset_login_session, validate_session, timestamp
 from marketingBot.helpers.wrapper import session_required
@@ -187,7 +188,8 @@ def load_tweets_root(self):
     ).with_entities(Tweet.id, Tweet.bot_id, Tweet.target, Tweet.text, Tweet.translated, Tweet.tweeted, Tweet.entities, Tweet.created_at, Tweet.metrics, Bot.name.label('bot_name')
     ).order_by(order_by).limit(limit).offset(skip)
 
-  total = Tweet.query.filter_by(user_id = user_id).count()
+  # total = Tweet.query.filter_by(user_id = user_id).count()
+  total = db.session.query(Tweet, Bot).filter(Bot.id == Tweet.bot_id).count()
 
   bots = Bot.query.filter_by(user_id = user_id).all()
   dict_bots = {}
@@ -219,5 +221,52 @@ def load_tweets_root(self):
     'iTotalDisplayRecords': total,
   })
 
+#
+# Notification Page
+@app.route('/notifications', methods=['GET'])
+@session_required
+def notification_page(self):
+  return render_template('panel/notifications.html')
 
 
+@app.route('/load-notifications', methods=['GET', 'POST'])
+@session_required
+def load_notifications_root(self):
+  payload = request.form #dict(request.get_json())
+  skip = payload['start']
+  limit = payload['length']
+  sortCol = payload['order[0][column]']
+  sortDir = payload['order[0][dir]']
+  columns = ['notifications.id', 'bot_name', 'notifications.text',
+    "JSON_EXTRACT(notifications.payload, '$.type')",
+    'notifications.created_at']
+
+  user_id = self.id
+
+  order_by = text(f"{columns[int(sortCol)]} {sortDir}")
+  notifications = db.session.query(
+      Bot, Notification
+    ).filter(Bot.id == Notification.bot_id
+    ).filter(Notification.user_id == user_id
+    ).with_entities(Notification.id, Notification.user_id, Notification.bot_id, Notification.text, Notification.payload, Notification.created_at, Bot.name.label('bot_name')
+    ).order_by(order_by).limit(limit).offset(skip)
+
+  # total = Notification.query.filter_by(user_id = user_id).count()
+  total = db.session.query(Bot, Notification).filter(Bot.id == Notification.bot_id).count()
+
+  data = []
+  for idx, notification in enumerate(notifications):
+    data.append([
+      idx + 1,
+      notification.bot_name,
+      notification.text,
+      notification.payload,
+      notification.created_at,
+      { "id": notification.id },
+    ])
+  return jsonify({
+    'data': data,
+    'draw': payload['draw'],
+    'iTotalRecords': total,
+    'iTotalDisplayRecords': total,
+  })
