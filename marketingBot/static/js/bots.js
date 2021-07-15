@@ -1,4 +1,5 @@
 var _dataTable;
+var columnConfig = {};
 const columnConfigKey = 'marketingbot.bots.columns';
 const defaultColumnConfig = {
   name: true, type: true,
@@ -659,7 +660,9 @@ function refreshColumnShow() {
   const config = loadColumnConfig();
   Object.keys(config).forEach((key) => {
     const index = columnNames.indexOf(key);
+    if (columnConfig[key] === undefined || config[key] !== columnConfig[key])
     setColumnVisibility(index, config[key]);
     $(`#col-show-${key}`).prop('checked', config[key]);
   });
+  columnConfig = config;
 }

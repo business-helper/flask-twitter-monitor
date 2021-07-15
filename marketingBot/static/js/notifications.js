@@ -1,10 +1,12 @@
 const columnConfigKey = 'marketingbot.notifications.columns';
 var _dataTable;
+
 const defaultColumnConfig = {
   bot: true, notification: true,
   type: true, time: true,
 };
 const columnNames = ['', 'bot', 'notification', 'type', 'time', ''];
+var columnConfig = {};
 
 $(function() {
   console.log('[Script][Loaded] API Apps');
@@ -185,7 +187,10 @@ function refreshColumnShow() {
   const config = loadColumnConfig();
   Object.keys(config).forEach((key) => {
     const index = columnNames.indexOf(key);
-    setColumnVisibility(index, config[key]);
+    if (columnConfig[key] === undefined || config[key] !== columnConfig[key]) {
+      setColumnVisibility(index, config[key]);
+    }
     $(`#col-show-${key}`).prop('checked', config[key]);
   });
+  columnConfig = config;
 }

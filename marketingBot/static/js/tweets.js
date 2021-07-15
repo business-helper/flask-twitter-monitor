@@ -1,5 +1,6 @@
 const columnConfigKey = 'marketingbot.tweets.columns';
 var _dataTable;
+var columnConfig = {};
 const defaultColumnConfig = {
   bot: true, target: true,
   text: true, translated: true,
@@ -480,7 +481,10 @@ function refreshColumnShow() {
   const config = loadColumnConfig();
   Object.keys(config).forEach((key) => {
     const index = columnNames.indexOf(key);
-    setColumnVisibility(index, config[key]);
+    if (columnConfig[key] === undefined || columnConfig[key] !== config[key]) {
+      setColumnVisibility(index, config[key]);
+    }
     $(`#col-show-${key}`).prop('checked', config[key]);
   });
+  columnConfig = config;
 }
