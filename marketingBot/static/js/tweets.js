@@ -11,6 +11,11 @@ const defaultColumnConfig = {
 };
 const columnNames = ['', 'bot', 'target', 'text', 'translated', 'followers', 'friends', 'statuses', 'lists', 'retweets', 'likes', 'tweeted', 'time', ''];
 
+const filter = {
+  bot: 0,
+  keyword: '',
+};
+
 $(function() {
   console.log('[Script][Loaded] API Apps');
 
@@ -67,7 +72,6 @@ $(function() {
     });
   });
 
-
   $('#website-form').submit(function(e) {
     e.preventDefault();
     if (!confirm('Are you sure to submit?')) return false;
@@ -96,6 +100,18 @@ $(function() {
   $('.col-show-checkbox').on('change', function(e) {
     storeColumnConfig();
     refreshColumnShow();
+  });
+
+  $('#filter_bot').on('change', function(e) {
+    filter.bot = $(this).val();
+    refreshTable();
+  });
+
+  $('#filter_search').on('change keydown', function(e) {
+    if (e.which === 13) {
+      filter.keyword = $(this).val();
+      refreshTable();
+    }    
   });
 
   // deprecated.
@@ -232,7 +248,7 @@ function initDataTable() {
           order: [
               [ 0, "asc" ]
           ],
-          searching: true,
+          searching: false,
 
           processing: true,
 
@@ -243,7 +259,8 @@ function initDataTable() {
           ajax: {
               url: "/load-tweets",
               data: function(extra) {
-                  extra.keyword = 'test';
+                  extra.keyword = filter.keyword;
+                  extra.bot = filter.bot;
               },
               type: 'POST',
               dataSrc: 'data'
@@ -327,7 +344,7 @@ function initDataTable() {
               //     return names.join(',');
               //   },
             // },
-          ]
+          ],
       };
 
       _dataTable.dataTable(settings);

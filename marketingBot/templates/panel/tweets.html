@@ -6,21 +6,9 @@
       <div class="m-portlet__head-caption">
         <div class="m-portlet__head-title">
           <h3 class="m-portlet__head-text">
-            My Bots
+            Tweets
           </h3>
         </div>
-      </div>
-      <div class="m-portlet__head-tools">
-        <ul class="m-portlet__nav">
-          <li class="m-portlet__nav-item">
-            <span href="#" class="btn btn-accent m-btn m-btn--custom m-btn--pill m-btn--icon m-btn--air" id="add-item">
-              <span>
-                <i class="la la-plus"></i>
-                <span>New record</span>
-              </span>
-            </span>
-          </li>
-        </ul>
       </div>
     </div>
 
@@ -75,6 +63,32 @@
       </div>
     </div>
 
+    <hr/>
+
+    <!-- Filters -->
+    <div class="m-portlet__body">
+      <label><b>Filters</b></label>
+      <div class="row">
+        <div class="col-12 col-md-4">
+          <div class="form-group form-group-default">
+            <label>Bot</label>
+            <select class="form-control" id="filter_bot">
+              <option value="0">- Select a bot -</option>
+              {% for bot in data.bots %}
+                <option class="flash" value="{{bot['id']}}">{{ bot['name'] }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+        <div class="col-12 col-md-4">
+          <div class="form-group form-group-default">
+            <label>Search</label>
+            <input class="form-control" type="text" id="filter_search" name="filter_serarch"
+                  value="" placeholder="Search by Text" />
+          </div>
+        </div>
+      </div>
+    </div>
     <!-- Datatable -->
     <div class="m-portlet__body">
       <!--begin: Datatable -->

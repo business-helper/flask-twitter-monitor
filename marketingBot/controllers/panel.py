@@ -158,7 +158,14 @@ def load_bots_root(self):
 @app.route('/tweets', methods=['GET'])
 @session_required
 def tweets_page(self):
-  return render_template('panel/tweets.html')
+  bots = Bot.query.filter_by(user_id=self.id).all()
+  bots_dict = []
+  for bot in bots:
+    bots_dict.append(bot.to_dict())
+  data = {
+    "bots": bots_dict,
+  }
+  return render_template('panel/tweets.html', data = data)
 
 @app.route('/load-tweets', methods=['GET', 'POST'])
 @session_required
@@ -168,6 +175,9 @@ def load_tweets_root(self):
   limit = payload['length']
   sortCol = payload['order[0][column]']
   sortDir = payload['order[0][dir]']
+  keyword = payload['keyword']
+  bot_id = int(payload['bot'])
+  print('[Bot ID]', bot_id)
   columns = ['tweets.id', 'bot_name', 'target', 'text', 'translated',
     "JSON_EXTRACT(tweets.metrics, '$.followers')",
     "JSON_EXTRACT(tweets.metrics, '$.friends')",
@@ -184,12 +194,21 @@ def load_tweets_root(self):
   tweets = db.session.query(
       Tweet, Bot
     ).filter(Tweet.bot_id == Bot.id
-    ).filter(Tweet.user_id == user_id
-    ).with_entities(Tweet.id, Tweet.bot_id, Tweet.target, Tweet.text, Tweet.translated, Tweet.tweeted, Tweet.entities, Tweet.created_at, Tweet.metrics, Bot.name.label('bot_name')
+    ).filter(Tweet.user_id == user_id)
+  if keyword:
+    tweets = tweets.filter(Tweet.text.like(f"%{keyword}%"))
+  if bot_id > 0:
+    tweets = tweets.filter(Tweet.bot_id == bot_id)
+  tweets =  tweets.with_entities(Tweet.id, Tweet.bot_id, Tweet.target, Tweet.text, Tweet.translated, Tweet.tweeted, Tweet.entities, Tweet.created_at, Tweet.metrics, Bot.name.label('bot_name')
     ).order_by(order_by).limit(limit).offset(skip)
 
   # total = Tweet.query.filter_by(user_id = user_id).count()
-  total = db.session.query(Tweet, Bot).filter(Bot.id == Tweet.bot_id).count()
+  total = db.session.query(Tweet, Bot).filter(Bot.id == Tweet.bot_id)
+  if keyword:
+    total = total.filter(Tweet.text.like(f"%{keyword}%"))
+  if bot_id > 0:
+    total = total.filter(Tweet.bot_id == bot_id)
+  total = total.count()
 
   bots = Bot.query.filter_by(user_id = user_id).all()
   dict_bots = {}
