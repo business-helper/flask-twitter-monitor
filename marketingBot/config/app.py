@@ -4,7 +4,7 @@ load_dotenv()
 
 class DBConfig(object):
   DEBUG = os.getenv('DEBUG')
-  SQLALCHEMY_DATABASE_URI = 'mysql://{}:{}@{}/{}'.format(
+  SQLALCHEMY_DATABASE_URI = 'mysql://{}:{}@{}/{}?charset=utf8mb4'.format(
     os.getenv('DB_USER'),
     os.getenv('DB_PASSWORD'),
     os.getenv('DB_HOST'),
