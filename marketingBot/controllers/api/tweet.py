@@ -1,5 +1,6 @@
 from flask import request, jsonify
 from datetime import datetime
+import requests
 import ast
 
 from marketingBot.controllers.api import api
@@ -8,6 +9,10 @@ from marketingBot.controllers.api.api_apps import get_tweepy_instance
 from marketingBot.helpers.wrapper import session_required
 from marketingBot.helpers.common import json_parse
 
+
+def get_tweet_embed_info(tweet_id):
+  response = requests.get(f"https://publish.twitter.com/oembed?url=https://twitter.com/Interior/status/{tweet_id}")
+  return response
 
 @api.route('/ping-tweet', methods=['GET'])
 def api_ping_tweet():
@@ -21,6 +26,7 @@ def api_ping_tweet():
 @session_required
 def get_tweet_by_id(self, id):
   tweet = Tweet.query.filter_by(id=id).first()
+  embed = get_tweet_embed_info(tweet.entities['id_str']).json()
   if not tweet:
     return jsonify({
       "status": False,
@@ -30,6 +36,7 @@ def get_tweet_by_id(self, id):
     "status": True,
     "message": "success",
     "data": tweet.to_dict(),
+    "embed": embed,
   })
 
 
@@ -146,3 +153,9 @@ def delete_tweet_by_id(self, id):
     "status": True,
     "message": "A tweet has been deleted!",
   })
+
+@api.route('/tweets/embed-info/<id>', methods = ['GET'])
+def get_tweet_embed_info_req(id):
+  response = get_tweet_embed_info(id).json()
+  print(type(response), response)
+  return jsonify(response)

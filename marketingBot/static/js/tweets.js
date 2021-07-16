@@ -154,8 +154,8 @@ $(function() {
 function onEdit(id) {
   return getTweetByIdRequest(id).then((res) => {
     if (res.status) {
-      const { data: tweet } = res;
-      patchTweetModal(tweet);
+      const { data: tweet, embed } = res;
+      patchTweetModal(tweet, embed);
       openTweetModal();
     } else {
       toastr.error(res.message, 'Get a Tweet');
@@ -216,9 +216,10 @@ function composeFormData() {
   return data;
 }
 
-function patchTweetModal(tweet) {
+function patchTweetModal(tweet, embed) {
   $('#tweet-id').val(tweet.id);
-  $('#origin-tweet').val(tweet.text);
+  // $('#origin-tweet').val(tweet.text);
+  $('#o-tweet-con').html(embed.html)
   $('#len-origin').text(tweet.text.length);
   $('#translated-tweet').val(tweet.translated);
   $('#len-translated').text(tweet.translated.length);

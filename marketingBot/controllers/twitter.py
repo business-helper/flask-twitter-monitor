@@ -47,7 +47,6 @@ def create_api_v2(bearer_token):
   )
   return api
 
-
 # api = create_api(CONSUMER_KEY, CONSUMER_SECRET, ACCESS_TOKEN, ACCESS_TOKEN_SECRET)
 
 # user_timeline = api.user_timeline(screen_name='CMIContent')
