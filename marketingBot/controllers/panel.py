@@ -195,6 +195,7 @@ def load_tweets_root(self):
     "JSON_EXTRACT(tweets.metrics, '$.listed')",
     "JSON_EXTRACT(tweets.metrics, '$.tweet.retweets')",
     "JSON_EXTRACT(tweets.metrics, '$.tweet.favorite')",
+    'rank_index',
     'tweeted', 'tweets.created_at']
 
   user_id = self.id
@@ -209,7 +210,7 @@ def load_tweets_root(self):
     tweets = tweets.filter(Tweet.text.like(f"%{keyword}%"))
   if bot_id > 0:
     tweets = tweets.filter(Tweet.bot_id == bot_id)
-  tweets =  tweets.with_entities(Tweet.id, Tweet.bot_id, Tweet.target, Tweet.text, Tweet.translated, Tweet.tweeted, Tweet.entities, Tweet.created_at, Tweet.metrics, Bot.name.label('bot_name')
+  tweets =  tweets.with_entities(Tweet.id, Tweet.bot_id, Tweet.target, Tweet.text, Tweet.translated, Tweet.tweeted, Tweet.entities, Tweet.created_at, Tweet.metrics, Tweet.rank_index, Bot.name.label('bot_name')
     ).order_by(order_by).limit(limit).offset(skip)
 
   # total = Tweet.query.filter_by(user_id = user_id).count()
@@ -239,6 +240,7 @@ def load_tweets_root(self):
       tweet.metrics['listed'] if 'listed' in tweet.metrics else 0,
       tweet.metrics['tweet']['retweets'] if 'tweet' in tweet.metrics else 0,
       tweet.metrics['tweet']['favorite'] if 'tweet' in tweet.metrics else 0,
+      str(tweet.rank_index),
       tweet.tweeted,
       tweet.created_at,
       { "id": tweet.id, "tweet_id": tweet.entities['id_str'] },

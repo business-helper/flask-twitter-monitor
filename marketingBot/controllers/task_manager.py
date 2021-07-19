@@ -256,7 +256,7 @@ class BotThread(threading.Thread):
     delta = now - start_time0
     start_time = self.format_time_v2(self.bot['start_time'], delta)
     end_time = self.format_time_v2(self.bot['end_time'], delta)
-    # print('[Start & End Time]', start_time, end_time)
+    print('[Start & End Time]', start_time, end_time)
     # since_id = None #"1408485784840065028"
     try:
       while(True):
@@ -396,7 +396,7 @@ class BotThread(threading.Thread):
     for keyword in self.bot['inclusion_keywords']:
       if keyword in text:
         return True
-    return True
+    return False
 
 
   def parse_full_text(self, status):
@@ -471,7 +471,15 @@ class BotThread(threading.Thread):
 
   def check_insert_tweet(self, twit_dict):
     # db.session.query(Tweet).filter(Tweet.entities['id_str'] == id).first()
-    tweet = db.session.query(Tweet).filter(Tweet.entities['id_str'] == twit_dict['entities']['id_str'], Tweet.user_id == twit_dict['user_id']).first()
+    tweet = db.session.query(Tweet).filter(
+      Tweet.entities['id_str'] == twit_dict['entities']['id_str'],
+      Tweet.user_id == twit_dict['user_id'],
+      Tweet.bot_id == twit_dict['bot_id']
+    ).first()
+
+    # calculate rank index
+    twit_dict['rank_index'] = self.calculate_rank_index(twit_dict)
+
     if not tweet:
       twit = Tweet(**twit_dict)
       db.session.add(twit)
@@ -480,9 +488,38 @@ class BotThread(threading.Thread):
     else:
       tweet.metrics = twit_dict['metrics']
       tweet.entities = twit_dict['entities']
+      tweet.rank_index = twit_dict['rank_index']
       tweet.updated_at = datetime.utcnow()
       db.session.commit()
       print('[Check & Insert Tweet][Updated]')
+
+  def calculate_rank_index(self, twit_dict):
+    rank_factors = self.bot['rank_factors']
+    metrics = twit_dict['metrics']
+
+    followers = metrics['followers'] if 'followers' in metrics else 0
+    likes = metrics['tweet']['favorite'] if 'favorite' in metrics['tweet'] else 0
+    comments = metrics['tweet']['quotes'] if 'quotes' in metrics['tweet'] else 0
+    retweets = metrics['tweet']['retweets'] if 'retweets' in metrics['tweet'] else 0
+    numerator_val = {
+      "retweets": retweets,
+      "likes": likes,
+      "comments": comments,
+    }
+
+    denominator_val = {
+      "followers": followers,
+    }
+
+    numerator = 0
+    for key in numerator_val.keys():
+      if rank_factors[key]:
+        numerator += numerator_val[key]
+    denominator = denominator_val['followers'] if rank_factors['followers'] else 1
+
+    if denominator == 0:
+      return 0
+    return numerator / denominator
 
   # def set_interval(self, func, sec):
   #   def func_wrapper():

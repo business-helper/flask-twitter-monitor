@@ -7,9 +7,10 @@ const defaultColumnConfig = {
   followers: true, friends: true,
   statuses: true, lists: true,
   retweets: true, likes: true,
+  rank: true,
   tweeted: true, time: true,
 };
-const columnNames = ['', 'bot', 'target', 'text', 'translated', 'followers', 'friends', 'statuses', 'lists', 'retweets', 'likes', 'tweeted', 'time', ''];
+const columnNames = ['', 'bot', 'target', 'text', 'translated', 'followers', 'friends', 'statuses', 'lists', 'retweets', 'likes', 'rank', 'tweeted', 'time', ''];
 
 const filter = {
   bot: 0,
@@ -487,7 +488,7 @@ function loadColumnConfig() {
 }
 
 function storeColumnConfig() {
-  const names = ['bot', 'target', 'text', 'translated', 'followers', 'friends', 'statuses', 'lists', 'retweets', 'likes', 'tweeted', 'time'];
+  const names = ['bot', 'target', 'text', 'translated', 'followers', 'friends', 'statuses', 'lists', 'retweets', 'likes', 'rank', 'tweeted', 'time'];
   const config = {};
   names.forEach((name) => {
     config[name] = $(`#col-show-${name}`).is(':checked');
