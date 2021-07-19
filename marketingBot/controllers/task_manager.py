@@ -425,7 +425,7 @@ class BotThread(threading.Thread):
       print('[Metric] satisfied [Keywords] not satisfied.')
       return "Keyword match failed!"
 
-    translated = translate(src_text=full_text)
+    translated = translate(src_text=full_text) if self.bot['enable_translation'] else full_text
 
     notification = {
       "user_name": screen_name,

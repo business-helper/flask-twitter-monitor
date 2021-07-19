@@ -142,6 +142,7 @@ function onEdit(id) {
       $('#end_time').val(app.end_time);
       $('#schedule_interval').val(app.schedule_interval);
       $('#schedule_time').val(app.schedule_time);
+      $('#enable-translation').prop('checked', app.enable_translation);
 
       addMetricFilter(app.metrics);
 
@@ -321,6 +322,7 @@ function composeFormData() {
   data.append('end_time', $('#end_time').val());
   data.append('schedule_interval', $('#schedule_interval').val());
   data.append('schedule_time', $('#schedule_time').val());
+  data.append('enable_translation', $('#enable-translation').is(':checked'));
   data.append('rank_factors', JSON.stringify(rank_factors));
 
   const metricKeys = [];
@@ -580,6 +582,8 @@ function emptyForm() {
   $('#form-wrapper').addClass('_hide').removeClass('_show');
   $('#filters').html('');
   onRankFactorUpdated();
+  $('#enable-translation').prop('checked', false);
+  $('.rank-checkbox').prop('checked', false);
 }
 
 function refreshTable() {

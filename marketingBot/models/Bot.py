@@ -20,6 +20,7 @@ class Bot(db.Model):
   end_time = db.Column(db.String(30), nullable=True)
   schedule_interval = db.Column(db.Integer, default=0)
   schedule_time = db.Column(db.String(30), nullable=False)
+  enable_translation = db.Column(db.Boolean, default=True)
   metrics = db.Column(db.JSON)
   rank_factors = db.Column(db.JSON)
   last_tweets = db.Column(db.JSON)
@@ -29,8 +30,9 @@ class Bot(db.Model):
 
 
   def __init__(self, user_id, name, type, api_keys, targets, inclusion_keywords, exclusion_keywords, 
-    period, status, start_time, end_time, 
+    period, status, start_time, end_time,
     metrics = {}, schedule_interval = 0, schedule_time = 0, last_tweets = [], rank_factors = {},
+    enable_translation = True,
     **args):
 
     self.user_id = user_id
@@ -49,6 +51,7 @@ class Bot(db.Model):
     self.rank_factors = rank_factors
     self.status = status
     self.last_tweets = last_tweets
+    self.enable_translation = enable_translation
 
     self.created_at = datetime.utcnow()
     self.updated_at = datetime.utcnow()
@@ -83,6 +86,7 @@ class Bot(db.Model):
       metrics = self.metrics,
       rank_factors = self.rank_factors,
       status=self.status,
+      enable_translation = self.enable_translation,
       created_at=self.created_at,
       updated_at=self.updated_at
     )

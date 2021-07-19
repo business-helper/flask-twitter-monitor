@@ -166,6 +166,7 @@ def create_bot_form(self):
       metrics = json_parse(payload['metrics']),
       rank_factors = json_parse(payload['rank_factors']),
       status= payload['status'] if 'status' in payload else 'IDLE',
+      enable_translation = True if payload['enable_translation'] == 'true' else False,
     )
 
     db.session.add(bot)
@@ -202,6 +203,7 @@ def update_bot_form(self, id):
   bot.end_time = payload['end_time']
   bot.schedule_interval = payload['schedule_interval']
   bot.schedule_time = payload['schedule_time']
+  bot.enable_translation = True if payload['enable_translation'] == 'true' else False
   print('[Metrics]', payload['metrics'])
   bot.metrics = json_parse(payload['metrics'])
   bot.rank_factors = json_parse(payload['rank_factors'])
