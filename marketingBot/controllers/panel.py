@@ -31,7 +31,17 @@ def ping():
 @app.route('/dashboard', methods=['GET'])
 @session_required
 def dashboard(self):
-  return render_template('panel/dashboard.html')
+  apps = AppKey.query.filter_by(user_id = self.id).count()
+  bots = Bot.query.filter_by(user_id = self.id).count()
+  tweets = Tweet.query.filter_by(user_id = self.id).count()
+  notifications = Notification.query.filter_by(user_id = self.id).count()
+  data = {
+    "apps": apps,
+    "bots": bots,
+    "tweets": tweets,
+    "notifications": notifications,
+  }
+  return render_template('panel/dashboard.html', data = data)
 
 @app.route('/api-apps')
 @session_required

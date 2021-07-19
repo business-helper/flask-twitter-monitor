@@ -19,7 +19,7 @@
           <div class="card">
             <p>You have </p>
             <div class="info-text">
-              2 Apps
+              {{ data.apps }} Apps
             </div>
             <div class="text-right"><a href="/api-apps">View More...</a></div>
           </div>
@@ -27,8 +27,22 @@
         <div class="information-box col-sm-12 col-md-3">
           <div class="card">
             <p>You have</p>
-            <div class="info-text">2 Bots</div>
+            <div class="info-text">{{ data.bots }} Bots</div>
             <div class="text-right"><a href="/bots">View More...</a></div>
+          </div>
+        </div>
+        <div class="information-box col-sm-12 col-md-3">
+          <div class="card">
+            <p>You have</p>
+            <div class="info-text">{{ data.tweets }} Tweets</div>
+            <div class="text-right"><a href="/tweets">View More...</a></div>
+          </div>
+        </div>
+        <div class="information-box col-sm-12 col-md-3">
+          <div class="card">
+            <p>You have</p>
+            <div class="info-text">{{ data.notifications }} Notifications</div>
+            <div class="text-right"><a href="/tweets">View More...</a></div>
           </div>
         </div>
       </div>
