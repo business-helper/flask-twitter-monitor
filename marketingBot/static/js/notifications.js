@@ -22,7 +22,7 @@ $(function() {
 
 function onDelete(id) {
   if (!confirm('Are you sure proceed to delete?')) return false;
-  return deleteTweetByIdRequest(id).then((res) => {
+  return deleteNotificationByIdRequest(id).then((res) => {
     if (res.status) {
       toastr.success(res.message);
       refreshTable();
@@ -60,7 +60,7 @@ function initDataTable() {
           order: [
               [ 0, "asc" ]
           ],
-          searching: true,
+          searching: false,
 
           processing: true,
 
@@ -86,15 +86,6 @@ function initDataTable() {
                     const tweet_id = obj.tweet_id;
                     const tweet_link = `https://twitter.com/${full[2]}/status/${tweet_id}`;
                     return `
-                    <a class="edit-row m-portlet__nav-link btn m-btn m-btn--hover-brand m-btn--icon m-btn--icon-only m-btn--pill" title="Open Tweet"
-                        href="${tweet_link}" target="_blank">
-                      <i class="la la-external-link-square"></i>
-                    </a>
-                    <span class="edit-row m-portlet__nav-link btn m-btn m-btn--hover-brand m-btn--icon m-btn--icon-only m-btn--pill" title="Edit"
-                        onclick="onEdit(${data})"
-                        data-domain="${data}">
-                      <i class="la la-edit"></i>
-                    </span>
                     <span href="#" class="delete-row m-portlet__nav-link btn m-btn m-btn--hover-brand m-btn--icon m-btn--icon-only m-btn--pill" title="Remove"
                       onclick="onDelete(${data})"
                       data-domain="${data}">
@@ -108,31 +99,6 @@ function initDataTable() {
                   return data.type;
                 }
               },
-              // },
-              // {
-              //     targets: 3,
-              //     render: function(data, type, full, meta) {
-              //       if (data.length) return data.join(',');
-              //       return `<span class="m-badge m-badge--warning m-badge--wide">No Targets</span>`;
-              //     },
-              // },
-              // {
-              //     targets: 4,
-              //     render: function(data, type, full, meta) {
-              //       if (full[2] === 'REAL_TIME') return data[0];
-              //       return `${data[1]}-${data[2]}`;
-              //     },
-              // },
-              // {
-              //   targets: 5,
-              //   render: function(data, type, full, meta) {
-              //     if (!data.length) {
-              //       return `<span class="m-badge m-badge--danger m-badge--wide">None</span>`
-              //     }
-              //     const names = data.map((api_key) => api_key.name);
-              //     return names.join(',');
-              //   },
-            // },
           ]
       };
 
@@ -142,9 +108,9 @@ function initDataTable() {
   initTableWithDynamicRows();
 }
 
-function deleteTweetByIdRequest(id) {
+function deleteNotificationByIdRequest(id) {
   return $.ajax({
-    url: `/api/tweets/${id}`,
+    url: `/api/notifications/${id}`,
     method: 'DELETE',
     // data: JSON.stringify(data),
     contentType: 'application/json; charset=utf-8',
