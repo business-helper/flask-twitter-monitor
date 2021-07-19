@@ -19,7 +19,6 @@ def api_ping_bot():
     "data": bot.to_dict(),
   })
 
-# deprecated
 @api.route('/bots', methods=['GET'])
 @session_required
 def load_bots(self):
@@ -55,6 +54,7 @@ def load_bots(self):
     'iTotalDisplayRecords':10,
   })
 
+# @deprecated. use 'create_bot_form' instead.
 @api.route('/bots', methods=['POST'])
 @session_required
 def create_bot(self):
@@ -79,6 +79,7 @@ def create_bot(self):
     "data": Bot.query.filter_by(id=bot.id).first().format().to_dict(),
   })
 
+# @deprecated. use 'update_bot_form' instead.
 @api.route('/bots/<id>', methods=['PUT'])
 @session_required
 def update_bot_by_id(self, id):
@@ -163,6 +164,7 @@ def create_bot_form(self):
       schedule_interval = payload['schedule_interval'],
       schedule_time = payload['schedule_time'],
       metrics = json_parse(payload['metrics']),
+      rank_factors = json_parse(payload['rank_factors']),
       status= payload['status'] if 'status' in payload else 'IDLE',
     )
 
@@ -202,6 +204,7 @@ def update_bot_form(self, id):
   bot.schedule_time = payload['schedule_time']
   print('[Metrics]', payload['metrics'])
   bot.metrics = json_parse(payload['metrics'])
+  bot.rank_factors = json_parse(payload['rank_factors'])
 
   db.session.commit()
   modify_bot_schedule(bot)

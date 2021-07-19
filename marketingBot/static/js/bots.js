@@ -75,6 +75,8 @@ $(function() {
     refreshColumnShow();
   });
 
+  $('.rank-checkbox').on('change', onRankFactorUpdated);
+
   // deprecated.
   // submit action in the item form.
   $('#website-form1').submit(function(e) {
@@ -144,6 +146,8 @@ function onEdit(id) {
       addMetricFilter(app.metrics);
 
       botTypeSelected(app.type);
+
+      configureRankFactors(app.rank_factors);
     } else {
       toastr.error(res.message);
     }    
@@ -202,6 +206,35 @@ function onDelete(id) {
 
 /// --------------- Scripts for UI Operation Events
 
+function onRankFactorUpdated(e) {
+  const { numerators, denominators } = getRankFactors();
+  
+  const sel_numerators = Object.keys(numerators).filter(key => numerators[key]).map(it => it.charAt(0).toUpperCase() + it.substr(1, it.length - 1));
+  const sel_denominators = Object.keys(denominators).filter(key => denominators[key]).map(it => it.charAt(0).toUpperCase() + it.substr(1, it.length - 1));
+
+  let str_formula = '';
+  if (sel_numerators.length === 0 && sel_denominators.length === 0) {
+    str_formula = 'Please define the rank formula, or it will be zero!';
+  } else if (sel_denominators.length === 0) {
+    str_formula = sel_numerators.join(' + ');
+  } else if (sel_numerators.length === 0) {
+    str_formula = `1 / ${sel_denominators.length > 1 ? `( ${sel_denominators.join(' + ')} )`  : sel_denominators[0]}`;
+  } else {
+    const num = sel_numerators.length === 1 ? sel_numerators[0] : `( ${sel_numerators.join(' + ')} )`;
+    const denom = sel_denominators.length === 1 ? sel_denominators[0] : `( ${sel_denominators(' + ')} )`;
+    str_formula = `${num} / ${denom}`;
+  }
+
+  $('#rank-formula').text(str_formula);
+}
+
+function configureRankFactors(factors) {
+  Object.keys(factors).forEach(key => {
+    $(`#rank-${key}`).prop('checked', factors[key]);
+  });
+  onRankFactorUpdated();
+}
+
 function botTypeSelected(type) {
   // update status of the elements - interval, {star time, end time}
   const isRealTime = type === 'REAL_TIME';
@@ -227,7 +260,7 @@ function onDeleteMetricFilterWidget(e) {
 function onSelectMetricType(e) {
   let values = [];
   $('.select-metric').each((i, item) => values.push(item.value));
-  values = values.filter((value) => !!value); console.log('[Values]', values)
+  values = values.filter((value) => !!value);
   const unique_values = values.filter((value, i, self) => self.indexOf(value) === i);
   if (values.length > unique_values.length) {
     toastr.warning('You must select different filter types!', 'Metric Filter');
@@ -278,7 +311,7 @@ function validateForm() {
 
 function composeFormData() {
   const data = new FormData();
-  
+  const { rank_factors } = getRankFactors();
   data.append('id', $('#bot-id').val())
   data.append('name', $('#name').val());
   data.append('type', $('#type').val());
@@ -288,6 +321,7 @@ function composeFormData() {
   data.append('end_time', $('#end_time').val());
   data.append('schedule_interval', $('#schedule_interval').val());
   data.append('schedule_time', $('#schedule_time').val());
+  data.append('rank_factors', JSON.stringify(rank_factors));
 
   const metricKeys = [];
   const metricValues = [];
@@ -545,6 +579,7 @@ function emptyForm() {
   $('#website-form button[type="submit"]').html('<i class="la la-plus"></i>Add');
   $('#form-wrapper').addClass('_hide').removeClass('_show');
   $('#filters').html('');
+  onRankFactorUpdated();
 }
 
 function refreshTable() {
@@ -665,4 +700,21 @@ function refreshColumnShow() {
     $(`#col-show-${key}`).prop('checked', config[key]);
   });
   columnConfig = config;
+}
+
+function getRankFactors() {
+  const numerators = {
+    retweets: true,
+    likes: true,
+    comments: true,
+  };
+  const denominators = { followers: true };
+  
+  Object.keys(numerators).forEach((key) => {
+    numerators[key] = $(`#rank-${key}`).is(':checked');
+  });
+  Object.keys(denominators).forEach((key) => {
+    denominators[key] = $(`#rank-${key}`).is(':checked');
+  });
+  return { numerators, denominators, rank_factors: { ...numerators, ...denominators } };
 }
