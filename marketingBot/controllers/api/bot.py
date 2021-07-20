@@ -167,6 +167,8 @@ def create_bot_form(self):
       rank_factors = json_parse(payload['rank_factors']),
       status= payload['status'] if 'status' in payload else 'IDLE',
       enable_translation = True if payload['enable_translation'] == 'true' else False,
+      enable_cutout = True if payload['enable_cutout'] == 'true' else False,
+      cutout = int(payload['cutout']),
     )
 
     db.session.add(bot)
@@ -207,6 +209,8 @@ def update_bot_form(self, id):
   print('[Metrics]', payload['metrics'])
   bot.metrics = json_parse(payload['metrics'])
   bot.rank_factors = json_parse(payload['rank_factors'])
+  bot.enable_cutout = True if payload['enable_cutout'] == 'true' else False
+  bot.cutout = int(payload['cutout'])
 
   db.session.commit()
   modify_bot_schedule(bot)

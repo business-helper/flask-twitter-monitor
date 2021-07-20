@@ -132,7 +132,7 @@ def load_bots_root(self):
   sortDir = payload['order[0][dir]']
   user_id = self.id
 
-  columns = ['bots.id', 'name', 'type', 'targets', '', 'api_keys', '', '', 'status']
+  columns = ['bots.id', 'name', 'type', 'targets', '', 'api_keys', '', '', 'enable_cutout', 'cutout', 'status']
   order_by = text(f"{columns[int(sortCol)]} {sortDir}")
 
   print('[Sort]', sortCol, sortDir)
@@ -153,7 +153,13 @@ def load_bots_root(self):
       if key in dict_keys:
         bot_keys.append(dict_keys[key])
 
-    data.append([idx + 1, bot.name, bot.type, bot.targets, [float(bot.period), bot.start_time, bot.end_time], bot_keys, bot.inclusion_keywords, bot.exclusion_keywords, bot.status, bot.id])
+    data.append([
+      idx + 1, bot.name, bot.type, bot.targets,
+      [float(bot.period), bot.start_time, bot.end_time], bot_keys,
+      bot.inclusion_keywords, bot.exclusion_keywords,
+      bot.enable_cutout, bot.cutout,
+      bot.status, bot.id
+    ])
 
   return jsonify({
     'data': data,

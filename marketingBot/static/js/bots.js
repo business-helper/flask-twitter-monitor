@@ -6,8 +6,9 @@ const defaultColumnConfig = {
   targets: true, period: true,
   apps: true, inclusion: true,
   exclusion: true, status: true,
+  enable_cutout: true, cutout: true,
 };
-const columnNames = ['', 'name', 'type', 'targets', 'period', 'apps', 'inclusion', 'exclusion', 'status', ''];
+const columnNames = ['', 'name', 'type', 'targets', 'period', 'apps', 'inclusion', 'exclusion', 'enable_cutout', 'cutout', 'status', ''];
 
 $(function() {
   console.log('[Script][Loaded] API Apps');
@@ -324,6 +325,8 @@ function composeFormData() {
   data.append('schedule_time', $('#schedule_time').val());
   data.append('enable_translation', $('#enable-translation').is(':checked'));
   data.append('rank_factors', JSON.stringify(rank_factors));
+  data.append('enable_cutout', $('#enable_cutout').is(':checked'));
+  data.append('cutout', $('#cutout').val());
 
   const metricKeys = [];
   const metricValues = [];
@@ -387,6 +390,7 @@ function initDataTable() {
           columnDefs: [
               {
                   targets: -1,
+                  label: 'Actions',
                   orderable: false,
                   render: function(data, type, full, meta) {
                     return `
@@ -414,6 +418,7 @@ function initDataTable() {
               },
               {
                 targets: -2,
+                label: 'Status',
                 render: function (data, type, full, meta) {
                     const status = {
                         'IDLE': {'title': 'Idle', 'class': 'm-badge--info'},
@@ -426,22 +431,32 @@ function initDataTable() {
                     return '<span class="m-badge ' + status[data].class + ' m-badge--wide">' + status[data].title + '</span>';
                 },
               },
-              {
-                targets: -3,
-                orderable: false,
-                render: function(data) {
-                  return data;
-                }
-              },
+              // {
+              //   targets: -3,
+              //   orderable: false,
+              //   render: function(data) {
+              //     return data;
+              //   }
+              // },
               {
                 targets: -4,
+                label: 'Enable Cutout',
                 orderable: false,
                 render: function(data) {
-                  return data;
+                  data = data.toString();
+                  const status = {
+                    'false': {'title': 'Disabled', 'class': 'm-badge--danger'},
+                    'true': {'title': 'Enabled', 'class': 'm-badge--success'},
+                };
+                if (typeof status[data] === 'undefined') {
+                    return data;
+                }
+                return '<span class="m-badge ' + status[data].class + ' m-badge--wide">' + status[data].title + '</span>';
                 }
               },
               {
                 targets: 2,
+                label: 'Type',
                 render: function (data, type, full, meta) {
                   const status = {
                       'ONE_TIME': {'title': 'One Time', 'class': 'm-badge--info'},
@@ -455,6 +470,7 @@ function initDataTable() {
               },
               {
                   targets: 3,
+                  label: 'Targets',
                   render: function(data, type, full, meta) {
                     if (data.length) return data.join(',');
                     return `<span class="m-badge m-badge--warning m-badge--wide">No Targets</span>`;
@@ -462,6 +478,7 @@ function initDataTable() {
               },
               {
                   targets: 4,
+                  label: 'Period',
                   orderable: false,
                   render: function(data, type, full, meta) {
                     if (full[2] === 'REAL_TIME') return data[0];
@@ -470,6 +487,7 @@ function initDataTable() {
               },
               {
                 targets: 5,
+                label: 'API Apps',
                 orderable: false,
                 render: function(data, type, full, meta) {
                   if (!data.length) {
