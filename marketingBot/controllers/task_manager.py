@@ -341,7 +341,7 @@ class BotThread(threading.Thread):
           #   "keyword_matched": self.matches_keywords(full_text),
           #   "entities": full_text._json,
           # }
-          translated = translate(src_text=full_text)
+          translated = translate(src_text=full_text) if self.bot['enable_translation'] else full_text
 
           if self.matches_keywords(full_text):
             # twit = Tweet(
@@ -592,13 +592,8 @@ def start_bot_execution(id):
       "status": True,
       "message": "Bot already running!",
     })
-  bot.status = 'RUNNING'
-  bot.updated_at = datetime.utcnow()
-  db.session.commit()
 
-  botThread = BotThread(bot)
-  botThread.start()
-  botThreads[str(id)] = botThread
+  run_bot_as_thread(id = id, from_schedule = False)
   
   # botThread.start()
   return jsonify({
@@ -629,7 +624,7 @@ def test_translate():
   return jsonify({ "text": txt })
 
 
-def run_bot_as_thread(id):
+def run_bot_as_thread(id, from_schedule = True):
   print('[Run Bot As Thread]', id)
   bot = Bot.query.filter_by(id=id).first()
   if not bot:
@@ -648,20 +643,28 @@ def run_bot_as_thread(id):
     db.session.commit()
     def run_botThread():
       bot = Bot.query.filter_by(id=id).first()
-      botThread = BotThread(bot= bot, from_schedule = True)
+      botThread = BotThread(bot= bot, from_schedule = from_schedule)
       botThreads[str(id)] = botThread
       botThread.start()
     threading.Thread(target = run_botThread).start()
+
+    notification_msg = f"The bot [{bot.name}] has been triggered by schedule!" if from_schedule else f"You started the bot [{bot.name}]!"
     notification = Notification(
       user_id = bot.user_id,
-      text = f"The bot [{bot.name}] has been triggered by schedule!",
+      text = notification_msg,
       payload = {
-        "type": "SCHEDULE_RUN",
+        "type": "SCHEDULE_RUN" if from_schedule else "BOT_RUN",
         "bot": bot.id,
       },
     )
     db.session.add(notification)
     db.session.commit()
+    # emit socket event
+    io_notify_user(
+      user_id = bot.user_id,
+      event = socket_event.BOT_SCHEDULE_START if from_schedule else socket_event.BOT_MANUAL_START,
+      args = notification_msg,
+    )
   except Exception as e:
     print(f"[Cron][Bot]{id} Stopped By Error", str(e))
     bot.status = 'IDLE'

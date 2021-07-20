@@ -159,11 +159,11 @@ function onEdit(id) {
 }
 
 function onStartBot(id) {
-  startBotByIdRequest(id)
-  return sleep(2000).then((res) => {
+  // startBotByIdRequest(id)
+  return startBotByIdRequest(id).then((res) => {
     // if (res.status) {
-      toastr.success('A bot has been started!');
-      refreshTable();
+      // toastr.success('A bot has been started!');
+      // refreshTable();
     // } else {
     //   toastr.error(res.message);
     // }

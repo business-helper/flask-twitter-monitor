@@ -13,6 +13,7 @@ from marketingBot.controllers.task_manager import run_bot_as_thread
 from marketingBot.models.Notification import Notification, db
 from marketingBot.models.Bot import Bot
 from marketingBot import app
+
 TEST_INTERVAL = 2
 CRON_TEST = False
 
@@ -29,7 +30,7 @@ def convert_strignt_JST(str_datetime):
 
 def schedule_bot_running(bot, reboot = False):
   if bot.schedule_interval == 0:
-    print(f"[Schedule][Bot {bot.id}] is unable to schdule")
+    print(f"[Schedule][Bot {bot.id}] is unable to schedule")
     return False
   try:
     # trigger = CronTrigger(
@@ -61,7 +62,7 @@ def schedule_bot_running(bot, reboot = False):
 
 def modify_bot_schedule(bot):
   if bot.schedule_interval == 0:
-    print(f"[Schedule][Bot {bot.id}] is unable to schdule")
+    print(f"[Schedule][Bot {bot.id}] is unable to schedule")
     return False
   job = scheduler.get_job(job_id = str(bot.id))
   job.remove()
