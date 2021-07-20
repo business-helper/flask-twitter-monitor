@@ -637,10 +637,6 @@ def run_bot_as_thread(id, from_schedule = True):
   #   print(f"[Cron][BOt]{id} Stopped: already running")
   #   return True
   try:
-    # update db
-    bot.status = 'RUNNING'
-    bot.udpated_at = datetime.utcnow()
-    db.session.commit()
     def run_botThread():
       bot = Bot.query.filter_by(id=id).first()
       botThread = BotThread(bot= bot, from_schedule = from_schedule)
@@ -648,10 +644,16 @@ def run_bot_as_thread(id, from_schedule = True):
       botThread.start()
     threading.Thread(target = run_botThread).start()
 
+    # update db
+    bot.status = 'RUNNING'
+    bot.udpated_at = datetime.utcnow()
+    db.session.commit()
+
     notification_msg = f"The bot [{bot.name}] has been triggered by schedule!" if from_schedule else f"You started the bot [{bot.name}]!"
     notification = Notification(
       user_id = bot.user_id,
       text = notification_msg,
+      bot_id = id,
       payload = {
         "type": "SCHEDULE_RUN" if from_schedule else "BOT_RUN",
         "bot": bot.id,
@@ -659,12 +661,15 @@ def run_bot_as_thread(id, from_schedule = True):
     )
     db.session.add(notification)
     db.session.commit()
+
     # emit socket event
     io_notify_user(
       user_id = bot.user_id,
       event = socket_event.BOT_SCHEDULE_START if from_schedule else socket_event.BOT_MANUAL_START,
-      args = notification_msg,
+      args = { "message": notification_msg },
     )
+
+
   except Exception as e:
     print(f"[Cron][Bot]{id} Stopped By Error", str(e))
     bot.status = 'IDLE'
