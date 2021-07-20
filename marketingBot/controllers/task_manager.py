@@ -393,6 +393,8 @@ class BotThread(threading.Thread):
       if keyword in text:
         return False;
     
+    if len(self.bot['inclusion_keywords']) == 0:
+      return True
     for keyword in self.bot['inclusion_keywords']:
       if keyword in text:
         return True
