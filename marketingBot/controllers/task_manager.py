@@ -150,10 +150,23 @@ class BotThread(threading.Thread):
       bot.updated_at = datetime.utcnow()
       db.session.commit()
     print(f"[BotThread][One Time Bot][Finished] {bot.id}-{bot.name}")
+
+    notification_msg = f"The bot [{bot.name}] finished!"
+    notification = Notification(
+      user_id = bot.user_id,
+      text = notification_msg,
+      bot_id = bot.id,
+      payload = {
+        "type": "BOT_FINISHED",
+        "bot": bot.id,
+      },
+    )
+    db.session.add(notification)
+    db.session.commit()
     io_notify_user(
       user_id = bot.user_id,
       event = socket_event.BOT_FINISHED,
-      args = { "message": f"The bot [{bot.name}] finished!" },
+      args = { "message": notification_msg },
     )
 
 
