@@ -2,6 +2,7 @@ const EVENT = {
   NEW_TWEET_FOUND: 'NEW_TWEET_FOUND',
   BOT_MANUAL_START: 'BOT_MANUAL_START',
   BOT_SCHEDULE_START: 'BOT_SCHEDULE_START',
+  BOT_FINISHED: 'BOT_FINISHED',
 };
 
 
@@ -11,15 +12,15 @@ var socket = io.connect('/');
 socket.on( 'connect', function() {
   console.log('[SocketID]', socket.id)
 
-  socket.emit( 'PING', {
-    user_name : 'Aleks',
-    message : 'Hello Flask Socket'
-  })
+  // socket.emit( 'PING', {
+  //   user_name : 'Aleks',
+  //   message : 'Hello Flask Socket'
+  // })
 })
 
-socket.on('PONG', args => {
-  console.log('[EVENT][PONG]', args)
-})
+// socket.on('PONG', args => {
+//   console.log('[EVENT][PONG]', args)
+// })
 
 socket.on(EVENT.NEW_TWEET_FOUND, args => {
   console.log('[New Tweet]', args);
@@ -27,7 +28,6 @@ socket.on(EVENT.NEW_TWEET_FOUND, args => {
 });
 
 socket.on(EVENT.BOT_MANUAL_START, args => {
-  console.log(`[${EVENT.BOT_MANUAL_START}]`, args);
   toastr.info(args.message, 'Bot Status');
   if (typeof refreshTable === 'function') {
     refreshTable();
@@ -35,7 +35,13 @@ socket.on(EVENT.BOT_MANUAL_START, args => {
 });
 
 socket.on(EVENT.BOT_SCHEDULE_START, args => {
-  console.log(`[${EVENT.BOT_SCHEDULE_START}]`, args);
+  toastr.info(args.message, 'Bot Status');
+  if (typeof refreshTable === 'function') {
+    refreshTable();
+  }
+});
+
+socket.on(EVENT.BOT_FINISHED, args => {
   toastr.info(args.message, 'Bot Status');
   if (typeof refreshTable === 'function') {
     refreshTable();

@@ -149,7 +149,12 @@ class BotThread(threading.Thread):
       bot.status = 'IDLE'
       bot.updated_at = datetime.utcnow()
       db.session.commit()
-    print(f"[BotThread][One Time Bot][Finished] {bot.id}-{bot.name}")      
+    print(f"[BotThread][One Time Bot][Finished] {bot.id}-{bot.name}")
+    io_notify_user(
+      user_id = bot.user_id,
+      event = socket_event.BOT_FINISHED,
+      args = { "message": f"The bot [{bot.name}] finished!" },
+    )
 
 
   def processor(self):
