@@ -302,10 +302,10 @@ function validateForm() {
       toastr.error('The field must not be smaller than 0', 'Schedule Interval');
       valid = false;
     }
-    if (!schedule_time) {
-      toastr.error('The field is required!', 'Schedule Time');
-      valid = false;
-    }
+    // if (!schedule_time) {
+    //   toastr.error('The field is required!', 'Schedule Time');
+    //   valid = false;
+    // }
   }
   return valid;
 }
