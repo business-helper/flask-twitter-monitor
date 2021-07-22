@@ -2,7 +2,7 @@ const columnConfigKey = 'marketingbot.tweets.columns';
 var _dataTable;
 var columnConfig = {};
 const defaultColumnConfig = {
-  bot: true, target: true,
+  bot: true, session: true, target: true,
   text: true, translated: true,
   followers: true, friends: true,
   statuses: true, lists: true,
@@ -10,7 +10,7 @@ const defaultColumnConfig = {
   rank: true,
   tweeted: true, time: true,
 };
-const columnNames = ['', 'bot', 'target', 'text', 'translated', 'followers', 'friends', 'statuses', 'lists', 'retweets', 'likes', 'rank', 'tweeted', 'time', ''];
+const columnNames = ['', 'bot', 'session', 'target', 'text', 'translated', 'followers', 'friends', 'statuses', 'lists', 'retweets', 'likes', 'rank', 'tweeted', 'time', ''];
 
 const filter = {
   bot: 0,
@@ -505,7 +505,7 @@ function loadColumnConfig() {
 }
 
 function storeColumnConfig() {
-  const names = ['bot', 'target', 'text', 'translated', 'followers', 'friends', 'statuses', 'lists', 'retweets', 'likes', 'rank', 'tweeted', 'time'];
+  const names = ['bot', 'session', 'target', 'text', 'translated', 'followers', 'friends', 'statuses', 'lists', 'retweets', 'likes', 'rank', 'tweeted', 'time'];
   const config = {};
   names.forEach((name) => {
     config[name] = $(`#col-show-${name}`).is(':checked');
