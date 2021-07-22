@@ -44,6 +44,7 @@ class BotThread(threading.Thread):
   _iterN = 0
 
   name = ''
+  identifier = 0
   _interval = 5
   bot = None
   apis = []
@@ -53,9 +54,10 @@ class BotThread(threading.Thread):
   one_time_batch = 10
   from_schedule = False
 
-  def __init__(self, bot, from_schedule = False, **args):
+  def __init__(self, bot, from_schedule = False, identifier = 0, **args):
     threading.Thread.__init__(self)
     self.name = bot.name
+    self.identifier = identifier
     self._interval = bot.period
     self.bot = bot.to_dict()
     # self.event = threading.Event()
@@ -494,18 +496,20 @@ class BotThread(threading.Thread):
     tweet = db.session.query(Tweet).filter(
       Tweet.entities['id_str'] == twit_dict['entities']['id_str'],
       Tweet.user_id == twit_dict['user_id'],
-      Tweet.bot_id == twit_dict['bot_id']
+      Tweet.bot_id == twit_dict['bot_id'],
+      Tweet.session == self.identifier,
     ).first()
 
     # calculate rank index
     twit_dict['rank_index'] = self.calculate_rank_index(twit_dict)
 
     if not tweet:
-      twit = Tweet(**twit_dict)
+      twit = Tweet(**twit_dict, session = self.identifier)
       db.session.add(twit)
       db.session.commit()
       print('[Check & Insert Tweet][Inserted]')
     else:
+      tweet.session = self.identifier
       tweet.metrics = twit_dict['metrics']
       tweet.entities = twit_dict['entities']
       tweet.rank_index = twit_dict['rank_index']
@@ -655,13 +659,7 @@ def run_bot_as_thread(id, from_schedule = True):
   #   print(f"[Cron][BOt]{id} Stopped: already running")
   #   return True
   try:
-    def run_botThread():
-      bot = Bot.query.filter_by(id=id).first()
-      botThread = BotThread(bot= bot, from_schedule = from_schedule)
-      botThreads[str(id)] = botThread
-      botThread.start()
-    threading.Thread(target = run_botThread).start()
-
+    bot_user_id = bot.user_id
     # update db
     bot.status = 'RUNNING'
     bot.udpated_at = datetime.utcnow()
@@ -679,10 +677,20 @@ def run_bot_as_thread(id, from_schedule = True):
     )
     db.session.add(notification)
     db.session.commit()
+    db.session.flush()
+    identifier = notification.id
+    print('[Notification ID]', identifier)
+    
+    def run_botThread():
+      bot = Bot.query.filter_by(id=id).first()
+      botThread = BotThread(bot= bot, from_schedule = from_schedule, identifier = identifier)
+      botThreads[str(id)] = botThread
+      botThread.start()
+    threading.Thread(target = run_botThread).start()
 
     # emit socket event
     io_notify_user(
-      user_id = bot.user_id,
+      user_id = bot_user_id,
       event = socket_event.BOT_SCHEDULE_START if from_schedule else socket_event.BOT_MANUAL_START,
       args = { "message": notification_msg },
     )
@@ -690,6 +698,7 @@ def run_bot_as_thread(id, from_schedule = True):
 
   except Exception as e:
     print(f"[Cron][Bot]{id} Stopped By Error", str(e))
+    bot = Bot.query.filter_by(id=id).first()
     bot.status = 'IDLE'
     bot.updated_at = datetime.utcnow()
     # db.session.add(bot)

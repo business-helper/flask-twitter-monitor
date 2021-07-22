@@ -194,7 +194,7 @@ def load_tweets_root(self):
   keyword = payload['keyword']
   bot_id = int(payload['bot'])
   print('[Bot ID]', bot_id)
-  columns = ['tweets.id', 'bot_name', 'target', 'text', 'translated',
+  columns = ['tweets.id', 'bot_name', 'session_time', 'target', 'text', 'translated',
     "JSON_EXTRACT(tweets.metrics, '$.followers')",
     "JSON_EXTRACT(tweets.metrics, '$.friends')",
     "JSON_EXTRACT(tweets.metrics, '$.statuses')",
@@ -209,18 +209,22 @@ def load_tweets_root(self):
   # tweets = Tweet.query.filter_by(user_id = user_id).limit(limit).offset(skip)
   order_by = text(f"{columns[int(sortCol)]} {sortDir}")
   tweets = db.session.query(
-      Tweet, Bot
-    ).filter(Tweet.bot_id == Bot.id
+      Tweet#, Bot
+    # ).filter(Tweet.bot_id == Bot.id
+    ).join(Bot, Bot.id == Tweet.bot_id, isouter = True
+    ).join(Notification, Notification.id == Tweet.session, isouter = True
     ).filter(Tweet.user_id == user_id)
   if keyword:
     tweets = tweets.filter(Tweet.text.like(f"%{keyword}%"))
   if bot_id > 0:
     tweets = tweets.filter(Tweet.bot_id == bot_id)
-  tweets =  tweets.with_entities(Tweet.id, Tweet.bot_id, Tweet.target, Tweet.text, Tweet.translated, Tweet.tweeted, Tweet.entities, Tweet.created_at, Tweet.metrics, Tweet.rank_index, Bot.name.label('bot_name')
+  tweets =  tweets.with_entities(Tweet.id, Tweet.bot_id, Tweet.target, Tweet.text, Tweet.translated, Tweet.tweeted, Tweet.entities, Tweet.created_at, Tweet.metrics, Tweet.rank_index, Bot.name.label('bot_name'), Notification.created_at.label('session_time')
     ).order_by(order_by).limit(limit).offset(skip)
 
   # total = Tweet.query.filter_by(user_id = user_id).count()
-  total = db.session.query(Tweet, Bot).filter(Bot.id == Tweet.bot_id)
+  # total = db.session.query(Tweet, Bot).filter(Bot.id == Tweet.bot_id)
+  total = db.session.query(Tweet).join(Bot, Bot.id == Tweet.bot_id, isouter = True)
+
   if keyword:
     total = total.filter(Tweet.text.like(f"%{keyword}%"))
   if bot_id > 0:
@@ -237,6 +241,7 @@ def load_tweets_root(self):
     data.append([
       idx + 1,
       tweet.bot_name,
+      tweet.session_time,
       tweet.target,
       tweet.text,
       tweet.translated,

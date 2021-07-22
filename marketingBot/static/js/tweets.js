@@ -270,31 +270,33 @@ function initDataTable() {
 
           columnDefs: [
               {
-                  targets: -1,
-                  orderable: false,
-                  render: function(obj, type, full, meta) {
-                    const data = obj.id;
-                    const tweet_id = obj.tweet_id;
-                    const tweet_link = `https://twitter.com/${full[2]}/status/${tweet_id}`;
-                    return `
-                    <a class="edit-row m-portlet__nav-link btn m-btn m-btn--hover-brand m-btn--icon m-btn--icon-only m-btn--pill" title="Open Tweet"
-                        href="${tweet_link}" target="_blank">
-                      <i class="la la-external-link-square"></i>
-                    </a>
-                    <span class="edit-row m-portlet__nav-link btn m-btn m-btn--hover-brand m-btn--icon m-btn--icon-only m-btn--pill" title="Edit"
-                        onclick="onEdit(${data})"
-                        data-domain="${data}">
-                      <i class="la la-edit"></i>
-                    </span>
-                    <span href="#" class="delete-row m-portlet__nav-link btn m-btn m-btn--hover-brand m-btn--icon m-btn--icon-only m-btn--pill" title="Remove"
-                      onclick="onDelete(${data})"
+                targets: -1,
+                label: "Actions",
+                orderable: false,
+                render: function(obj, type, full, meta) {
+                  const data = obj.id;
+                  const tweet_id = obj.tweet_id;
+                  const tweet_link = `https://twitter.com/${full[2]}/status/${tweet_id}`;
+                  return `
+                  <a class="edit-row m-portlet__nav-link btn m-btn m-btn--hover-brand m-btn--icon m-btn--icon-only m-btn--pill" title="Open Tweet"
+                      href="${tweet_link}" target="_blank">
+                    <i class="la la-external-link-square"></i>
+                  </a>
+                  <span class="edit-row m-portlet__nav-link btn m-btn m-btn--hover-brand m-btn--icon m-btn--icon-only m-btn--pill" title="Edit"
+                      onclick="onEdit(${data})"
                       data-domain="${data}">
-                      <i class="la la-trash"></i>
-                    </span>`;
-                  },
+                    <i class="la la-edit"></i>
+                  </span>
+                  <span href="#" class="delete-row m-portlet__nav-link btn m-btn m-btn--hover-brand m-btn--icon m-btn--icon-only m-btn--pill" title="Remove"
+                    onclick="onDelete(${data})"
+                    data-domain="${data}">
+                    <i class="la la-trash"></i>
+                  </span>`;
+                },
               },
               {
                 targets: -3,
+                label: "Tweeted",
                 render: function (data, type, full, meta) {
                   data = data.toString()
                     const status = [
@@ -307,6 +309,21 @@ function initDataTable() {
                         return data;
                     }
                     return '<span class="m-badge ' + status[data].class + ' m-badge--wide">' + status[data].title + '</span>';
+                },
+              },
+              {
+                targets: 1,
+                label: "Tweeted",
+                render: function (data, type, full, meta) {
+                  return data ? data : '<span class="m-badge m-badge--danger m-badge--wide">Deleted Bot</span>';
+                },
+              },
+              {
+                targets: 2,
+                label: "Tweeted",
+                render: function (data, type, full, meta) {
+                  return data ? formatTime(getLocalDateTime(data), 'YYYY-mm-dd HH:ii')
+                    :'<span class="m-badge m-badge--warning m-badge--wide">No Session</span>';
                 },
               },
               // {
