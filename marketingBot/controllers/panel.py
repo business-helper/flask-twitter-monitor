@@ -194,7 +194,7 @@ def load_tweets_root(self):
   keyword = payload['keyword']
   bot_id = int(payload['bot'])
   print('[Bot ID]', bot_id)
-  columns = ['tweets.id', 'bot_name', 'session_time', 'target', 'text', 'translated',
+  columns = ['tweets.id', 'bot_name', 'session_time', 'target', 'tweets.text', 'translated',
     "JSON_EXTRACT(tweets.metrics, '$.followers')",
     "JSON_EXTRACT(tweets.metrics, '$.friends')",
     "JSON_EXTRACT(tweets.metrics, '$.statuses')",

@@ -1,5 +1,6 @@
 from datetime import datetime
 from flask import jsonify, request
+from sqlalchemy.sql import text
 import pytz
 import threading
 import time, traceback, sys
@@ -165,11 +166,14 @@ class BotThread(threading.Thread):
     )
     db.session.add(notification)
     db.session.commit()
+
     io_notify_user(
       user_id = bot.user_id,
       event = socket_event.BOT_FINISHED,
       args = { "message": notification_msg },
     )
+    # cutout by the limitation
+    self.process_cutout()
 
 
   def processor(self):
@@ -544,6 +548,28 @@ class BotThread(threading.Thread):
     if denominator == 0:
       return 0
     return numerator / denominator
+
+  def process_cutout(self):
+    print('[Bot][Cutout] Starting...')
+    if self.bot['enable_cutout'] and self.bot['cutout'] > 0:
+      order_by = text(f"rank_index desc")
+      condition = {
+        "user_id": self.bot['user_id'],
+        "bot_id": self.bot['id'],
+        "session": self.identifier,
+      }
+      total = Tweet.query.filter_by(**condition).count()
+      print(f"[Bot][Cutout] collected {total} tweets")
+      tweets = Tweet.query.filter_by(**condition).order_by(order_by).limit(self.bot['cutout']).offset(0)
+      final_ids = list(map(lambda tweet: tweet.id, tweets))
+      print('[Bot][Cutout] Will leave', final_ids)
+      # bots = db.session.query(Bot).filter(Bot.id.notin_(final_ids))
+      delete_query = Tweet.__table__.delete().where(Tweet.id.notin_(final_ids))
+
+      db.session.execute(delete_query)
+      db.session.commit()
+      print('[Bot][Cutout] Finished')
+
 
   # def set_interval(self, func, sec):
   #   def func_wrapper():
