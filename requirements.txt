@@ -5,6 +5,7 @@ Flask-DebugToolbar
 Flask_Bcrypt==0.7.1
 Flask-Session
 Flask-SQLAlchemy
+googletrans==4.0.0-rc1
 #mysqlclient
 # python-mysqldb
 # MySQLdb

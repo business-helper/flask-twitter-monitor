@@ -2,8 +2,11 @@ from flask import session, json
 import os
 import requests
 import time
+from googletrans import Translator
 
 from marketingBot.models.User import User
+
+google_translator = Translator()
 
 deepl_endpoint = {
   "free": 'https://api-free.deepl.com/v2',
@@ -62,6 +65,15 @@ def translate(src_text, target_lang = 'JA'):
     return data['translations'][0]['text']
 
   raise Exception(data['message'])
+
+def translate_google(src_text, target_lang = 'JA'):
+  try:
+    if target_lang.upper() == 'ZH':
+      target_lang = 'ZH-CN'
+    res = google_translator.translate(src_text, dest = target_lang)
+    return res.__dict__()['text']
+  except Exception as e:
+    print('')
 
 def splitString2Array(str):
   try:

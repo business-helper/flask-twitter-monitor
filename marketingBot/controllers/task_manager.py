@@ -16,7 +16,7 @@ from marketingBot.models.Bot import db, Bot
 from marketingBot.models.AppKey import AppKey
 from marketingBot.models.Notification import Notification
 from marketingBot.models.Tweet import Tweet
-from marketingBot.helpers.common import translate
+from marketingBot.helpers.common import translate, translate_google
 
 botThreads = {}
 
@@ -699,7 +699,7 @@ def add_new_bot():
 @app.route('/translate', methods=['POST'])
 def test_translate():
   payload = request.get_json()
-  txt = translate(src_text = payload['text'], target_lang = payload['lang'])
+  txt = translate_google(src_text = payload['text'], target_lang = payload['lang'])
   return jsonify({ "text": txt })
 
 
