@@ -127,8 +127,15 @@
             <div>
               <label><b>Translation</b></label>
               <div class="row">
-                <div class="col-sm-12 col-md-6" style="align-items: center;">
-                  <input type="checkbox" id="enable-translation" /><label class="ml-2" for="enable-translation"> Enable Translation</label>
+                <div class="col-sm-12 col-md-6" style="display: flex; align-items: center;">
+                  <input type="checkbox" id="enable-translation" /><label class="ml-2 mb-0" for="enable-translation"> Enable Translation</label>
+                </div>
+                <div class="col-sm-12 col-md-6">
+                  <label>Translator</label>
+                  <select class="form-control" id="translator" name="translator">
+                    <option value="DEEPL">DeepL Translator</option>
+                    <option value="GOOGLE">Google Translator</option>
+                  </select>
                 </div>
               </div>
               <div id="translation-langs" class="row">

@@ -85,10 +85,10 @@ def create_api_v2(bearer_token):
 
 
 ## ----------- V2
-api_v2 = create_api_v2(bearer_token = BEARER_TOKEN)
-user_v2 = api_v2.get_user(username = 'Adweek')
+# api_v2 = create_api_v2(bearer_token = BEARER_TOKEN)
+# user_v2 = api_v2.get_user(username = 'Adweek')
 
-print('[User] V2:', user_v2.__dict__['data'].id)
+# print('[User] V2:', user_v2.__dict__['data'].id)
 
 # timelines = api_v2.get_timelines(user_id = user_v2.__dict__['data'].id, start_time="2021-07-01T00:00:00Z", end_time="2021-07-05T00:00:00Z",
 #   media_fields = ['url', 'public_metrics' ],

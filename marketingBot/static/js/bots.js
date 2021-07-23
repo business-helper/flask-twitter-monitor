@@ -880,6 +880,7 @@ function onEdit(id) {
       $('#schedule_interval').val(app.schedule_interval);
       $('#schedule_time').val(app.schedule_time);
       $('#enable-translation').prop('checked', app.enable_translation);
+      $('#translator').val(app.translator);
 
       addMetricFilter(app.metrics);
 
@@ -951,6 +952,7 @@ function renderTargetTranslationLangs(target_langs = {}) {
   const selectElements = targets.map(target => composeSelectElement(target, target_langs[target])).join('\n');
   $('#translation-langs').html(selectElements);
   $('.target-lang-item select').prop('disabled', !translation_enabled);
+  $('#translator').prop('disabled', !translation_enabled);
 }
 
 function onRankFactorUpdated(e) {
@@ -1070,6 +1072,7 @@ function composeFormData() {
   data.append('schedule_time', $('#schedule_time').val());
   data.append('enable_translation', $('#enable-translation').is(':checked'));
   data.append('target_langs', JSON.stringify(getTargetLangs()));
+  data.append('translator', $('#translator').val());
   data.append('rank_factors', JSON.stringify(rank_factors));
   data.append('enable_cutout', $('#enable_cutout').is(':checked'));
   data.append('cutout', $('#cutout').val());
@@ -1351,6 +1354,7 @@ function emptyForm() {
 
   // translation langs
   $('#translation-langs').html('');
+  $('#translator').prop('disabled', true);
   // $('.target-lang-item select').prop('disabled', !translation_enabled);
 }
 

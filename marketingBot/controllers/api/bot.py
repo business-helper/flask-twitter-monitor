@@ -168,6 +168,7 @@ def create_bot_form(self):
       status= payload['status'] if 'status' in payload else 'IDLE',
       enable_translation = True if payload['enable_translation'] == 'true' else False,
       target_langs = json_parse(payload['target_langs']),
+      translator = payload['translator'],
       enable_cutout = True if payload['enable_cutout'] == 'true' else False,
       cutout = int(payload['cutout']),
     )
@@ -208,6 +209,7 @@ def update_bot_form(self, id):
   bot.schedule_time = payload['schedule_time']
   bot.enable_translation = True if payload['enable_translation'] == 'true' else False
   bot.target_langs = json_parse(payload['target_langs'])
+  bot.translator = payload['translator']
   print('[Metrics]', payload['metrics'])
   bot.metrics = json_parse(payload['metrics'])
   bot.rank_factors = json_parse(payload['rank_factors'])

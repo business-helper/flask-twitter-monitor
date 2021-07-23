@@ -366,7 +366,8 @@ class BotThread(threading.Thread):
           #   "entities": full_text._json,
           # }
           lang = self.bot['target_langs'][screen_name] if screen_name in self.bot['target_langs'] else 'JA'
-          translated = translate(src_text = full_text, target_lang = lang) if self.bot['enable_translation'] and lang != 'NONE' else full_text
+          translate_method = translate if self.bot['translator'] == 'DEEPL' else translate_google
+          translated = translate_method(src_text = full_text, target_lang = lang) if self.bot['enable_translation'] and lang != 'NONE' else full_text
 
           if self.matches_keywords(full_text):
             # twit = Tweet(
