@@ -49,7 +49,7 @@ class Tweet(db.Model):
       entities = self.entities,
       tweeted = self.tweeted,
       metrics = self.metrics,
-      rank_index = self.rank_index,
+      rank_index = str(self.rank_index),
       created_at=self.created_at,
       updated_at=self.updated_at
     )

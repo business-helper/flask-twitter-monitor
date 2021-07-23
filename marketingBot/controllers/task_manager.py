@@ -567,7 +567,7 @@ class BotThread(threading.Thread):
       final_ids = list(map(lambda tweet: tweet.id, tweets))
       print('[Bot][Cutout] Will leave', final_ids)
       # bots = db.session.query(Bot).filter(Bot.id.notin_(final_ids))
-      delete_query = Tweet.__table__.delete().where(Tweet.id.notin_(final_ids))
+      delete_query = Tweet.__table__.delete().where(Tweet.id.notin_(final_ids)).where(Tweet.bot_id == self.bot['id']).where(Tweet.session == self.identifier)
 
       db.session.execute(delete_query)
       db.session.commit()
