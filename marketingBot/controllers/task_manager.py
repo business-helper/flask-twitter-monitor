@@ -365,7 +365,8 @@ class BotThread(threading.Thread):
           #   "keyword_matched": self.matches_keywords(full_text),
           #   "entities": full_text._json,
           # }
-          translated = translate(src_text=full_text) if self.bot['enable_translation'] else full_text
+          lang = self.bot['target_langs'][screen_name] if screen_name in self.bot['target_langs'] else 'JA'
+          translated = translate(src_text = full_text, target_lang = lang) if self.bot['enable_translation'] and lang != 'NONE' else full_text
 
           if self.matches_keywords(full_text):
             # twit = Tweet(
@@ -392,7 +393,8 @@ class BotThread(threading.Thread):
       # tb = traceback.extract_tb(exc_tb)[-1]
       # print(exc_type, tb[2], tb[1])
       print('[Error] Timeline: ', screen_name, str(e))
-      raise e
+      self.stop_bot_by_error(e)
+      # raise e
 
 
   def satisfy_metrics(self, metrics):
@@ -451,7 +453,8 @@ class BotThread(threading.Thread):
       print('[Metric] satisfied [Keywords] not satisfied.')
       return "Keyword match failed!"
 
-    translated = translate(src_text=full_text) if self.bot['enable_translation'] else full_text
+    lang = self.bot['target_langs'][screen_name] if screen_name in self.bot['target_langs'] and self.bot['target_langs'][screen_name] != 'NONE' else 'JA'
+    translated = translate(src_text=full_text, target_lang = lang) if self.bot['enable_translation'] and lang != 'NONE' else full_text
 
     notification = {
       "user_name": screen_name,
@@ -570,6 +573,33 @@ class BotThread(threading.Thread):
       db.session.commit()
       print('[Bot][Cutout] Finished')
 
+  def stop_bot_by_error(self, e):
+    self.stopped = True
+    bot = Bot.query.filter_by(id = self.bot['id']).first()
+    bot.status = 'IDLE'
+    bot.updated_at = datetime.utcnow()
+    db.session.commit()
+
+    
+    notification_msg = f"The bot [{bot.name}] has stopped with Error '{str(e)}'!"
+    notification = Notification(
+      user_id = self.bot['user_id'],
+      text = notification_msg,
+      bot_id = self.bot['id'],
+      payload = {
+        "type": "RUNTIME_ERROR",
+        "bot": self.bot['id'],
+      },
+    )
+    db.session.add(notification)
+    db.session.commit()
+
+    # emit socket event
+    io_notify_user(
+      user_id = self.bot['user_id'],
+      event = socket_event.BOT_STOPPED,
+      args = { "message": notification_msg },
+    )
 
   # def set_interval(self, func, sec):
   #   def func_wrapper():
@@ -664,6 +694,7 @@ def add_new_bot():
     "status": True,
     "message": "success",
   })
+
 
 @app.route('/translate', methods=['POST'])
 def test_translate():

@@ -57,7 +57,11 @@ def translate(src_text, target_lang = 'JA'):
   }
   res = requests.get(url = url, params = params)
   data = res.json()
-  return data['translations'][0]['text']
+  print('[Translation]', target_lang,data)
+  if 'translations' in data:
+    return data['translations'][0]['text']
+
+  raise Exception(data['message'])
 
 def splitString2Array(str):
   try:

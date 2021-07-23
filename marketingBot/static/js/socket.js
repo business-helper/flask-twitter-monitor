@@ -3,6 +3,7 @@ const EVENT = {
   BOT_MANUAL_START: 'BOT_MANUAL_START',
   BOT_SCHEDULE_START: 'BOT_SCHEDULE_START',
   BOT_FINISHED: 'BOT_FINISHED',
+  BOT_STOPPED: 'BOT_STOPPED',
 };
 
 
@@ -42,6 +43,13 @@ socket.on(EVENT.BOT_SCHEDULE_START, args => {
 });
 
 socket.on(EVENT.BOT_FINISHED, args => {
+  toastr.info(args.message, 'Bot Status');
+  if (typeof refreshTable === 'function') {
+    refreshTable();
+  }
+});
+
+socket.on(EVENT.BOT_STOPPED, args => {
   toastr.info(args.message, 'Bot Status');
   if (typeof refreshTable === 'function') {
     refreshTable();

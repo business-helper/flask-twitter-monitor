@@ -21,6 +21,7 @@ class Bot(db.Model):
   schedule_interval = db.Column(db.Integer, default=0)
   schedule_time = db.Column(db.String(30), nullable=False)
   enable_translation = db.Column(db.Boolean, default=True)
+  target_langs = db.Column(db.JSON)
   metrics = db.Column(db.JSON)
   rank_factors = db.Column(db.JSON)
   enable_cutout = db.Column(db.Boolean, default = False)
@@ -34,7 +35,7 @@ class Bot(db.Model):
   def __init__(self, user_id, name, type, api_keys, targets, inclusion_keywords, exclusion_keywords, 
     period, status, start_time, end_time,
     metrics = {}, schedule_interval = 0, schedule_time = 0, last_tweets = [], rank_factors = {},
-    enable_translation = True, enable_cutout = False, cutout = 0,
+    enable_translation = True, target_langs = {}, enable_cutout = False, cutout = 0,
     **args):
 
     self.user_id = user_id
@@ -54,6 +55,7 @@ class Bot(db.Model):
     self.status = status
     self.last_tweets = last_tweets
     self.enable_translation = enable_translation
+    self.target_langs = target_langs
     self.enable_cutout = enable_cutout
     self.cutout = cutout
 
@@ -92,6 +94,7 @@ class Bot(db.Model):
       rank_factors = self.rank_factors,
       status=self.status,
       enable_translation = self.enable_translation,
+      target_langs = self.target_langs,
       enable_cutout = self.enable_cutout,
       cutout = self.cutout,
       created_at=self.created_at,
