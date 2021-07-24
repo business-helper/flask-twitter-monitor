@@ -106,12 +106,12 @@ def do_tweet(self, id):
       "status": False,
       "message": "Cound not create API connection!",
     })
-    
+
   # update tweet record.
   tweet.translated = payload['translated'] if 'translated' in payload else payload.translated
   tweet.updated_at = datetime.utcnow()
   tweet.tweeted = 2
-  _tweepy.update_status(tweet.translated)
+  _tweepy.update_status(tweet.translated, media_ids = [])
   db.session.commit()
   return jsonify({
     "status": True,

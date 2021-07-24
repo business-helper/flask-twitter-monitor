@@ -1,18 +1,30 @@
-A simple boilerplate application following the MVC pattern using Flask micro python framework.
-It basically here to be my base skeleton for new python web applications
+# Marketing Bot
+A bot to analyze the tweets with various & flexible configuration.
 
-Demo : http://flask-mvc-salimane.herokuapp.com/
+This project is based on this boilerplate(https://github.com/salimane/flask-mvc)
 
-Dependencies :
-	
-	git clone git://github.com/salimane/flask-mvc.git
-	cd flask-mvc
-    	if you have old version of project: pip uninstall -r requirements.txt
-	pip install -r requirements.txt
+## Dependencies :
 
-To run:
+- if you have old version of project: 
+```bash
+pip uninstall -r requirements.txt
+```
 
-    python wsgi.py
+- To install the dependencies:
+```bash
+pip install -r requirements.txt
+```
+
+- To run:
+
+```bash
+python wsgi.py
+```
+
+### Notes
+
+- Windows
+mysqlclient
 
 
 # Database
@@ -60,10 +72,9 @@ To run:
 - Contributors: 133
 
 
+## Others
 
-## Dependencies
-
-- Windows
-mysqlclient
-
+- Media Ids
+1418847104844304389
+1418858925366054912
 

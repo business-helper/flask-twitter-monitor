@@ -58,10 +58,11 @@ api = create_api(CONSUMER_KEY, CONSUMER_SECRET, ACCESS_TOKEN, ACCESS_TOKEN_SECRE
 def file_upload_test():
   # file = request.files.get('file').read().decode('utf-8') if 'targets' in request.files
   file = request.files.get('file')
-  print('[Before Upload]', api, file.name)
-  api.configuration
-  response = api.media_pload(filename = request.files.get('file').name, file = file, media_category = 'tweet_image')
-  print('[Upload Result]', response)
+  print('[Files]', file)
+  # print('[Before Upload]', api, file.name)
+  # print('[Update API]', type(api.media_upload))
+  # response = api.media_upload(filename = request.files.get('file').name, file = file, media_category = 'tweet_image')
+  # print('[Upload Result]', response)
   return jsonify({
     "status": True,
     "message": "uploaded?"
