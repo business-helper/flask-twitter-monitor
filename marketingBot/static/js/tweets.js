@@ -14,6 +14,7 @@ const columnNames = ['', 'bot', 'session', 'target', 'text', 'translated', 'foll
 
 const filter = {
   bot: 0,
+  session: 0,
   keyword: '',
 };
 
@@ -103,8 +104,15 @@ $(function() {
     refreshColumnShow();
   });
 
-  $('#filter_bot').on('change', function(e) {
+  $('#filter_bot').on('change', async function(e) {
     filter.bot = $(this).val();
+    await refreshSessionOfBot();
+    filter.session = 0;
+    refreshTable();
+  });
+
+  $('#filter_session').on('change', function(e) {
+    filter.session = $(this).val();
     refreshTable();
   });
 
@@ -226,6 +234,21 @@ function patchTweetModal(tweet, embed) {
   $('#len-translated').text(tweet.translated.length);
 }
 
+async function refreshSessionOfBot() {
+  return loadSessionOfBotRequest(filter.bot)
+    .then(res => {
+      if (!res.status) throw new Error(res.message);
+
+      const optionHtml = (value, name) => `<option value="${value}">${name}</option>`;
+      const innerHtml = res.data
+        .map(noti => optionHtml(noti.id, formatTime(noti.created_at)))
+        .reduce((html, optHtml) => html += `\n${optHtml}`, optionHtml(0, '- Select a session -'));
+      $('#filter_session').html(innerHtml);
+    })
+    .catch(error => {
+      console.log('[refreshSessionSelection] Error: ', error);
+    });
+}
 
 // ------------------- Scripts for API requests
 
@@ -263,6 +286,7 @@ function initDataTable() {
               data: function(extra) {
                   extra.keyword = filter.keyword;
                   extra.bot = filter.bot;
+                  extra.session = filter.session;
               },
               type: 'POST',
               dataSrc: 'data'
@@ -464,6 +488,15 @@ function updateTranslationById(id, translated) {
     url: `/api/tweets/translate/${id}`,
     method: 'PUT',
     data: JSON.stringify({ translated }),
+    contentType: 'application/json, charset=utf-8',
+    dataType: 'json',
+  });
+}
+
+function loadSessionOfBotRequest(bot_id) {
+  return $.ajax({
+    url: `/api/bots/${bot_id}/sessions`,
+    method: 'GET',
     contentType: 'application/json, charset=utf-8',
     dataType: 'json',
   });

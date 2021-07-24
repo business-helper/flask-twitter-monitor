@@ -193,7 +193,8 @@ def load_tweets_root(self):
   sortDir = payload['order[0][dir]']
   keyword = payload['keyword']
   bot_id = int(payload['bot'])
-  print('[Bot ID]', bot_id)
+  session_id = int(payload['session'])
+  print('session_id', session_id)
   columns = ['tweets.id', 'bot_name', 'session_time', 'target', 'tweets.text', 'translated',
     "JSON_EXTRACT(tweets.metrics, '$.followers')",
     "JSON_EXTRACT(tweets.metrics, '$.friends')",
@@ -218,6 +219,8 @@ def load_tweets_root(self):
     tweets = tweets.filter(Tweet.text.like(f"%{keyword}%"))
   if bot_id > 0:
     tweets = tweets.filter(Tweet.bot_id == bot_id)
+  if session_id > 0:
+    tweets = tweets.filter(Tweet.session == session_id)
   tweets =  tweets.with_entities(Tweet.id, Tweet.bot_id, Tweet.target, Tweet.text, Tweet.translated, Tweet.tweeted, Tweet.entities, Tweet.created_at, Tweet.metrics, Tweet.rank_index, Bot.name.label('bot_name'), Notification.created_at.label('session_time')
     ).order_by(order_by).limit(limit).offset(skip)
 
@@ -229,6 +232,8 @@ def load_tweets_root(self):
     total = total.filter(Tweet.text.like(f"%{keyword}%"))
   if bot_id > 0:
     total = total.filter(Tweet.bot_id == bot_id)
+  if session_id > 0:
+    total = total.filter(Tweet.session == session_id)
   total = total.count()
 
   bots = Bot.query.filter_by(user_id = user_id).all()

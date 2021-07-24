@@ -1,9 +1,11 @@
 from flask import request, current_app, jsonify
 from datetime import datetime
+from sqlalchemy import or_
 
 # from marketingBot.models import db
 from marketingBot.models.Bot import db, Bot
 from marketingBot.models.AppKey import AppKey
+from marketingBot.models.Notification import Notification
 from marketingBot.controllers.api import api
 from marketingBot.controllers.task_manager import start_bot_execution, stop_bot_execution
 from marketingBot.controllers.cron import schedule_bot_running, remove_bot_from_schedule, modify_bot_schedule
@@ -121,6 +123,18 @@ def get_bot_by_id(self, id):
     "status": True,
     "message": "success",
     "data": bot.to_dict(),
+  })
+
+@api.route('/bots/<bot_id>/sessions', methods=['GET'])
+# @session_required
+def get_sessions_of_bot(bot_id):
+  # db.session.query(Notification.column1.distinct()).filter_by(column2 = 'some_column2_value').all();
+  notifications = Notification.query.filter(Notification.bot_id == bot_id, or_(Notification.payload['type']=='SCHEDULE_RUN', Notification.payload['type']=="BOT_RUN")).all()
+  print('[Notifications]', notifications)
+  return jsonify({
+    "status": True,
+    "message": "success",
+    "data": list(map(lambda noti: noti.to_dict(), notifications))
   })
 
 @api.route('/bots/<id>', methods=['DELETE'])
