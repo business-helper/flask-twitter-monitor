@@ -1,8 +1,12 @@
+from flask import request, jsonify
 import tweepy
 from pytwitter import Api
 import os
 import logging
 from dotenv import load_dotenv
+
+from marketingBot import app
+
 load_dotenv()
 
 logging.basicConfig(level=logging.INFO)
@@ -10,10 +14,10 @@ logger = logging.getLogger()
 
 logger.info(f"Processing tweet id ~")
 
-# CONSUMER_KEY = "rTyqeH43KVVA96eRHXJxnzMOS"
-# CONSUMER_SECRET = "oQLAlEXs3DipiN8ow1kmrtggOahba9zyZuWF691Bm1kDgEFt7E"
-# ACCESS_TOKEN = "1052098057922273280-JTBl0wNmvkcRvzXVUUkJHKvDQ5ae6Z"
-# ACCESS_TOKEN_SECRET = "eqhupIfMr7uvklYHSHtu7IVvptlQrYY6tTN8YJxUps1IK"
+CONSUMER_KEY = "rTyqeH43KVVA96eRHXJxnzMOS"
+CONSUMER_SECRET = "oQLAlEXs3DipiN8ow1kmrtggOahba9zyZuWF691Bm1kDgEFt7E"
+ACCESS_TOKEN = "1052098057922273280-JTBl0wNmvkcRvzXVUUkJHKvDQ5ae6Z"
+ACCESS_TOKEN_SECRET = "eqhupIfMr7uvklYHSHtu7IVvptlQrYY6tTN8YJxUps1IK"
 BEARER_TOKEN = "AAAAAAAAAAAAAAAAAAAAABgWEAEAAAAA8b6PoxoYNew%2BE4nnS7has9CofwA%3D9shXMqslVNrJecsYmW9iEuIvNi0rhNRLN73WGp9bQiEd9LmDRj"
 
 # # Authenticate to Twitter
@@ -47,7 +51,22 @@ def create_api_v2(bearer_token):
   )
   return api
 
-# api = create_api(CONSUMER_KEY, CONSUMER_SECRET, ACCESS_TOKEN, ACCESS_TOKEN_SECRET)
+api = create_api(CONSUMER_KEY, CONSUMER_SECRET, ACCESS_TOKEN, ACCESS_TOKEN_SECRET)
+
+# file upload
+@app.route('/file-upload-test', methods=['POST'])
+def file_upload_test():
+  # file = request.files.get('file').read().decode('utf-8') if 'targets' in request.files
+  file = request.files.get('file')
+  print('[Before Upload]', api, file.name)
+  api.configuration
+  response = api.media_pload(filename = request.files.get('file').name, file = file, media_category = 'tweet_image')
+  print('[Upload Result]', response)
+  return jsonify({
+    "status": True,
+    "message": "uploaded?"
+  })
+
 
 # user_timeline = api.user_timeline(screen_name='CMIContent')
 

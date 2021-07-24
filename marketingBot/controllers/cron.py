@@ -65,7 +65,11 @@ def modify_bot_schedule(bot):
     print(f"[Schedule][Bot {bot.id}] is unable to schedule")
     return False
   job = scheduler.get_job(job_id = str(bot.id))
-  job.remove()
+  try:
+    job.remove()
+  except Exception as e:
+    print('[Modify Bot Schedule] Not found prev schedule')
+    pass
   try:
     trigger = IntervalTrigger(
       start_date=convert_strignt_JST(bot.schedule_time),
