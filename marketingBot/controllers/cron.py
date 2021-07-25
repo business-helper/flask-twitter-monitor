@@ -166,3 +166,8 @@ def run_a_bot_as_thread(id):
   run_bot_as_thread(id)
   return jsonify({"status": True})
 
+def get_next_run_time(bot_id):
+  job = scheduler.get_job(job_id = str(bot_id))
+  if not job:
+    return False
+  return str(job.next_run_time)

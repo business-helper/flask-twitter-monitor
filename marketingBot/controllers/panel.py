@@ -7,6 +7,7 @@ from datetime import datetime, timedelta
 from flask import flash
 
 from marketingBot import app
+from marketingBot.controllers.cron import get_next_run_time
 from marketingBot.models.AppKey import db, AppKey
 from marketingBot.models.Bot import Bot
 from marketingBot.models.Notification import Notification
@@ -158,7 +159,8 @@ def load_bots_root(self):
       [float(bot.period), bot.start_time, bot.end_time], bot_keys,
       bot.inclusion_keywords, bot.exclusion_keywords,
       bot.enable_cutout, bot.cutout,
-      bot.status, bot.id
+      bot.status, bot.id,
+      get_next_run_time(bot.id),
     ])
 
   return jsonify({
