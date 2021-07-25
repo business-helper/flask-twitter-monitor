@@ -17,12 +17,13 @@ class Tweet(db.Model):
   tweeted = db.Column(db.SmallInteger, default=0)
   metrics = db.Column(db.JSON)
   rank_index = db.Column(db.Numeric(10, 8))
+  media = db.Column(db.JSON)
 
   created_at = db.Column(db.String(30), nullable=True)
   updated_at = db.Column(db.String(30), nullable=True)
 
 
-  def __init__(self, user_id, bot_id, session, target, text, translated, entities, metrics = {}, rank_index = 0, tweeted = False, **args):
+  def __init__(self, user_id, bot_id, session, target, text, translated, entities, metrics = {}, rank_index = 0, media = [], tweeted = False, **args):
     self.user_id = user_id
     self.bot_id = bot_id
     self.session = session
@@ -33,6 +34,7 @@ class Tweet(db.Model):
     self.tweeted = tweeted
     self.metrics = metrics
     self.rank_index = rank_index
+    self.media = media
 
     self.created_at = datetime.utcnow()
     self.updated_at = datetime.utcnow()
@@ -50,6 +52,7 @@ class Tweet(db.Model):
       tweeted = self.tweeted,
       metrics = self.metrics,
       rank_index = str(self.rank_index),
+      media = self.media,
       created_at=self.created_at,
       updated_at=self.updated_at
     )

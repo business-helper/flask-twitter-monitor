@@ -2,9 +2,16 @@ from flask import request, jsonify
 from datetime import datetime
 import requests
 import ast
+import uuid
+import os, uuid
 
+from marketingBot import app
+from marketingBot.config.constants import mPath
 from marketingBot.controllers.api import api
+from marketingBot.controllers.twitter import create_api
 from marketingBot.models.Tweet import db, Tweet
+from marketingBot.models.AppKey import AppKey
+from marketingBot.models.Media import Media
 from marketingBot.controllers.api.api_apps import get_tweepy_instance
 from marketingBot.helpers.wrapper import session_required
 from marketingBot.helpers.common import json_parse
@@ -111,7 +118,7 @@ def do_tweet(self, id):
   tweet.translated = payload['translated'] if 'translated' in payload else payload.translated
   tweet.updated_at = datetime.utcnow()
   tweet.tweeted = 2
-  _tweepy.update_status(tweet.translated, media_ids = [])
+  _tweepy.update_status(tweet.translated, media_ids = payload['media'] if 'media' in payload else [])
   db.session.commit()
   return jsonify({
     "status": True,
@@ -159,3 +166,72 @@ def get_tweet_embed_info_req(id):
   response = get_tweet_embed_info(id).json()
   print(type(response), response)
   return jsonify(response)
+
+
+@api.route('/tweets/upload/media', methods=['POST'])
+@session_required
+def upload_media(self):
+  print('[S][Upload Media]')
+  payload = dict(request.form)
+
+  file_keys = list(request.files.keys())
+  if len(file_keys) == 0:
+    return jsonify({
+      "status": False,
+      "message": "No files selected!",
+      "title": "Upload Media to Twitter",
+      "data": [],
+    })
+
+  # create an instance of API v1
+  api_key = AppKey.query.filter_by(user_id = self.id).first()
+  api_instance = create_api(
+    consumer_key=api_key.consumer_key,
+    consumer_secret=api_key.consumer_secret,
+    access_token=api_key.access_token,
+    access_token_secret=api_key.access_token_secret,    
+  )
+
+  if not api_key:
+    return jsonify({
+      "status": False,
+      "message": "Not found the valid API key!",
+      "title": "Upload Media to Twitter",
+      "data": [],
+    })
+
+  media_ids = []
+
+  for file_key in file_keys:
+    file_ = request.files[file_key]
+    file_extension = os.path.splitext(file_.filename)
+
+    # to-do: check file extension if it's image.
+
+    str_uuid = str(uuid.uuid4())
+    new_filename = f"{str_uuid}{file_extension}"
+    rel_path = os.path.join(mPath.MEDIA_PATH, new_filename)
+    dest_path = os.path.join(app.root_path, rel_path)
+    file_.save(dest_path)
+    # upload to twitter
+    media_t = api_instance.media_upload(filename = new_filename, file = file_, media_category = 'tweet_image')
+    print('Media Uploaded', media_t)
+    # create media in db.
+    media_db = Media(
+      user_id = self.id,
+      origin_name = file_.filename,
+      path = rel_path,
+      media_id = media_t.media_id_string,
+    )
+    db.session.add(media_db)
+    db.session.commit()
+
+    media_ids.append(media_t.media_id_string)
+  
+  return jsonify({
+    "status": True,
+    "message": "Media uploaded successfully!",
+    "title": "Upload Media to Twitter",
+    "data": media_ids,
+  })
+

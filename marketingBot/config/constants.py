@@ -6,4 +6,5 @@ class socket_event(object):
   BOT_FINISHED = 'BOT_FINISHED'
   BOT_STOPPED = 'BOT_STOPPED'
   
-
+class mPath(object):
+  MEDIA_PATH = 'assets/uploads/media'

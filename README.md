@@ -71,6 +71,9 @@ mysqlclient
 - Used by: 5.5k
 - Contributors: 133
 
+## Reference
+
+- [flask upload file get file path](https://www.codegrepper.com/code-examples/python/flask+upload+file+get+file+path)
 
 ## Others
 

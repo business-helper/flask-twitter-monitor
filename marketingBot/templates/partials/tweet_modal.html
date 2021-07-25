@@ -1,0 +1,60 @@
+<!-- Tweet Modal -->
+<div class="modal fade" id="tweetModal" tabindex="-1" role="dialog" aria-labelledby="TweetModalLabel"
+  aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLabel">
+          Review a Tweet
+        </h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body" style="padding-bottom: 5px;">
+        <form role="form" id="tweet-form" name="tweet-form">
+          <input type="hidden" id="tweet-id" name="tweet-id" />
+
+            <div class="form-group form-group-default">
+              <label>Origin Tweet (<span id="len-origin"></span>)</label>
+              <!-- <textarea class="form-control" type="text" id="origin-tweet" name="origin-tweet"
+                    value="" placeholder="Origin Tweet" readonly></textarea> -->
+              <div id="o-tweet-con"></div>
+              <div class="flex-right mt-1">
+                <button id="do-retweet" type="button" class="btn btn-info  btn-cons">Retweet</button>
+              </div>
+            </div>
+            <div class="form-group form-group-default">
+              <label>Translated (<span id="len-translated"></span>)</label>
+              <textarea class="form-control" type="text" id="translated-tweet" name="translated-tweet"
+                    value="" placeholder="Translated Tweet"></textarea>
+              <!-- Add Custom Images -->
+              <div class="mt-2" style="display: flex; align-items: center;">
+                <input type="checkbox" id="enable-add-images" />
+                <label class="mb-0 mx-2" for="enable-add-images">Add Custom Images</label>
+                <button id="add-image" type="button" class="btn btn-warning  btn-cons" style="padding: 0.45rem 0.75rem;"><i class="la la-plus"></i></button>
+              </div>
+
+              <div id="img-file-container" style="display: none;">
+                <!-- <div class="my-2 custom-img-wrapper" style="display: flex; align-items: center;">
+                  <button type="button" class="remove-custom-image btn btn-danger btn-cons mr-2" style="padding: 0.45rem 0.75rem;"><i class="la la-minus"></i></button>
+                  <input type="file" />
+                </div> -->
+              </div>
+
+              <div class="flex-right mt-1">
+                <button id="do-tweet" type="button" class="btn btn-info  btn-cons">Save & Tweet</button>
+              </div>
+            </div>
+          
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button id="do-save" type="button" class="btn btn-primary  btn-cons">Save</button>
+        <button type="button" class="btn btn-cons" data-dismiss="modal">Cancel</button>
+      </div>
+    </div>
+    <!-- /.modal-content -->
+  </div>
+  <!-- /.modal-dialog -->
+</div>

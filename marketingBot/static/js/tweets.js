@@ -42,18 +42,28 @@ $(function() {
     const tweet_id = $('#tweet-id').val();
     const translated = $('#translated-tweet').val();
 
-    return doTweetById(tweet_id, { translated }).then((res) => {
-      if (res.status) {
-        toastr.success(res.message, 'Tweet');
-        refreshTable();
-      } else {
-        toastr.error(res.message, 'Tweet');
-      }
-    })
-    .catch((error) => {
-      console.log('[Tweet]', error);
-      toastr.error(error.message, 'Tweet');
-    })
+    return uploadMediaRequest()
+      .then((res) => {
+        console.log('[Media UPloaded]', res)
+        if (!res.status) {
+          // toastr.error(res.message, res.title);
+          throw new Error(res.message);
+        }
+        console.log('[Do Tweet By Id]')
+        return doTweetById(tweet_id, { translated, media: res.data });
+      })
+      .then((res) => {
+        if (res.status) {
+          toastr.success(res.message, 'Tweet');
+          refreshTable();
+        } else {
+          toastr.error(res.message, 'Tweet');
+        }
+      })
+      .catch((error) => {
+        console.log('[Tweet]', error);
+        toastr.error(error.message, 'Tweet');
+      });
   });
 
   $('#do-save').on('click', function(e) {
@@ -71,31 +81,6 @@ $(function() {
     .catch(error => {
       console.log('[Tweet]', error);
       toastr.error(error.message, 'Save Translation');
-    });
-  });
-
-  $('#website-form').submit(function(e) {
-    e.preventDefault();
-    if (!confirm('Are you sure to submit?')) return false;
-    const is_form_valid = validateForm();
-
-    const data = composeFormData();
-
-    const bot_id = Number($('#bot-id').val());
-    const promise = bot_id === -1 ? addBotRequest1(data) : updateBotRequest1(bot_id, data);
-
-    return promise.then((res) => {
-      if (res.status) {
-        toastr.success(res.message);
-        refreshTable();
-        emptyForm();
-      } else {
-        toastr.error(res.message);
-      }
-    })
-    .catch((error) => {
-      console.log('[Error]', error);
-      toastr.error(error.message);
     });
   });
 
@@ -121,6 +106,57 @@ $(function() {
       filter.keyword = $(this).val();
       refreshTable();
     }    
+  });
+
+  $('#enable-add-images').on('change', function(e) {
+    const enabled = $(this).is(':checked');
+    $('#img-file-container').css('display', enabled ? 'block' : 'none');
+  });
+
+  $('#add-image').on('click', function(e) {
+    const enabled = $('#enable-add-images').is(':checked');
+    if (!enabled) return false;
+    const elmAdded = document.querySelectorAll('.custom-img-wrapper');
+    if (elmAdded && elmAdded.length >= 4) {
+      toastr.error('You can add 4 images at max!');
+      return;
+    }
+    $('#img-file-container').append(`
+    <div class="my-2 custom-img-wrapper" style="display: flex; align-items: center;">
+      <button type="button" class="remove-custom-image btn btn-danger btn-cons mr-2" style="padding: 0.45rem 0.75rem;"><i class="la la-minus"></i></button>
+      <input type="file" class="custom-image-file" />
+    </div>
+    `);
+  });
+
+  $('#img-file-container').on('click', '.remove-custom-image', function() {
+    $(this).closest('.custom-img-wrapper').remove();
+  });
+
+  $('#website-form').submit(function(e) {
+    e.preventDefault();
+    if (!confirm('Are you sure to submit?')) return false;
+    const is_form_valid = validateForm();
+
+    const data = composeFormData();
+
+    const bot_id = Number($('#bot-id').val());
+    const promise = bot_id === -1 ? addBotRequest1(data) : updateBotRequest1(bot_id, data);
+
+    return promise
+      .then((res) => {
+        if (res.status) {
+          toastr.success(res.message);
+          refreshTable();
+          emptyForm();
+        } else {
+          toastr.error(res.message);
+        }
+      })
+      .catch((error) => {
+        console.log('[Error]', error);
+        toastr.error(error.message);
+      });
   });
 
   // deprecated.
@@ -473,11 +509,11 @@ function doRetweetById(id) {
   });
 }
 
-function doTweetById(id, { translated }) {
+function doTweetById(id, { translated, media = [] }) {
   return $.ajax({
     url: `/api/tweets/do-tweet/${id}`,
     method: 'POST',
-    data: JSON.stringify({ translated }),
+    data: JSON.stringify({ translated, media }),
     contentType: 'application/json, charset=utf-8',
     dataType: 'json',
   });
@@ -499,6 +535,28 @@ function loadSessionOfBotRequest(bot_id) {
     method: 'GET',
     contentType: 'application/json, charset=utf-8',
     dataType: 'json',
+  });
+}
+
+function uploadMediaRequest() {
+  const data = new FormData();
+  elem_files = document.querySelectorAll('.custom-image-file');
+  let index = 0;
+  for (let i = 0; i < elem_files.length; i++) {
+    const element = elem_files[i];
+    const file = $(element).prop('files')[0]
+    if (file) {
+      data.append(`file${index}`, file);
+      index ++;
+    }
+  }
+  // data.append('nFiles', index);
+  return $.ajax({
+    url : 'api/tweets/upload/media',
+    type : 'POST',
+    data : data,
+    processData: false,  // tell jQuery not to process the data
+    contentType: false,  // tell jQuery not to set contentType
   });
 }
 

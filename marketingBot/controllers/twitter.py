@@ -1,7 +1,7 @@
 from flask import request, jsonify
 import tweepy
 from pytwitter import Api
-import os
+import shutil, os
 import logging
 from dotenv import load_dotenv
 
@@ -53,12 +53,19 @@ def create_api_v2(bearer_token):
 
 api = create_api(CONSUMER_KEY, CONSUMER_SECRET, ACCESS_TOKEN, ACCESS_TOKEN_SECRET)
 
+print('[App path]', app.root_path, app.instance_path)
+
 # file upload
 @app.route('/file-upload-test', methods=['POST'])
 def file_upload_test():
   # file = request.files.get('file').read().decode('utf-8') if 'targets' in request.files
-  file = request.files.get('file')
-  print('[Files]', file)
+  file = request.files['file']
+  print('[Files]', file, file.filename, list(request.files.keys()))
+
+  dest = os.path.join(app.root_path, 'assets/uploads/media', 'test.png')
+  file.save(dest)
+  print('[Dest]', dest)
+  # shutil.copy(file, dest)
   # print('[Before Upload]', api, file.name)
   # print('[Update API]', type(api.media_upload))
   # response = api.media_upload(filename = request.files.get('file').name, file = file, media_category = 'tweet_image')
