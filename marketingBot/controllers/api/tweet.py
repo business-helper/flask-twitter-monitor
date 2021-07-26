@@ -177,7 +177,7 @@ def upload_media(self):
   file_keys = list(request.files.keys())
   if len(file_keys) == 0:
     return jsonify({
-      "status": False,
+      "status": True,
       "message": "No files selected!",
       "title": "Upload Media to Twitter",
       "data": [],
