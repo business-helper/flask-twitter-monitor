@@ -1225,7 +1225,9 @@ function initDataTable() {
                   
                   return `
                   <div style="display: flex; flex-direction: column;">
-                    <span class="m-badge ${status[data].class} m-badge--wide">${status[data].title}</span>
+                    <div class="text-center">
+                      <span class="m-badge ${status[data].class} m-badge--wide">${status[data].title}</span>
+                    </div>
                     ${next_run_element}
                   </div>
                   `;
