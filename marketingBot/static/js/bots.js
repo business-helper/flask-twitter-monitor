@@ -1237,7 +1237,7 @@ function initDataTable() {
                   targets: 3,
                   label: 'Targets',
                   render: function(data, type, full, meta) {
-                    if (data.length) return data.join(',');
+                    if (data.length) return data.join(', ');
                     return `<span class="m-badge m-badge--warning m-badge--wide">No Targets</span>`;
                   },
               },
