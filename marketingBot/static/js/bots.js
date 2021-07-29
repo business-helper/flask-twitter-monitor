@@ -861,6 +861,7 @@ function onClickAddButton() {
 }
 
 function onEdit(id) {
+  console.log('[OnEdit]', id);
   return getApiAppByIdRequest(id).then((res) => {
     if (res.status) {
       const { data: app } = res;
@@ -1207,26 +1208,27 @@ function initDataTable() {
                 targets: 2,
                 label: 'Type',
                 render: function (data, type, full, meta) {
+                  const { type: bot_type, next_time } = data;
                   const status = {
                       'ONE_TIME': {'title': 'One Time', 'class': 'm-badge--info'},
                       'REAL_TIME': {'title': 'Real Time', 'class': 'm-badge--success'},
                   };
-                  if (typeof status[data] === 'undefined') {
-                      return data;
+                  if (typeof status[bot_type] === 'undefined') {
+                      return bot_type;
                   }
-                  const next_run_time = full[full.length - 1];
-                  const next_run_element = !next_run_time ? '' : 
+                  // const next_run_time = full[full.length - 1];
+                  const next_run_element = !next_time ? '' : 
                   `<div class="mt-1">
                       <span class="m-badge m-badge--primary m-badge--wide" style="white-space: nowrap;">
                         <i class="flaticon-calendar-with-a-clock-time-tools mr-1"></i>
-                        ${next_run_time.replace("+09:00", "JST")}
+                        ${next_time.replace("+09:00", "JST")}
                       </span>
                     </div>`;
                   
                   return `
                   <div style="display: flex; flex-direction: column;">
                     <div class="text-center">
-                      <span class="m-badge ${status[data].class} m-badge--wide">${status[data].title}</span>
+                      <span class="m-badge ${status[bot_type].class} m-badge--wide">${status[bot_type].title}</span>
                     </div>
                     ${next_run_element}
                   </div>

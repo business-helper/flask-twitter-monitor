@@ -155,17 +155,21 @@ def load_bots_root(self):
         bot_keys.append(dict_keys[key])
 
     data.append([
-      idx + 1, bot.name, bot.type, bot.targets,
+      idx + 1, bot.name,
+      {
+        'type': bot.type,
+        'next_time': get_next_run_time(bot.id),
+      },
+      bot.targets,
       [float(bot.period), bot.start_time, bot.end_time], bot_keys,
       bot.inclusion_keywords, bot.exclusion_keywords,
       bot.enable_cutout, bot.cutout,
-      bot.status, bot.id,
-      get_next_run_time(bot.id),
+      bot.status, bot.id,      
     ])
 
   return jsonify({
     'data': data,
-    'draw': request.args.get('draw'),
+    'draw': payload['draw'],
     'iTotalRecords': total,
     'iTotalDisplayRecords': total,
   })
