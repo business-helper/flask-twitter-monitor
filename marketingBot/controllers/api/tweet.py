@@ -118,12 +118,19 @@ def do_tweet(self, id):
   tweet.translated = payload['translated'] if 'translated' in payload else payload.translated
   tweet.updated_at = datetime.utcnow()
   tweet.tweeted = 2
-  _tweepy.update_status(tweet.translated, media_ids = payload['media'] if 'media' in payload else [])
-  db.session.commit()
-  return jsonify({
-    "status": True,
-    "message": "You posted a tweet!",
-  })
+  try:
+    _tweepy.update_status(tweet.translated, media_ids = payload['media'] if 'media' in payload else [])
+    db.session.commit()
+    return jsonify({
+      "status": True,
+      "message": "You posted a tweet!",
+    })
+  except Exception as e:
+    print('[Tweet Error]', type(e.__dict__['reason']))
+    return jsonify({
+      'status': False,
+      'message': e.__dict__['reason'],
+    })
 
 
 @api.route('/tweets/translate/<id>', methods=['PUT'])
