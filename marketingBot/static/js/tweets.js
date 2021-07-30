@@ -424,6 +424,8 @@ function initDataTable() {
                         {'title': 'None', 'class': 'm-badge--danger'},
                         {'title': 'Retweeted', 'class': 'm-badge--success'},
                         {'title': 'Tweeted', 'class': 'm-badge--info'},
+                        {'title': 'Commentted', 'class': 'm-badge--warning'},
+                        {'title': 'Quoted', 'class': 'm-badge--secondary'},
                     ];
                     
                     if (typeof status[data] === 'undefined') {

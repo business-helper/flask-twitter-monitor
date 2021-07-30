@@ -304,7 +304,7 @@ def comment_with_quote(self, id):
     })
   
   tweet.updated_at = datetime.utcnow()
-  tweet.tweeted = 3
+  tweet.tweeted = 4
   db.session.commit()
 
   target_tweet_url = f"https://twitter.com/{tweet.entities['user']['screen_name']}/status/{tweet.entities['id_str']}"
