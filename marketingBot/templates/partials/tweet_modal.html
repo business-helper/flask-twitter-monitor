@@ -27,7 +27,7 @@
             <div class="form-group form-group-default">
               <label>Translated (<span id="len-translated"></span>)</label>
               <textarea class="form-control" type="text" id="translated-tweet" name="translated-tweet"
-                    value="" placeholder="Translated Tweet"></textarea>
+                    value="" placeholder="Translated Tweet" maxlength="280"></textarea>
               <!-- Add Custom Images -->
               <div class="mt-2" style="display: flex; align-items: center;">
                 <input type="checkbox" id="enable-add-images" />
@@ -43,8 +43,10 @@
               </div>
 
               <div class="form-group form-group-default mt-2">
-                <label>Comment <span title="Images will be also applied.">
-                  <i class="flaticon-exclamation-2" style="font-size: 1rem;"></i>
+                <label>Comment 
+                  (<span id="len-comment">0</span>)
+                  <span class="ml-1" title="- Images will be also applied. &#013;&#010;- For quote, comment + tweet url must not exceed 280 characters!">
+                    <i class="flaticon-exclamation-2" style="font-size: 1rem;"></i>
                   </span>
                 </label>
                 <textarea class="form-control" type="text" id="comment" name="comment" value="" 
@@ -56,6 +58,7 @@
 
               <div class="flex-right mt-1">
                 <button id="do-comment" type="button" class="btn btn-info btn-cons mr-1">Comment</button>
+                <button id="do-quote" type="button" class="btn btn-info btn-cons mr-1">Quote</button>
                 <button id="do-tweet" type="button" class="btn btn-info btn-cons">Save & Tweet</button>
               </div>
             </div>

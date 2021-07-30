@@ -91,6 +91,31 @@ $(function() {
       })
   });
 
+  $('#do-quote').on('click', function(e) {
+    const tweet_id = $('#tweet-id').val();
+    const text = $('#comment').val();
+
+    return uploadMediaRequest()
+      .then(res => {
+        if (!res.status) {
+          throw new Error(res.message);
+        }
+        return commentWithQuote(tweet_id, { text, media: res.data });
+      })
+      .then(res => {
+        if (res.status) {
+          toastr.success(res.message, 'Quote');
+          refreshTable();
+        } else {
+          toastr.error(res.message, 'Quote');
+        }
+      })
+      .catch(error => {
+        console.log('[Comment]', error);
+        toastr.error(error.message, 'Quote');
+      })
+  });
+
   $('#do-save').on('click', function(e) {
     const tweet_id = $('#tweet-id').val();
     const translated = $('#translated-tweet').val();
@@ -182,6 +207,14 @@ $(function() {
         console.log('[Error]', error);
         toastr.error(error.message);
       });
+  });
+
+  $('#translated-tweet').on('keyup change', function() {
+    $('#len-translated').text($(this).val().length);
+  });
+
+  $('#comment').on('keyup change', function() {
+    $('#len-comment').text($(this).val().length);
   });
 
   // deprecated.
@@ -295,6 +328,7 @@ function patchTweetModal(tweet, embed) {
   $('#translated-tweet').val(tweet.translated);
   $('#len-translated').text(tweet.translated.length);
   $('#comment').val('');
+  $('#len-comment').text(0);
 }
 
 async function refreshSessionOfBot() {
@@ -553,6 +587,16 @@ function uploadMediaRequest() {
 function commentToTweet(id, data) {
   return $.ajax({ 
     url: `/api/tweets/comment/${id}`,
+    method: 'POST',
+    data: JSON.stringify(data),
+    contentType: 'application/json, charset=utf-8',
+    dataType: 'json',
+  });
+}
+
+function commentWithQuote(id, data) {
+  return $.ajax({ 
+    url: `/api/tweets/quote/${id}`,
     method: 'POST',
     data: JSON.stringify(data),
     contentType: 'application/json, charset=utf-8',

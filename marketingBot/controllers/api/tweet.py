@@ -263,14 +263,15 @@ def comment_to_tweet(self, id):
     })
   tweet.updated_at = datetime.utcnow()
   tweet.tweeted = 3
-  print('[Tweet IDSTR]',id, tweet.entities['id_str'])
+  db.session.commit()
+
   try:
     _tweepy.update_status(
       f"@{tweet.entities['user']['screen_name']} {comment_text}",
       media_ids = payload['media'] if 'media' in payload else [],
       in_reply_to_status_id = tweet.entities['id_str'],
     )
-    db.session.commit()
+
     return jsonify({
       "status": True,
       "message": "You commented to the tweet!",
@@ -281,3 +282,47 @@ def comment_to_tweet(self, id):
       'status': False,
       'message':'Failed to comment',
     })
+
+@api.route('/tweets/quote/<id>', methods=['POST'])
+@session_required
+def comment_with_quote(self, id):
+  payload = dict(request.get_json())
+  comment_text = payload['text']
+  
+  tweet = Tweet.query.filter_by(id = id).first()
+  if not tweet:
+    return jsonify({
+      'status': False,
+      'message': 'Not found the target tweet!',
+    })
+
+  _tweepy = get_tweepy_instance()
+  if not _tweepy:
+    return jsonify({
+      "status": False,
+      "message": "Cound not create API connection!",
+    })
+  
+  tweet.updated_at = datetime.utcnow()
+  tweet.tweeted = 3
+  db.session.commit()
+
+  target_tweet_url = f"https://twitter.com/{tweet.entities['user']['screen_name']}/status/{tweet.entities['id_str']}"
+
+  try:
+    _tweepy.update_status(
+      f"{comment_text} {target_tweet_url}",
+      media_ids = payload['media'] if 'media' in payload else [],
+    )
+
+    return jsonify({
+      "status": True,
+      "message": "You quoted to the tweet!",
+    })
+  except Exception as e:
+    print('[Quote Error]', type(e.__dict__))
+    return jsonify({
+      'status': False,
+      'message':'Failed to quote',
+    })
+
