@@ -66,6 +66,31 @@ $(function() {
       });
   });
 
+  $('#do-comment').on('click', function(e) {
+    const tweet_id = $('#tweet-id').val();
+    const comment = $('#comment').val();
+
+    return uploadMediaRequest()
+      .then(res => {
+        if (!res.status) {
+          throw new Error(res.message);
+        }
+        return commentToTweet(tweet_id, { comment, media: res.data });
+      })
+      .then(res => {
+        if (res.status) {
+          toastr.success(res.message, 'Comment');
+          refreshTable();
+        } else {
+          toastr.error(res.message, 'Comment');
+        }
+      })
+      .catch(error => {
+        console.log('[Comment]', error);
+        toastr.error(error.message, 'Comment');
+      })
+  });
+
   $('#do-save').on('click', function(e) {
     const tweet_id = $('#tweet-id').val();
     const translated = $('#translated-tweet').val();
@@ -262,12 +287,14 @@ function composeFormData() {
 }
 
 function patchTweetModal(tweet, embed) {
+  console.log('[Embed URL]', embed);
   $('#tweet-id').val(tweet.id);
   // $('#origin-tweet').val(tweet.text);
   $('#o-tweet-con').html(embed.html)
   $('#len-origin').text(tweet.text.length);
   $('#translated-tweet').val(tweet.translated);
   $('#len-translated').text(tweet.translated.length);
+  $('#comment').val('');
 }
 
 async function refreshSessionOfBot() {
@@ -336,7 +363,7 @@ function initDataTable() {
                 render: function(obj, type, full, meta) {
                   const data = obj.id;
                   const tweet_id = obj.tweet_id;
-                  const tweet_link = `https://twitter.com/${full[2]}/status/${tweet_id}`;
+                  const tweet_link = `https://twitter.com/${full[3]}/status/${tweet_id}`;
                   return `
                   <a class="edit-row m-portlet__nav-link btn m-btn m-btn--hover-brand m-btn--icon m-btn--icon-only m-btn--pill" title="Open Tweet"
                       href="${tweet_link}" target="_blank">
@@ -386,43 +413,6 @@ function initDataTable() {
                     :'<span class="m-badge m-badge--warning m-badge--wide">No Session</span>';
                 },
               },
-              // {
-              //   targets: 2,
-              //   render: function (data, type, full, meta) {
-              //     const status = {
-              //         'ONE_TIME': {'title': 'One Time', 'class': 'm-badge--info'},
-              //         'REAL_TIME': {'title': 'Real Time', 'class': 'm-badge--success'},
-              //     };
-              //     if (typeof status[data] === 'undefined') {
-              //         return data;
-              //     }
-              //     return '<span class="m-badge ' + status[data].class + ' m-badge--wide">' + status[data].title + '</span>';
-              // },
-              // },
-              // {
-              //     targets: 3,
-              //     render: function(data, type, full, meta) {
-              //       if (data.length) return data.join(',');
-              //       return `<span class="m-badge m-badge--warning m-badge--wide">No Targets</span>`;
-              //     },
-              // },
-              // {
-              //     targets: 4,
-              //     render: function(data, type, full, meta) {
-              //       if (full[2] === 'REAL_TIME') return data[0];
-              //       return `${data[1]}-${data[2]}`;
-              //     },
-              // },
-              // {
-              //   targets: 5,
-              //   render: function(data, type, full, meta) {
-              //     if (!data.length) {
-              //       return `<span class="m-badge m-badge--danger m-badge--wide">None</span>`
-              //     }
-              //     const names = data.map((api_key) => api_key.name);
-              //     return names.join(',');
-              //   },
-            // },
           ],
       };
 
@@ -557,6 +547,16 @@ function uploadMediaRequest() {
     data : data,
     processData: false,  // tell jQuery not to process the data
     contentType: false,  // tell jQuery not to set contentType
+  });
+}
+
+function commentToTweet(id, data) {
+  return $.ajax({ 
+    url: `/api/tweets/comment/${id}`,
+    method: 'POST',
+    data: JSON.stringify(data),
+    contentType: 'application/json, charset=utf-8',
+    dataType: 'json',
   });
 }
 
