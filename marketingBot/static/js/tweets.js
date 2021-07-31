@@ -21,118 +21,15 @@ const filter = {
 $(function() {
   console.log('[Script][Loaded] API Apps');
 
-  $('#do-retweet').on('click', function(e) {
-    const tweet_id = $('#tweet-id').val();
-    return doRetweetById(tweet_id).then((res) => {
-      if (res.status) {
-        toastr.success(res.message, 'Retweet');
-        refreshTable();
-      } else {
-        toastr.error(res.message, 'Retweet');
-      }
-    })
-    .catch((error) => {
-      console.log('[Error while retweeting]', error);
-      toastr.error(error.message, 'Retweet');
-    })
-  });
+  $('#do-retweet').on('click', () => actionWrapper(actionRetweet, 'Are you sure proceed to retweet?'));
 
+  $('#do-tweet').on('click', () => actionWrapper(actionTweet, 'Are you sure to proceed to tweet?'));
 
-  $('#do-tweet').on('click', function(e) {
-    const tweet_id = $('#tweet-id').val();
-    const translated = $('#translated-tweet').val();
+  $('#do-comment').on('click', () => actionWrapper(actionComment, 'Are you sure to proceed to comment?'));
 
-    return uploadMediaRequest()
-      .then((res) => {
-        console.log('[Media UPloaded]', res)
-        if (!res.status) {
-          // toastr.error(res.message, res.title);
-          throw new Error(res.message);
-        }
-        console.log('[Do Tweet By Id]')
-        return doTweetById(tweet_id, { translated, media: res.data });
-      })
-      .then((res) => {
-        if (res.status) {
-          toastr.success(res.message, 'Tweet');
-          refreshTable();
-        } else {
-          toastr.error(res.message, 'Tweet');
-        }
-      })
-      .catch((error) => {
-        console.log('[Tweet]', error);
-        toastr.error(error.message, 'Tweet');
-      });
-  });
+  $('#do-quote').on('click', () => actionWrapper(actionQuote, 'Are you sure to proceed to quote?'));
 
-  $('#do-comment').on('click', function(e) {
-    const tweet_id = $('#tweet-id').val();
-    const comment = $('#comment').val();
-
-    return uploadMediaRequest()
-      .then(res => {
-        if (!res.status) {
-          throw new Error(res.message);
-        }
-        return commentToTweet(tweet_id, { comment, media: res.data });
-      })
-      .then(res => {
-        if (res.status) {
-          toastr.success(res.message, 'Comment');
-          refreshTable();
-        } else {
-          toastr.error(res.message, 'Comment');
-        }
-      })
-      .catch(error => {
-        console.log('[Comment]', error);
-        toastr.error(error.message, 'Comment');
-      })
-  });
-
-  $('#do-quote').on('click', function(e) {
-    const tweet_id = $('#tweet-id').val();
-    const text = $('#comment').val();
-
-    return uploadMediaRequest()
-      .then(res => {
-        if (!res.status) {
-          throw new Error(res.message);
-        }
-        return commentWithQuote(tweet_id, { text, media: res.data });
-      })
-      .then(res => {
-        if (res.status) {
-          toastr.success(res.message, 'Quote');
-          refreshTable();
-        } else {
-          toastr.error(res.message, 'Quote');
-        }
-      })
-      .catch(error => {
-        console.log('[Comment]', error);
-        toastr.error(error.message, 'Quote');
-      })
-  });
-
-  $('#do-save').on('click', function(e) {
-    const tweet_id = $('#tweet-id').val();
-    const translated = $('#translated-tweet').val();
-
-    return updateTranslationById(tweet_id, translated).then(res => {
-      if (res.status) {
-        toastr.success(res.message, 'Save Transaltion');
-        refreshTable();
-      } else {
-        toastr.error(res.message, 'Tweet');
-      }
-    })
-    .catch(error => {
-      console.log('[Tweet]', error);
-      toastr.error(error.message, 'Save Translation');
-    });
-  });
+  $('#do-save').on('click', () => actionWrapper(actionSave, 'Are you sure to proceed to save?'));
 
   $('.col-show-checkbox').on('change', function(e) {
     storeColumnConfig();
@@ -211,10 +108,6 @@ $(function() {
 
   $('#translated-tweet').on('keyup change', function() {
     $('#len-translated').text($(this).val().length);
-  });
-
-  $('#comment').on('keyup change', function() {
-    $('#len-comment').text($(this).val().length);
   });
 
   // deprecated.
@@ -326,8 +219,6 @@ function patchTweetModal(tweet, embed) {
   $('#len-origin').text(tweet.text.length);
   $('#translated-tweet').val(tweet.translated);
   $('#len-translated').text(tweet.translated.length);
-  $('#comment').val('');
-  $('#len-comment').text(0);
 }
 
 async function refreshSessionOfBot() {
@@ -464,6 +355,129 @@ function initDataTable() {
       refreshColumnShow();
   }
   initTableWithDynamicRows();
+}
+
+async function actionWrapper(funcAction, confirm_message) {
+  if (!confirm(confirm_message || 'Are you sure to proceed?')) {
+    return false;
+  }
+  showModalLoading(true);
+  if (typeof funcAction === 'function') {
+    await funcAction();
+  }
+  return showModalLoading(false);
+}
+
+function actionSave() {
+  const tweet_id = $('#tweet-id').val();
+  const translated = $('#translated-tweet').val();
+
+  return updateTranslationById(tweet_id, translated).then(res => {
+    if (res.status) {
+      toastr.success(res.message, 'Save Transaltion');
+      refreshTable();
+    } else {
+      toastr.error(res.message, 'Tweet');
+    }
+  })
+  .catch(error => {
+    console.log('[Tweet]', error);
+    toastr.error(error.message, 'Save Translation');
+  });
+}
+
+function actionTweet() {
+  const tweet_id = $('#tweet-id').val();
+  const translated = $('#translated-tweet').val();
+
+  return uploadMediaRequest()
+    .then((res) => {
+      console.log('[Media UPloaded]', res)
+      if (!res.status) {
+        // toastr.error(res.message, res.title);
+        throw new Error(res.message);
+      }
+      console.log('[Do Tweet By Id]')
+      return doTweetById(tweet_id, { translated, media: res.data });
+    })
+    .then((res) => {
+      if (res.status) {
+        toastr.success(res.message, 'Tweet');
+        refreshTable();
+      } else {
+        toastr.error(res.message, 'Tweet');
+      }
+    })
+    .catch((error) => {
+      console.log('[Tweet]', error);
+      toastr.error(error.message, 'Tweet');
+    });
+}
+
+function actionRetweet() {
+  const tweet_id = $('#tweet-id').val();
+  return doRetweetById(tweet_id).then((res) => {
+    if (res.status) {
+      toastr.success(res.message, 'Retweet');
+      refreshTable();
+    } else {
+      toastr.error(res.message, 'Retweet');
+    }
+  })
+  .catch((error) => {
+    console.log('[Error while retweeting]', error);
+    toastr.error(error.message, 'Retweet');
+  });
+}
+
+function actionQuote() {
+  const tweet_id = $('#tweet-id').val();
+  const text = $('#translated-tweet').val();
+
+  return uploadMediaRequest()
+    .then(res => {
+      if (!res.status) {
+        throw new Error(res.message);
+      }
+      return commentWithQuote(tweet_id, { text, media: res.data });
+    })
+    .then(res => {
+      if (res.status) {
+        toastr.success(res.message, 'Quote');
+        refreshTable();
+      } else {
+        toastr.error(res.message, 'Quote');
+      }
+    })
+    .catch(error => {
+      console.log('[Comment]', error);
+      toastr.error(error.message, 'Quote');
+    });
+}
+
+function actionComment() {
+  const tweet_id = $('#tweet-id').val();
+  const comment = $('#translated-tweet').val();
+
+  return uploadMediaRequest()
+    .then(res => {
+      if (!res.status) {
+        throw new Error(res.message);
+      }
+      return commentToTweet(tweet_id, { comment, media: res.data });
+    })
+    .then(res => {
+      if (res.status) {
+        toastr.success(res.message, 'Comment');
+        refreshTable();
+      } else {
+        toastr.error(res.message, 'Comment');
+      }
+    })
+    .catch(error => {
+      console.log('[Comment]', error);
+      toastr.error(error.message, 'Comment');
+    });
 }
 
 function updateBotRequest(id, data) {
@@ -668,4 +682,14 @@ function refreshColumnShow() {
     $(`#col-show-${key}`).prop('checked', config[key]);
   });
   columnConfig = config;
+}
+
+function showModalLoading(show = true) {
+  try {
+    $('#modal-loading')
+      .addClass(show ? 'show-loading' : 'hide-loading')
+      .removeClass(show ? 'hide-loading' : 'show-loading');
+  } catch (error) {
+    console.log('[Error while toggle loading...]', error);
+  }
 }

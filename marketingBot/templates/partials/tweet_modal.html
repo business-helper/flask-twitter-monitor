@@ -1,8 +1,54 @@
+<style>
+  #modal-loading {
+    position: absolute;
+    z-index: 1;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background: #f1f1f1f2;
+  }
+
+  #modal-loading.hide-loading {
+    display: none;
+  }
+
+  #modal-loading.show-loading {
+    display: block;
+  }
+
+  #modal-loading .v-center {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  #modal-loading .h-center {
+    display: flex;
+    justify-content: center;
+  }
+
+  #modal-loading .loading-img {
+    width: 50px;
+    height: 50px;
+  }
+</style>
 <!-- Tweet Modal -->
 <div class="modal fade" id="tweetModal" tabindex="-1" role="dialog" aria-labelledby="TweetModalLabel"
   aria-hidden="true">
   <div class="modal-dialog" role="document">
-    <div class="modal-content">
+    <div class="modal-content" style="position: relative;">
+      <!-- loading -->
+      <div id="modal-loading" class="hide-loading">
+        <div class="v-center">
+          <div class="h-center">
+            <img class="loading-img" src="{{ url_for('static', filename='images/loader.gif') }}" alt="Please wait..." />
+          </div>
+          <p class="text-center">Please wait...</p>
+        </div>
+      </div>
+      <!-- /loading -->
       <div class="modal-header">
         <h5 class="modal-title" id="exampleModalLabel">
           Review a Tweet
@@ -16,16 +62,11 @@
           <input type="hidden" id="tweet-id" name="tweet-id" />
 
             <div class="form-group form-group-default">
-              <label>Origin Tweet (<span id="len-origin"></span>)</label>
-              <!-- <textarea class="form-control" type="text" id="origin-tweet" name="origin-tweet"
-                    value="" placeholder="Origin Tweet" readonly></textarea> -->
+              <label><b>Origin Tweet</b> (<span id="len-origin"></span>)</label>
               <div id="o-tweet-con"></div>
-              <div class="flex-right mt-1">
-                <button id="do-retweet" type="button" class="btn btn-info  btn-cons">Retweet</button>
-              </div>
             </div>
             <div class="form-group form-group-default">
-              <label>Translated (<span id="len-translated"></span>)</label>
+              <label><b>Translated</b> (<span id="len-translated"></span>)</label>
               <textarea class="form-control" type="text" id="translated-tweet" name="translated-tweet"
                     value="" placeholder="Translated Tweet" maxlength="280"></textarea>
               <!-- Add Custom Images -->
@@ -41,31 +82,22 @@
                   <input type="file" />
                 </div> -->
               </div>
-
-              <div class="form-group form-group-default mt-2">
-                <label>Comment 
-                  (<span id="len-comment">0</span>)
-                  <span class="ml-1" title="- Images will be also applied. &#013;&#010;- For quote, comment + tweet url must not exceed 280 characters!">
-                    <i class="flaticon-exclamation-2" style="font-size: 1rem;"></i>
-                  </span>
-                </label>
-                <textarea class="form-control" type="text" id="comment" name="comment" value="" 
-                  placeholder="Enter your comment"
-                  maxlength="280"
-                >
-                </textarea>
-              </div>
-
-              <div class="flex-right mt-1">
-                <button id="do-comment" type="button" class="btn btn-info btn-cons mr-1">Comment</button>
-                <button id="do-quote" type="button" class="btn btn-info btn-cons mr-1">Quote</button>
-                <button id="do-tweet" type="button" class="btn btn-info btn-cons">Save & Tweet</button>
-              </div>
             </div>
           
         </form>
       </div>
       <div class="modal-footer">
+        <div class="dropdown">
+          <button class="btn btn-info dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+            &nbsp;&nbsp;Actions&nbsp;&nbsp;
+          </button>
+          <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+            <button class="dropdown-item" id="do-tweet">Tweet</button>
+            <button class="dropdown-item" id="do-retweet">Retweet</button>
+            <button class="dropdown-item" id="do-comment">Comment</button>
+            <button class="dropdown-item" id="do-quote">Quote</button>
+          </div>
+        </div>
         <button id="do-save" type="button" class="btn btn-primary  btn-cons">Save</button>
         <button type="button" class="btn btn-cons" data-dismiss="modal">Cancel</button>
       </div>
