@@ -9,17 +9,22 @@ from marketingBot import app
 from marketingBot.config.constants import mPath
 from marketingBot.controllers.api import api
 from marketingBot.controllers.twitter import create_api
+from marketingBot.controllers.api.api_apps import get_tweepy_instance
+from marketingBot.controllers.task_manager import TweetAction
 from marketingBot.models.Tweet import db, Tweet
 from marketingBot.models.AppKey import AppKey
 from marketingBot.models.Media import Media
-from marketingBot.controllers.api.api_apps import get_tweepy_instance
 from marketingBot.helpers.wrapper import session_required
 from marketingBot.helpers.common import json_parse
 
 
 def get_tweet_embed_info(tweet_id):
-  response = requests.get(f"https://publish.twitter.com/oembed?url=https://twitter.com/Interior/status/{tweet_id}")
-  return response
+  try:
+    response = requests.get(f"https://publish.twitter.com/oembed?url=https://twitter.com/Interior/status/{tweet_id}")
+    return response
+  except Exception as e:
+    print(f"[Embend] {tweet_id} error")
+    return False
 
 @api.route('/ping-tweet', methods=['GET'])
 def api_ping_tweet():
@@ -33,17 +38,22 @@ def api_ping_tweet():
 @session_required
 def get_tweet_by_id(self, id):
   tweet = Tweet.query.filter_by(id=id).first()
-  embed = get_tweet_embed_info(tweet.entities['id_str']).json()
   if not tweet:
     return jsonify({
       "status": False,
       "message": "Tweet does not exist!",
     })
+  embed = get_tweet_embed_info(tweet.entities['id_str'])
+  if not embed:
+    return jsonify({
+      'status': False,
+      'message': 'It seems the tweet has been deleted!',
+    })
   return jsonify({
     "status": True,
     "message": "success",
     "data": tweet.to_dict(),
-    "embed": embed,
+    "embed": embed.json(),
   })
 
 
@@ -66,12 +76,6 @@ def get_tweet_by_status_id(id):
 @api.route('/tweets/do-retweet/<id>', methods=['POST'])
 @session_required
 def do_retweet(self, id):
-  tweet = Tweet.query.filter_by(id = id).first()
-  if not tweet:
-    return jsonify({
-      "status": False,
-      "message": 'Not found the tweet with ID',
-    })
   _tweepy = get_tweepy_instance()
   if not _tweepy:
     return jsonify({
@@ -79,7 +83,17 @@ def do_retweet(self, id):
       "message": "Cound not create API connection!",
     })
   try:
-    _tweepy.retweet(tweet.entities['id_str'])
+    tweetAction = TweetAction(instance = _tweepy)
+    result = tweetAction.retweet(id)
+    if not result:
+      return jsonify({
+        'status': False,
+        'message': 'Failed to retweet',
+      })
+    return jsonify({
+      "status": True,
+      "message": "You retweeted a tweet!",
+    })
   except Exception as e:
     reason = ast.literal_eval(e.reason)
     print('[Reason]', type(reason), reason[0]['message'])
@@ -87,25 +101,12 @@ def do_retweet(self, id):
       "status": False,
       "message": reason[0]['message'],
     })
-  tweet.updated_at = datetime.utcnow()
-  tweet.tweeted = 1
-  db.session.commit()
-  return jsonify({
-    "status": True,
-    "message": "You retweeted a tweet!",
-  })
 
 
 @api.route('/tweets/do-tweet/<id>', methods=['POST'])
 @session_required
 def do_tweet(self, id):
   payload = dict(request.get_json())
-  tweet = Tweet.query.filter_by(id = id).first()
-  if not tweet:
-    return jsonify({
-      "status": False,
-      "message": 'Not found the tweet with ID',
-    })
   # get a tweepy instanace
   _tweepy = get_tweepy_instance()
   if not _tweepy:
@@ -113,14 +114,11 @@ def do_tweet(self, id):
       "status": False,
       "message": "Cound not create API connection!",
     })
-
-  # update tweet record.
-  tweet.translated = payload['translated'] if 'translated' in payload else payload.translated
-  tweet.updated_at = datetime.utcnow()
-  tweet.tweeted = 2
+  tweetAction = TweetAction(instance = _tweepy)
   try:
-    _tweepy.update_status(tweet.translated, media_ids = payload['media'] if 'media' in payload else [])
-    db.session.commit()
+    result = tweetAction.tweet(id, media = payload['media'] if 'media' in payload else [])
+    if not result:
+      return jsonify({'status': False, 'message': 'Failed to tweet...'})
     return jsonify({
       "status": True,
       "message": "You posted a tweet!",
@@ -167,6 +165,7 @@ def delete_tweet_by_id(self, id):
     "status": True,
     "message": "A tweet has been deleted!",
   })
+
 
 @api.route('/tweets/embed-info/<id>', methods = ['GET'])
 def get_tweet_embed_info_req(id):
@@ -242,6 +241,7 @@ def upload_media(self):
     "data": media_ids,
   })
 
+
 @api.route('/tweets/comment/<id>', methods=['POST'])
 @session_required
 def comment_to_tweet(self, id):
@@ -261,17 +261,19 @@ def comment_to_tweet(self, id):
       "status": False,
       "message": "Cound not create API connection!",
     })
-  tweet.updated_at = datetime.utcnow()
-  tweet.tweeted = 3
-  db.session.commit()
 
   try:
-    _tweepy.update_status(
-      f"@{tweet.entities['user']['screen_name']} {comment_text}",
-      media_ids = payload['media'] if 'media' in payload else [],
-      in_reply_to_status_id = tweet.entities['id_str'],
+    tweetAction = TweetAction(instance = _tweepy)
+    result = tweetAction.comment(
+      id = id,
+      comment = comment_text,
+      media = payload['media'] if 'media' in payload else [],
     )
-
+    if not result:
+      return jsonify({
+        'status': False,
+        'message': 'Failed to comment',
+      })
     return jsonify({
       "status": True,
       "message": "You commented to the tweet!",
@@ -283,18 +285,12 @@ def comment_to_tweet(self, id):
       'message':'Failed to comment',
     })
 
+
 @api.route('/tweets/quote/<id>', methods=['POST'])
 @session_required
 def comment_with_quote(self, id):
   payload = dict(request.get_json())
   comment_text = payload['text']
-  
-  tweet = Tweet.query.filter_by(id = id).first()
-  if not tweet:
-    return jsonify({
-      'status': False,
-      'message': 'Not found the target tweet!',
-    })
 
   _tweepy = get_tweepy_instance()
   if not _tweepy:
@@ -302,25 +298,24 @@ def comment_with_quote(self, id):
       "status": False,
       "message": "Cound not create API connection!",
     })
-  
-  tweet.updated_at = datetime.utcnow()
-  tweet.tweeted = 4
-  db.session.commit()
-
-  target_tweet_url = f"https://twitter.com/{tweet.entities['user']['screen_name']}/status/{tweet.entities['id_str']}"
-
   try:
-    _tweepy.update_status(
-      f"{comment_text} {target_tweet_url}",
-      media_ids = payload['media'] if 'media' in payload else [],
+    tweetAction = TweetAction(instance = _tweepy)
+    result = tweetAction.quote(
+      id = id,
+      comment = comment_text,
+      media = payload['media'] if 'media' in payload else [],
     )
-
+    if not result:
+      return jsonify({
+        'status': False,
+        'message': 'Failed to quote!',
+      })
     return jsonify({
       "status": True,
       "message": "You quoted to the tweet!",
     })
   except Exception as e:
-    print('[Quote Error]', type(e.__dict__))
+    print('[Quote Error]', type(e.__dict__), e)
     return jsonify({
       'status': False,
       'message':'Failed to quote',

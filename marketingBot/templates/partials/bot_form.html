@@ -168,6 +168,7 @@
               </div>
             </div>
 
+            <!-- Cutout -->
             <div>
               <label><b>Cutout (by Rank Index)</b></label>
               <div class="row">
@@ -223,6 +224,31 @@
                             value="0" placeholder="50" required />
                   </div>
               </div> -->
+            </div>
+
+            <!-- Automation -->
+            <div class="mt-5">
+              <label><b>Automation</b></label>
+              <div class="row">
+                <div class="col-sm-12 col-md-6" style="display: flex; align-items: center;">
+                    <div class="">
+                        <input type="checkbox" id="enable_automation" name="enable_automation" />
+                        <label for="enable_automation">Enable</label>
+                    </div>
+                </div>
+                <div class="col-sm-12 col-md-6">
+                    <div class="form-group form-group-default">
+                        <label>Action</label>
+                        <select class="form-control" id="auto_action">
+                          <option value="">- Select an action -</option>
+                          <option value="tweet">Tweet</option>
+                          <option value="retweet">Retweet</option>
+                          <option value="comment">Comment</option>
+                          <option value="quote">Quote</option>
+                        </select>
+                    </div>
+                </div>
+              </div>
             </div>
 
             <!-- Submit Container -->

@@ -219,6 +219,8 @@ function patchTweetModal(tweet, embed) {
   $('#len-origin').text(tweet.text.length);
   $('#translated-tweet').val(tweet.translated);
   $('#len-translated').text(tweet.translated.length);
+  $('#enable-add-images').prop('checked', false);
+  $('#img-file-container').html('');
 }
 
 async function refreshSessionOfBot() {

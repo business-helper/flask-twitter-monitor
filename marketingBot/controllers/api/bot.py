@@ -185,6 +185,8 @@ def create_bot_form(self):
       translator = payload['translator'],
       enable_cutout = True if payload['enable_cutout'] == 'true' else False,
       cutout = int(payload['cutout']),
+      enable_automation = True if payload['enable_automation'] == 'true' else False,
+      auto_action = payload['auto_action'],
     )
 
     db.session.add(bot)
@@ -229,6 +231,8 @@ def update_bot_form(self, id):
   bot.rank_factors = json_parse(payload['rank_factors'])
   bot.enable_cutout = True if payload['enable_cutout'] == 'true' else False
   bot.cutout = int(payload['cutout'])
+  bot.enable_automation = True if payload['enable_automation'] == 'true' else False
+  bot.auto_action = payload['auto_action']
 
   db.session.commit()
   modify_bot_schedule(bot)

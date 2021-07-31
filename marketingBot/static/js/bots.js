@@ -882,6 +882,11 @@ function onEdit(id) {
       $('#schedule_time').val(app.schedule_time);
       $('#enable-translation').prop('checked', app.enable_translation);
       $('#translator').val(app.translator);
+      $('#enable_cutout').prop('checked', app.enable_cutout);
+      $('#cutout').val(app.cutout);
+      $('#enable_automation').prop('checked', app.enable_automation);
+      $('#auto_action').val(app.auto_action);
+
 
       addMetricFilter(app.metrics);
 
@@ -1077,6 +1082,8 @@ function composeFormData() {
   data.append('rank_factors', JSON.stringify(rank_factors));
   data.append('enable_cutout', $('#enable_cutout').is(':checked'));
   data.append('cutout', $('#cutout').val());
+  data.append('enable_automation', $('#enable_automation').is(':checked'));
+  data.append('auto_action', $('#auto_action').val());
 
   const metricKeys = [];
   const metricValues = [];

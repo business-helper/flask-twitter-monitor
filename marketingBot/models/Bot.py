@@ -27,6 +27,8 @@ class Bot(db.Model):
   rank_factors = db.Column(db.JSON)
   enable_cutout = db.Column(db.Boolean, default = False)
   cutout = db.Column(db.Integer, default = 0)
+  enable_automation = db.Column(db.Boolean, default = False)
+  auto_action = db.Column(db.String(10), nullable=True)
   last_tweets = db.Column(db.JSON)
   status = db.Column(db.String(20), default='IDLE')
   created_at = db.Column(db.String(30), nullable=True)
@@ -37,6 +39,7 @@ class Bot(db.Model):
     period, status, start_time, end_time,
     metrics = {}, schedule_interval = 0, schedule_time = 0, last_tweets = [], rank_factors = {},
     enable_translation = True, target_langs = {}, enable_cutout = False, cutout = 0, translator = 'DEEPL',
+    enable_automation = False, auto_action = '',
     **args):
 
     self.user_id = user_id
@@ -60,6 +63,8 @@ class Bot(db.Model):
     self.translator = translator
     self.enable_cutout = enable_cutout
     self.cutout = cutout
+    self.enable_automation = enable_automation
+    self.auto_action = auto_action
 
 
     self.created_at = datetime.utcnow()
@@ -100,6 +105,8 @@ class Bot(db.Model):
       translator = self.translator,
       enable_cutout = self.enable_cutout,
       cutout = self.cutout,
+      enable_automation = self.enable_automation,
+      auto_action = self.auto_action,
       created_at=self.created_at,
       updated_at=self.updated_at
     )

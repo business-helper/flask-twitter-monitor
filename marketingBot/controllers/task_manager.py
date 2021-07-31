@@ -37,6 +37,98 @@ class BotDemo:
     self.name = name
     self.interval = interval
 
+class TweetAction():
+  def __init__(self, instance, bot_object = {}):
+    self.api = instance
+    self.bot = bot_object
+
+  def makeAction(self, id, action):
+    if action == 'tweet':
+      return self.tweet(id)
+    elif action == 'retweet':
+      return self.retweet(id)
+    elif action == 'comment':
+      return self.comment(id)
+    elif action == 'quote':
+      return self.quote(id)
+    else:
+      return False
+
+  def tweet(self, id, media = []):
+    try:
+      tweet = Tweet.query.filter_by(id = id).first()
+      if not tweet:
+        raise Exception(f"Not found the tweet with id {id}")
+
+      self.api.update_status(tweet.translated, media_ids = media)
+
+      tweet.updated_at = datetime.utcnow()
+      tweet.tweeted = 2
+      db.session.commit()
+      return True
+    except Exception as e:
+      print(f"[TweetAction][Tweet] error: ", str(e))
+      return False
+
+  def retweet(self, id):
+    try:
+      tweet = Tweet.query.filter_by(id = id).first()
+      if not tweet:
+        raise Exception(f"Not found the tweet with id {id}")
+      self.api.retweet(tweet.entities['id_str'])
+
+      tweet.updated_at = datetime.utcnow()
+      tweet.tweeted = 1
+      db.session.commit()
+      return True
+    except Exception as e:
+      print(f"[TweetAction][Retweet] error: ", str(e))
+      return False
+
+  def comment(self, id, comment = False, media = []):
+    try:
+      tweet = Tweet.query.filter_by(id = id).first()
+      if not tweet:
+        raise Exception(f"Not found the tweet with id {id}")
+
+      comment = tweet.translated if not comment else comment
+      self.api.update_status(
+        f"@{tweet.entities['user']['screen_name']} {comment}",
+        media_ids = media,
+        in_reply_to_status_id = tweet.entities['id_str'],
+      )
+      tweet.updated_at = datetime.utcnow()
+      tweet.tweeted = 3
+      db.session.commit()
+      return True
+    except Exception as e:
+      print(f"[TweetAction][Comment] error: {str(e)}")
+      return False
+
+    pass
+
+  def quote(self, id, comment = False, media = []):
+    try:
+      tweet = Tweet.query.filter_by(id = id).first()
+      if not tweet:
+        raise Exception(f"Not found the tweet with id {id}")
+
+      target_tweet_url = f"https://twitter.com/{tweet.entities['user']['screen_name']}/status/{tweet.entities['id_str']}"
+      comment = comment if comment else tweet.translated
+      self.api.update_status(
+        f"{comment} {target_tweet_url}",
+        media_ids = media,
+      )
+      tweet.updated_at = datetime.utcnow()
+      tweet.tweeted = 4
+      db.session.commit()
+      return True
+    except Exception as e:
+      print(f"[TweetAction][Quote] error: {str(e)}", e)
+      # db.session.commit()
+      db.session.rollback()
+      return False
+
 
 
 class BotThread(threading.Thread):
@@ -70,7 +162,46 @@ class BotThread(threading.Thread):
         "prev": None,
       }
     # self.apis = self.apis_v2 = self.targets = self.last_tweet_ids = []
-    
+
+  # @basic
+  def create_tweepy_instance(self, consumer_key, consumer_secret, access_token, access_token_secret):
+    try:
+      auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
+      auth.set_access_token(access_token, access_token_secret)
+      api = tweepy.API(auth, wait_on_rate_limit=True)
+      # test one more to check if the credentials are valid.
+      api.me()
+      return api
+    except Exception as e:
+      print(f"[TweepyInstance] {str(e)}")
+      return False
+
+  # @basic
+  def create_apis(self):
+    print('[API Keys]', self.bot['api_keys'], type(self.bot['api_keys']))
+    if len(self.bot['api_keys']) > 0:
+      for api_key_id in self.bot['api_keys']:
+        api_key = AppKey.query.filter_by(id=api_key_id).first()
+
+        api_instance = self.create_tweepy_instance(api_key.consumer_key, api_key.consumer_secret, api_key.access_token, api_key.access_token_secret)
+        if not api_instance:
+          return print('[API Instance] Failed to create.', api_key_id)
+        self.apis.append(api_instance)
+
+  # @basic
+  def create_v2_apis(self):
+    if len(self.bot['api_keys']) > 0:
+      for api_key_id in self.bot['api_keys']:
+        api_key = AppKey.query.filter_by(id=api_key_id).first()
+        if not api_key.bearer_token:
+          continue
+        try:
+          inst = Api(bearer_token = api_key.bearer_token)
+          self.apis_v2.append(inst)
+        except Exception as e:
+          print(f"[Bot][{self.bot['name']}][API V2] failed to create... {api_key_id}")
+
+  # @operator
   def start(self):
     print(f"[Task] starting '{self.name}'")
     self.stopped = False
@@ -85,36 +216,13 @@ class BotThread(threading.Thread):
       self.create_v2_apis()
       self.start_one_time_batch()
 
-
+  # @operator
   def stop(self):
     print(f"[Task] stopping '{self.name}'")
     self.stopped = True
 
-  # @postfork
-  def create_apis(self):
-    print('[API Keys]', self.bot['api_keys'], type(self.bot['api_keys']))
-    if len(self.bot['api_keys']) > 0:
-      for api_key_id in self.bot['api_keys']:
-        api_key = AppKey.query.filter_by(id=api_key_id).first()
 
-        api_instance = self.create_tweepy_instance(api_key.consumer_key, api_key.consumer_secret, api_key.access_token, api_key.access_token_secret)
-        if not api_instance:
-          return print('[API Instance] Failed to create.', api_key_id)
-        self.apis.append(api_instance)
-    
-  def create_v2_apis(self):
-    if len(self.bot['api_keys']) > 0:
-      for api_key_id in self.bot['api_keys']:
-        api_key = AppKey.query.filter_by(id=api_key_id).first()
-        if not api_key.bearer_token:
-          continue
-        try:
-          inst = Api(bearer_token = api_key.bearer_token)
-          self.apis_v2.append(inst)
-        except Exception as e:
-          print(f"[Bot][{self.bot['name']}][API V2] failed to create... {api_key_id}")
-
-
+  # @real-time
   def validate_targets(self):
     if len(self.apis) == 0:
       return []
@@ -128,6 +236,7 @@ class BotThread(threading.Thread):
         pass
     print('[Targets]', type(self.bot['targets']), self.bot['targets'], self.targets)
 
+  # @real-time
   def execute_loop(self):
     def func_wrapper():
       if self.stopped:
@@ -137,69 +246,16 @@ class BotThread(threading.Thread):
     t = threading.Timer(self._interval * len(self.apis), func_wrapper)
     t.start()
 
-  def start_one_time_batch(self):
-    if len(self.apis_v2) > 0:
-      api_inst = self.apis_v2[0]
-      for screen_name in self.bot['targets']:
-        if self.stopped:
-          break
-        self.analyze_target(screen_name = screen_name, api_inst = api_inst)
-    else:
-      print(f"[Bot][{self.bot['name']}]No available API v2 instances")
-    # after the bot is finished or stopped by error.
-    bot = Bot.query.filter_by(id = self.bot['id']).first()
-    if bot:
-      bot.status = 'IDLE'
-      bot.updated_at = datetime.utcnow()
-      db.session.commit()
-    print(f"[BotThread][One Time Bot][Finished] {bot.id}-{bot.name}")
-
-    notification_msg = f"The bot [{bot.name}] finished!"
-    notification = Notification(
-      user_id = bot.user_id,
-      text = notification_msg,
-      bot_id = bot.id,
-      payload = {
-        "type": "BOT_FINISHED",
-        "bot": bot.id,
-      },
-    )
-    db.session.add(notification)
-    db.session.commit()
-
-    io_notify_user(
-      user_id = bot.user_id,
-      event = socket_event.BOT_FINISHED,
-      args = { "message": notification_msg },
-    )
-    # cutout by the limitation
-    self.process_cutout()
-
-
+  # @real-time
   def processor(self):
     print(f"[Processing] {self.name} {str(self._iterN)}")
     self.monitor_accounts()
 
-
-  def create_tweepy_instance(self, consumer_key, consumer_secret, access_token, access_token_secret):
-    try:
-      auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
-      auth.set_access_token(access_token, access_token_secret)
-      api = tweepy.API(auth, wait_on_rate_limit=True)
-      # test one more to check if the credentials are valid.
-      api.me()
-      return api
-    except Exception as e:
-      print(f"[TweepyInstance] {str(e)}")
-      return False
-
+  # @real-time
   def monitor_accounts(self):
     print(f"[MonitorAccount]', Interval: {self._interval}s, APIs: {len(self.apis)}")
 
     for idx, api in enumerate(self.apis):
-
-      # if idx > 0:
-      #   time.sleep(self._interval)
       if len(self.bot['targets']) > 0:
         try:
           # users = api.lookup_users(list(self.targets.values()), include_entities=True, tweet_mode="extended")
@@ -213,6 +269,7 @@ class BotThread(threading.Thread):
           print('[LookUp] Error ', str(e))
           return False
 
+  # @real-time
   def process_monitor_result(self, user, api):
     screen_name = user.screen_name
     tweet_id = user.status.id_str
@@ -252,6 +309,48 @@ class BotThread(threading.Thread):
       print(f"[NEW_TWEET_FOUND]", self.last_tweet_ids, tweet_id, self._iterN)
       # tweet = self.apis[0].get_status(tweet_id, tweet_mode = 'extended')
       self.postprocess_new_tweet(user.status._json, screen_name, metrics)
+
+
+  # @one-time
+  def start_one_time_batch(self):
+    if len(self.apis_v2) > 0:
+      api_inst = self.apis_v2[0]
+      for screen_name in self.bot['targets']:
+        if self.stopped:
+          break
+        self.analyze_target(screen_name = screen_name, api_inst = api_inst)
+    else:
+      print(f"[Bot][{self.bot['name']}]No available API v2 instances")
+
+    # cutout by the limitation
+    self.process_cutout()
+    self.process_automation()
+    # after the bot is finished or stopped by error.
+    bot = Bot.query.filter_by(id = self.bot['id']).first()
+    if bot:
+      bot.status = 'IDLE'
+      bot.updated_at = datetime.utcnow()
+      db.session.commit()
+    print(f"[BotThread][One Time Bot][Finished] {bot.id}-{bot.name}")
+
+    notification_msg = f"The bot [{bot.name}] finished!"
+    notification = Notification(
+      user_id = bot.user_id,
+      text = notification_msg,
+      bot_id = bot.id,
+      payload = {
+        "type": "BOT_FINISHED",
+        "bot": bot.id,
+      },
+    )
+    db.session.add(notification)
+    db.session.commit()
+
+    io_notify_user(
+      user_id = bot.user_id,
+      event = socket_event.BOT_FINISHED,
+      args = { "message": notification_msg },
+    )
 
   def analyze_target(self, screen_name, api_inst):
     ## analysis data
@@ -427,7 +526,6 @@ class BotThread(threading.Thread):
         return True
     return False
 
-
   def parse_full_text(self, status):
     full_text = status.full_text
     entities = status.entities
@@ -574,6 +672,25 @@ class BotThread(threading.Thread):
       db.session.commit()
       print('[Bot][Cutout] Finished')
 
+  def process_automation(self):
+    print(f"[Automation]")
+    allowed_actions = ['tweet', 'retweet', 'comment', 'quote']
+
+    # automation must be applied for one-time bot enabled automation.
+    if self.bot['type'] == 'REAL_TIME' or not self.bot['enable_automation']:
+      return False
+    
+    # automation action should be valid, must be in allowed actions.
+    if self.bot['auto_action'] not in allowed_actions:
+      return False
+
+    # get all tweets(after cutout)
+    tweets = Tweet.query.filter_by(bot_id = self.bot['id'], session = self.identifier).all()
+    tweet_ids = list(map(lambda tweet: tweet.id, tweets))
+    tweetAction = TweetAction(instance = self.apis[0], bot_object = self.bot)
+    for tweet_id in tweet_ids:
+      tweetAction.makeAction(id = tweet_id, action = self.bot['auto_action'])
+
   def stop_bot_by_error(self, e):
     self.stopped = True
     bot = Bot.query.filter_by(id = self.bot['id']).first()
@@ -602,25 +719,6 @@ class BotThread(threading.Thread):
       args = { "message": notification_msg },
     )
 
-  # def set_interval(self, func, sec):
-  #   def func_wrapper():
-  #     if not self.stopped:
-  #       self.set_interval(self, func, sec)
-  #       func()
-  #   t = threading.Timer(self._interval, func_wrapper)
-  #   t.start()
-  #   return t
-
-  # def processor(self):
-  #   def func_wrapper():
-  #     self.processor(self)
-
-  #   if not self.stopped:
-  #     threading.Timer(self._interval, self.processor).start()
-  #     self._iterN += 1
-  #     print('[Processing...] ' + str(self._iterN))
-  #   else:
-  #     pass
 
 
 def run_bot(bot):
