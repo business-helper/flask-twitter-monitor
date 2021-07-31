@@ -320,7 +320,6 @@ function composeFormData() {
 }
 
 function patchTweetModal(tweet, embed) {
-  console.log('[Embed URL]', embed);
   $('#tweet-id').val(tweet.id);
   // $('#origin-tweet').val(tweet.text);
   $('#o-tweet-con').html(embed.html)
@@ -336,10 +335,10 @@ async function refreshSessionOfBot() {
     .then(res => {
       if (!res.status) throw new Error(res.message);
 
-      const optionHtml = (value, name) => `<option value="${value}">${name}</option>`;
+      const optionHtml = (value, name) => `<option value="${value}">${formatTime(getLocalDateTime(name), 'YYYY-mm-dd HH:ii')}</option>`;
       const innerHtml = res.data
         .map(noti => optionHtml(noti.id, formatTime(noti.created_at)))
-        .reduce((html, optHtml) => html += `\n${optHtml}`, optionHtml(0, '- Select a session -'));
+        .reduce((html, optHtml) => html += `\n${optHtml}`, '<option value="0">- Select a session -</option>');
       $('#filter_session').html(innerHtml);
     })
     .catch(error => {
@@ -416,6 +415,15 @@ function initDataTable() {
                 },
               },
               {
+                targets: -2,
+                label: "Time",
+                render: function (data, type, full, meta) {
+                  return data 
+                    ? formatTime(getLocalDateTime(data), 'YYYY-mm-dd HH:ii')
+                    :'<span class="m-badge m-badge--warning m-badge--wide">-</span>';
+                },
+              },
+              {
                 targets: -3,
                 label: "Tweeted",
                 render: function (data, type, full, meta) {
@@ -436,14 +444,14 @@ function initDataTable() {
               },
               {
                 targets: 1,
-                label: "Tweeted",
+                label: "Bot",
                 render: function (data, type, full, meta) {
                   return data ? data : '<span class="m-badge m-badge--danger m-badge--wide">Deleted Bot</span>';
                 },
               },
               {
                 targets: 2,
-                label: "Tweeted",
+                label: "Session",
                 render: function (data, type, full, meta) {
                   return data ? formatTime(getLocalDateTime(data), 'YYYY-mm-dd HH:ii')
                     :'<span class="m-badge m-badge--warning m-badge--wide">No Session</span>';
