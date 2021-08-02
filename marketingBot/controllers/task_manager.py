@@ -64,7 +64,7 @@ class TweetAction():
         updated_text = updated_text.replace('$rank$', str(rank))
       else:
         updated_text = updated_text.replace('$rank$', '')
-      print(f"[Generate Default Text from '{default_text}' to '{updated_text}']")
+      print(f"[Generate Default Text] from '{default_text}' to '{updated_text}']")
       return updated_text
     except Exception as e:
       print(f"[Generate Default Text][Error] {str(e)}", e)
@@ -735,9 +735,14 @@ class BotThread(threading.Thread):
     # get all tweets(after cutout)
     tweets = Tweet.query.filter_by(bot_id = self.bot['id'], session = self.identifier).all()
     tweet_ids = list(map(lambda tweet: tweet.id, tweets)) if final_ids == False else final_ids
-    rank_indices = list(map(lambda tweet: str(tweet.rank_index), tweets))
+    # get rank indices
+    rank_indices = []
+    for twit in tweets:
+      if twit.id in tweet_ids:
+        rank_indices.append(str(twit.rank_index))
+
     db.session.commit()
-    print(f"[Bot][{self.bot['name']}]", tweet_ids, rank_indices)
+    print(f"[Bot][{self.bot['name']}]", len(tweets), tweet_ids, rank_indices)
     tweetAction = TweetAction(instance = self.apis[0], bot_object = self.bot, ranks = rank_indices)
     for tweet_id in tweet_ids:
       tweetAction.makeAction(id = tweet_id, action = self.bot['auto_action'])
