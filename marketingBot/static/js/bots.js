@@ -886,6 +886,7 @@ function onEdit(id) {
       $('#cutout').val(app.cutout);
       $('#enable_automation').prop('checked', app.enable_automation);
       $('#auto_action').val(app.auto_action);
+      $('#default_text').val(app.default_text);
 
 
       addMetricFilter(app.metrics);
@@ -1084,6 +1085,7 @@ function composeFormData() {
   data.append('cutout', $('#cutout').val());
   data.append('enable_automation', $('#enable_automation').is(':checked'));
   data.append('auto_action', $('#auto_action').val());
+  data.append('default_text', $('#default_text').val());
 
   const metricKeys = [];
   const metricValues = [];
@@ -1222,7 +1224,7 @@ function initDataTable() {
                   }
                   // const next_run_time = full[full.length - 1];
                   const next_run_element = !next_time ? '' : 
-                  `<div class="mt-1">
+                  `<div class="mt-1 text-center">
                       <span class="m-badge m-badge--primary m-badge--wide" style="white-space: nowrap;">
                         <i class="flaticon-calendar-with-a-clock-time-tools mr-1"></i>
                         ${convertJST2Local(next_time)}

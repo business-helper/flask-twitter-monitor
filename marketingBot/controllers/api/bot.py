@@ -187,6 +187,7 @@ def create_bot_form(self):
       cutout = int(payload['cutout']),
       enable_automation = True if payload['enable_automation'] == 'true' else False,
       auto_action = payload['auto_action'],
+      default_text = payload['default_text'],
     )
 
     db.session.add(bot)
@@ -233,6 +234,7 @@ def update_bot_form(self, id):
   bot.cutout = int(payload['cutout'])
   bot.enable_automation = True if payload['enable_automation'] == 'true' else False
   bot.auto_action = payload['auto_action']
+  bot.default_text = payload['default_text']
 
   db.session.commit()
   modify_bot_schedule(bot)
