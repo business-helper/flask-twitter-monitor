@@ -1188,13 +1188,6 @@ function initDataTable() {
                     return '<span class="m-badge ' + status[data].class + ' m-badge--wide">' + status[data].title + '</span>';
                 },
               },
-              // {
-              //   targets: -3,
-              //   orderable: false,
-              //   render: function(data) {
-              //     return data;
-              //   }
-              // },
               {
                 targets: -4,
                 label: 'Enable Cutout',
@@ -1223,12 +1216,16 @@ function initDataTable() {
                   if (typeof status[bot_type] === 'undefined') {
                       return bot_type;
                   }
+                  const convertJST2Local = (str) => {
+                    const dt = new Date(str);
+                    return formatTime(dt, 'YYYY-mm-dd HH:ii');
+                  }
                   // const next_run_time = full[full.length - 1];
                   const next_run_element = !next_time ? '' : 
                   `<div class="mt-1">
                       <span class="m-badge m-badge--primary m-badge--wide" style="white-space: nowrap;">
                         <i class="flaticon-calendar-with-a-clock-time-tools mr-1"></i>
-                        ${next_time.replace("+09:00", "JST")}
+                        ${convertJST2Local(next_time)}
                       </span>
                     </div>`;
                   

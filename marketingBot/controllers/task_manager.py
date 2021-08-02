@@ -55,8 +55,8 @@ class TweetAction():
       return False
 
   def tweet(self, id, media = []):
+    tweet = Tweet.query.filter_by(id = id).first()
     try:
-      tweet = Tweet.query.filter_by(id = id).first()
       if not tweet:
         raise Exception(f"Not found the tweet with id {id}")
 
@@ -68,11 +68,12 @@ class TweetAction():
       return True
     except Exception as e:
       print(f"[TweetAction][Tweet] error: ", str(e))
+      db.session.commit()
       return False
 
   def retweet(self, id):
+    tweet = Tweet.query.filter_by(id = id).first()
     try:
-      tweet = Tweet.query.filter_by(id = id).first()
       if not tweet:
         raise Exception(f"Not found the tweet with id {id}")
       self.api.retweet(tweet.entities['id_str'])
@@ -83,11 +84,12 @@ class TweetAction():
       return True
     except Exception as e:
       print(f"[TweetAction][Retweet] error: ", str(e))
+      db.session.commit()
       return False
 
   def comment(self, id, comment = False, media = []):
+    tweet = Tweet.query.filter_by(id = id).first()
     try:
-      tweet = Tweet.query.filter_by(id = id).first()
       if not tweet:
         raise Exception(f"Not found the tweet with id {id}")
 
@@ -103,16 +105,14 @@ class TweetAction():
       return True
     except Exception as e:
       print(f"[TweetAction][Comment] error: {str(e)}")
+      db.session.commit()
       return False
 
-    pass
-
   def quote(self, id, comment = False, media = []):
+    tweet = Tweet.query.filter_by(id = id).first()
     try:
-      tweet = Tweet.query.filter_by(id = id).first()
       if not tweet:
         raise Exception(f"Not found the tweet with id {id}")
-
       target_tweet_url = f"https://twitter.com/{tweet.entities['user']['screen_name']}/status/{tweet.entities['id_str']}"
       comment = comment if comment else tweet.translated
       self.api.update_status(
@@ -124,9 +124,8 @@ class TweetAction():
       db.session.commit()
       return True
     except Exception as e:
-      print(f"[TweetAction][Quote] error: {str(e)}", e)
-      # db.session.commit()
-      db.session.rollback()
+      print(f"[TweetAction][Quote]{id} error: {str(e)}", e)
+      db.session.commit()
       return False
 
 
@@ -323,8 +322,8 @@ class BotThread(threading.Thread):
       print(f"[Bot][{self.bot['name']}]No available API v2 instances")
 
     # cutout by the limitation
-    self.process_cutout()
-    self.process_automation()
+    final_ids = self.process_cutout()
+    self.process_automation(final_ids)
     # after the bot is finished or stopped by error.
     bot = Bot.query.filter_by(id = self.bot['id']).first()
     if bot:
@@ -352,6 +351,7 @@ class BotThread(threading.Thread):
       args = { "message": notification_msg },
     )
 
+  # @one-time
   def analyze_target(self, screen_name, api_inst):
     ## analysis data
     tweets = {
@@ -665,14 +665,18 @@ class BotThread(threading.Thread):
       tweets = Tweet.query.filter_by(**condition).order_by(order_by).limit(self.bot['cutout']).offset(0)
       final_ids = list(map(lambda tweet: tweet.id, tweets))
       print('[Bot][Cutout] Will leave', final_ids)
+      db.session.commit()
       # bots = db.session.query(Bot).filter(Bot.id.notin_(final_ids))
       delete_query = Tweet.__table__.delete().where(Tweet.id.notin_(final_ids)).where(Tweet.bot_id == self.bot['id']).where(Tweet.session == self.identifier)
 
       db.session.execute(delete_query)
       db.session.commit()
+      # db.session.flush()
       print('[Bot][Cutout] Finished')
+      return final_ids
+    return False
 
-  def process_automation(self):
+  def process_automation(self, final_ids = False):
     print(f"[Automation]")
     allowed_actions = ['tweet', 'retweet', 'comment', 'quote']
 
@@ -686,7 +690,9 @@ class BotThread(threading.Thread):
 
     # get all tweets(after cutout)
     tweets = Tweet.query.filter_by(bot_id = self.bot['id'], session = self.identifier).all()
-    tweet_ids = list(map(lambda tweet: tweet.id, tweets))
+    tweet_ids = list(map(lambda tweet: tweet.id, tweets)) if final_ids == False else final_ids
+    db.session.commit()
+    print(f"[Bot][{self.bot['name']}]", tweet_ids)
     tweetAction = TweetAction(instance = self.apis[0], bot_object = self.bot)
     for tweet_id in tweet_ids:
       tweetAction.makeAction(id = tweet_id, action = self.bot['auto_action'])
