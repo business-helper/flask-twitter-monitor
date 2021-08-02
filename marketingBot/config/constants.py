@@ -8,3 +8,4 @@ class socket_event(object):
   
 class mPath(object):
   MEDIA_PATH = 'assets/uploads/media'
+  CSV_PATH = 'assets/uploads/csv'

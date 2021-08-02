@@ -1,4 +1,4 @@
-from flask import request, jsonify
+from flask import request, jsonify, send_file
 from datetime import datetime
 from sqlalchemy.sql import text
 import requests
@@ -16,8 +16,9 @@ from marketingBot.models.Tweet import db, Tweet
 from marketingBot.models.Bot import Bot
 from marketingBot.models.AppKey import AppKey
 from marketingBot.models.Media import Media
+from marketingBot.models.Notification import Notification
 from marketingBot.helpers.wrapper import session_required
-from marketingBot.helpers.common import json_parse
+from marketingBot.helpers.common import json_parse, save_as_csv
 
 
 def get_tweet_embed_info(tweet_id):
@@ -27,6 +28,12 @@ def get_tweet_embed_info(tweet_id):
   except Exception as e:
     print(f"[Embend] {tweet_id} error")
     return False
+
+@app.route('/download/csv/<filename>', methods = ['GET'])
+@session_required
+def download_csv_file_by_name(self, filename):
+  file_path = os.path.join(app.root_path, mPath.CSV_PATH, filename)
+  return send_file(file_path)
 
 @api.route('/ping-tweet', methods=['GET'])
 def api_ping_tweet():
@@ -353,3 +360,97 @@ def comment_with_quote(self, id):
       'message':'Failed to quote',
     })
 
+@api.route('/tweets/download', methods=['POST'])
+@session_required
+def download_tweets(self):
+  try:
+    user_id = self.id
+    payload = dict(request.get_json())
+    fields = payload['fields']
+    filter = payload['filter']
+
+    tweets = db.session.query(
+        Tweet
+      ).join(Bot, Bot.id == Tweet.bot_id, isouter = True
+      ).join(Notification, Notification.id == Tweet.session, isouter = True
+      ).filter(Tweet.user_id == user_id)
+    if 'keyworkd' in filter and filter['keyword']:
+      tweets = tweets.filter(Tweet.text.like(f"%{filter['keyword']}%"))
+    if 'bot' in filter and int(filter['bot']) > 0:
+      tweets = tweets.filter(Tweet.bot_id == filter['bot'])
+    if 'session' in filter and int(filter['session']) > 0:
+      tweets = tweets.filter(Tweet.session == filter['session'])
+    tweets =  tweets.with_entities(Tweet.id, Tweet.bot_id, Tweet.target, Tweet.text, Tweet.translated, Tweet.tweeted, Tweet.entities, Tweet.created_at, Tweet.metrics, Tweet.rank_index, Bot.name.label('bot_name'), Notification.created_at.label('session_time')
+      ).all()
+
+    header_map = {
+      "bot": 'Bot',
+      "session": 'Session',
+      "target": 'Target',
+      "text": 'Text',
+      "translated": 'Translated',
+      "followers": 'Followers',
+      "friends": 'friends',
+      "statuses": 'Total Tweets',
+      "lists": 'Lists',
+      "retweets": 'Retweets',
+      "likes": 'Likes',
+      "rank": 'Rank Index',
+      "tweeted": 'Tweeted',
+      "time": 'Time,'
+    }
+    headers = list(map(lambda key: header_map[key], fields))
+    print('[Download][Header]', type(headers), headers)
+    object_array = []
+    for tweet in tweets:
+      print('[Tweet]', type(tweet))
+      object_array.append(tweet_csv_row_data(dict(tweet), fields))
+    file_name = save_as_csv(headers, object_array, self.id)
+    return jsonify({
+      "status": True,
+      "message": 'success',
+      "file": file_name,
+    })
+  except Exception as e:
+    print(f"[Download CSV][Error] {str(e)}")
+    # raise e
+    return jsonify({
+      "status": False,
+      "message": "Something weng wrong!",
+      "details": str(e),
+    })
+
+
+def tweet_csv_row_data(tweet, fields):
+  data = []
+  tweet_actions = ['None', 'Retweeted', 'Tweeted', 'Commentted', 'Quoted']
+  for key in fields:
+    if key == 'bot':
+      data.append(tweet['bot_name'])
+    elif key == 'session':
+      data.append(tweet['session_time'])
+    elif key == 'target':
+      data.append(tweet['target'])
+    elif key == 'text':
+      data.append(f"\"{tweet['text']}\"")
+    elif key == 'translated':
+      data.append(f"\"{tweet['translated']}\"")
+    elif key == 'followers':
+      data.append(tweet['metrics']['followers'] if 'followers' in tweet['metrics'] else 0)
+    elif key == 'friends':
+      data.append(tweet['metrics']['friends'] if 'friends' in tweet['metrics'] else 0)
+    elif key == 'statuses':
+      data.append(tweet['metrics']['statuses'] if 'statuses' in tweet['metrics'] else 0)
+    elif key == 'lists':
+      data.append(tweet['metrics']['listed'] if 'listed' in tweet['metrics'] else 0)
+    elif key == 'retweets':
+      data.append(tweet['metrics']['tweet']['retweets'] if 'tweet' in tweet['metrics'] else 0)
+    elif key == 'likes':
+      data.append(tweet['metrics']['tweet']['favorite'] if 'tweet' in tweet['metrics'] else 0)
+    elif key == 'rank':
+      data.append(str(tweet['rank_index']))
+    elif key == 'tweeted':
+      data.append(tweet_actions[int(tweet['tweeted'])])
+    elif key == 'time':
+      data.append(tweet['created_at'])
+  return data

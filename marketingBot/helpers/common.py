@@ -1,9 +1,12 @@
-from flask import session, json
+from flask import session, json, Response
 import os
 import requests
 import time
+import csv
 from googletrans import Translator
 
+from marketingBot import app
+from marketingBot.config.constants import mPath
 from marketingBot.models.User import User
 
 google_translator = Translator()
@@ -94,3 +97,35 @@ def splitString2Array(str):
   except Exception as e:
     return []
 
+def save_as_csv(headers, data_array = [], user_id = 0):
+  file_name = f"Tweets-{user_id}-{int(time.time())}.csv"
+  rel_path = os.path.join(mPath.CSV_PATH, file_name)
+  dest_path = os.path.join(app.root_path, rel_path)
+
+  # csv_writer = csv.writer(dest_path, 'wb')
+
+  csv = f"No,{','.join(headers)}"
+  for idx, data in enumerate(data_array):
+    csv = f"{csv}\n{idx + 1}"
+    for val in data:
+      csv = f"{csv},{val}"
+  # csv = '1,2,3\n4,5,6\n'
+
+  with open(dest_path, 'w', encoding='UTF-8', newline='') as f:
+    f.write(csv)
+  return file_name
+
+def download_csv(headers, data_array = [], file_name = 'Tweets.csv'):
+  csv = f"No,{','.join(headers)}"
+  for idx, data in enumerate(data_array):
+    csv = f"{csv}\n{idx + 1}"
+    for val in data:
+      csv = f"{csv},{val}"
+  # csv = '1,2,3\n4,5,6\n'
+  return Response(
+    csv,
+    mimetype="text/csv",
+    headers={
+      "Content-disposition": f"attachment; filename={file_name}"
+    }
+  )

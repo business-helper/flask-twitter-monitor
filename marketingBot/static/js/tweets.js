@@ -110,6 +110,23 @@ $(function() {
     $('#len-translated').text($(this).val().length);
   });
 
+  $('#open-download-modal').on('click', openDownloadModal);
+
+  $('#do-download').on('click', actionDownloadTweets);
+
+  $('#download-key-all').on('change', function() {
+    $('.download-key-checkbox').prop('checked', $(this).is(':checked'));
+  });
+
+  $('.download-key-checkbox:not(#download-key-all)').on('change', function() {
+    const total = $('.download-key-checkbox:not(#download-key-all)').length;
+    let checked = 0;
+    $('.download-key-checkbox:not(#download-key-all)').each((i, item) => {
+      if ($(item).is(':checked')) checked ++;
+    });
+    $('#download-key-all').prop('checked', total === checked);
+  });
+
   // deprecated.
   // submit action in the item form.
   $('#website-form1').submit(function(e) {
@@ -482,6 +499,37 @@ function actionComment() {
     });
 }
 
+function actionDownloadTweets() {
+  const fields = [];
+  $('.download-key-checkbox:not(#download-key-all)').each((i, item) => {
+    if ($(item).is(':checked')) {
+      fields.push($(item).prop('id').replace('download-key-', ''));
+    }
+  });
+  const downloadFilter = $('input[name="download-option"]:checked').val() === 'filtered' ? filter : {};
+
+  return downloadTweetRequest(downloadFilter, fields)
+    .then(res => {
+      if (!res.status) {
+        throw new Error(res.message);
+      }
+      return res.file;
+    })
+    .then(filename => {
+      var link=document.createElement('a');
+      document.body.appendChild(link);
+      link.href = `download/csv/${filename}`;
+      link.click();
+      toastr.success('Downloading...');
+      closeDownloadModal();
+    })
+    .catch(error => {
+      console.log('[DownloadTweet][Error]', error);
+      toastr.error(error.message, 'Download Tweets');
+    });
+
+}
+
 function updateBotRequest(id, data) {
   return $.ajax({
     url: `/api/bots/${id}`,
@@ -630,6 +678,16 @@ function commentWithQuote(id, data) {
   });
 }
 
+function downloadTweetRequest(filter, fields) {
+  return $.ajax({ 
+    url: `/api/tweets/download`,
+    method: 'POST',
+    data: JSON.stringify({ filter, fields }),
+    contentType: 'application/json, charset=utf-8',
+    dataType: 'json',
+  });
+}
+
 // Scripts for minority
 
 function emptyForm() {
@@ -649,6 +707,17 @@ function openTweetModal() {
     backdrop: 'static',
     keyboard: false
   });
+}
+
+function openDownloadModal() {
+  $('#downloadTweetModal').modal({
+    backdrop: 'static',
+    keyboard: false
+  });
+}
+
+function closeDownloadModal() {
+  $('#downloadTweetModal').modal('hide');
 }
 
 function setColumnVisibility(index, show) {

@@ -1,0 +1,109 @@
+<style>
+</style>
+<!-- Tweet Modal -->
+<div class="modal fade" id="downloadTweetModal" tabindex="-1" role="dialog" aria-labelledby="DownloadTweetModalLabel"
+  aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content" style="position: relative;">
+
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLabel">
+          Download Tweets
+        </h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+
+      <div class="modal-body" style="padding-bottom: 5px;">
+        <form role="form" id="download-tweet-form">
+          <div class="row">
+            <div class="col-12">
+              <label><b>Select Download Mode</b><span class="text-danger">*</span></label>
+            </div>
+            <div class="col-sm-12 col-md-6" style="display: flex; align-items: center;">
+              <input type="radio" id="download-all" name="download-option" value="all"/>
+              <label class="ml-2 mb-0" for="download-all">All</label>
+            </div>
+            <div class="col-sm-12 col-md-6" style="display: flex; align-items: center;">
+              <input type="radio" id="download-filtered" name="download-option" value="filtered" checked />
+              <label class="ml-2 mb-0" for="download-filtered">Filtered Tweets Only</label>
+            </div>
+           </div>
+
+           <div class="row mt-5">
+            <div class="col-12">
+              <label><b>Select Fields</b></label>
+            </div>
+            <div class="col-12">
+              <input type="checkbox" id="download-key-all" class="download-key-checkbox mb-3" />
+              <label for="download-key-all"><b>All</b></label>
+            </div>
+            <div class="col-6 col-md-x">
+              <input type="checkbox" id="download-key-bot" class="download-key-checkbox" />
+              <label for="download-key-bot">Bot</label>
+            </div>
+            <div class="col-6 col-md-x">
+              <input type="checkbox" id="download-key-session" class="download-key-checkbox" />
+              <label for="download-key-session">Session</label>
+            </div>
+            <div class="col-6 col-md-x">
+              <input type="checkbox" id="download-key-target" class="download-key-checkbox" />
+              <label for="download-key-target">Target</label>
+            </div>
+            <div class="col-6 col-md-x">
+              <input type="checkbox" id="download-key-text" class="download-key-checkbox" />
+              <label for="download-key-text">Text</label>
+            </div>
+            <div class="col-6 col-md-x">
+              <input type="checkbox" id="download-key-translated" class="download-key-checkbox" />
+              <label for="download-key-translated">Translated</label>
+            </div>
+            <div class="col-6 col-md-x">
+              <input type="checkbox" id="download-key-followers" class="download-key-checkbox" />
+              <label for="download-key-followers">Followers</label>
+            </div>
+            <div class="col-6 col-md-x">
+              <input type="checkbox" id="download-key-friends" class="download-key-checkbox" />
+              <label for="download-key-friends">Friends</label>
+            </div>
+            <div class="col-6 col-md-x">
+              <input type="checkbox" id="download-key-statuses" class="download-key-checkbox" />
+              <label for="download-key-statuses">Total Tweets</label>
+            </div>
+            <div class="col-6 col-md-x">
+              <input type="checkbox" id="download-key-lists" class="download-key-checkbox" />
+              <label for="download-key-lists">Lists</label>
+            </div>
+            <div class="col-6 col-md-x">
+              <input type="checkbox" id="download-key-retweets" class="download-key-checkbox" />
+              <label for="download-key-retweets">Retweets</label>
+            </div>
+            <div class="col-6 col-md-x">
+              <input type="checkbox" id="download-key-likes" class="download-key-checkbox" />
+              <label for="download-key-likes">Likes</label>
+            </div>
+            <div class="col-6 col-md-x">
+              <input type="checkbox" id="download-key-rank" class="download-key-checkbox" />
+              <label for="download-key-rank">Rank Index</label>
+            </div>
+            <div class="col-6 col-md-x">
+              <input type="checkbox" id="download-key-tweeted" class="download-key-checkbox" />
+              <label for="download-key-tweeted">Tweeted</label>
+            </div>
+            <div class="col-6 col-md-x">
+              <input type="checkbox" id="download-key-time" class="download-key-checkbox" />
+              <label for="download-key-time">Time</label>
+            </div>
+           </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button id="do-download" type="button" class="btn btn-primary  btn-cons">Download</button>
+        <button type="button" class="btn btn-cons" data-dismiss="modal">Cancel</button>
+      </div>
+    </div>
+    <!-- /.modal-content -->
+  </div>
+  <!-- /.modal-dialog -->
+</div>

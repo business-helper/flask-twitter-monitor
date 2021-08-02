@@ -10,8 +10,23 @@
           </h3>
         </div>
       </div>
+      <div class="m-portlet__head-tools">
+          <ul class="m-portlet__nav">
+              <li class="m-portlet__nav-item">
+                  <span href="#"
+                    class="btn btn-accent m-btn m-btn--custom m-btn--pill m-btn--icon m-btn--air"
+                    id="open-download-modal">
+                      <span>
+                          <i class="la la-download"></i>
+                          <span>Download</span>
+                      </span>
+                    </span>
+              </li>
+          </ul>
+      </div>
     </div>
 
+    <!-- Show/Hide Columns -->
     <div class="row p-3">
       <div class="col-6 col-md-3">
         <input type="checkbox" id="col-show-bot" class="col-show-checkbox" />
@@ -67,7 +82,7 @@
       </div>
       <div class="col-6 col-md-3">
         <input type="checkbox" id="col-show-time" class="col-show-checkbox" />
-        <label for="col-show-time">time</label>
+        <label for="col-show-time">Time</label>
       </div>
     </div>
 
@@ -138,6 +153,7 @@
 </div>
 
 {% include 'partials/tweet_modal.html' %}
+{% include 'partials/download_tweets_modal.html' %}
 
 {% endblock %}
 
