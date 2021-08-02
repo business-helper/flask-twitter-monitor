@@ -38,9 +38,43 @@ class BotDemo:
     self.interval = interval
 
 class TweetAction():
-  def __init__(self, instance, bot_object = {}):
+  def __init__(self, instance, bot_object = {}, ranks = []):
     self.api = instance
     self.bot = bot_object
+    ranks.sort(reverse = True)
+    self.ranks = ranks
+
+  def getRank(self, rank_index):
+    try:
+      index = self.ranks.index(rank_index)
+      return index + 1
+    except Exception as e:
+      print(f"[TweetAction][GetRank] Error: {str(e)}")
+      return len(self.ranks) + 2
+
+  def generateDefaultText(self, tweet_obj):
+    try:
+      default_text = self.bot['default_text']
+      # link = f"https://twitter.com/{tweet_obj['entities']['user']['screen_name']}/status/{tweet_obj['entities']['id_str']}"
+      account = f"@{tweet_obj['entities']['user']['screen_name']}"
+
+      updated_text = default_text.replace('$account$', account).replace('$link$', '')
+      if len(list(self.bot['rank_factors'].keys())) > 0:
+        rank = self.getRank(tweet_obj['rank_index'])
+        updated_text = updated_text.replace('$rank$', str(rank))
+      else:
+        updated_text = updated_text.replace('$rank$', '')
+      print(f"[Generate Default Text from '{default_text}' to '{updated_text}']")
+      return updated_text
+    except Exception as e:
+      print(f"[Generate Default Text][Error] {str(e)}", e)
+      return '';
+
+  def getAttachment(self, tweet_obj, initial = []):
+    link = f"https://twitter.com/{tweet_obj['entities']['user']['screen_name']}/status/{tweet_obj['entities']['id_str']}"
+    if '$link$' in self.bot['default_text'] and link not in initial:
+      initial.append(link)
+    return link
 
   def makeAction(self, id, action):
     if action == 'tweet':
@@ -60,14 +94,18 @@ class TweetAction():
       if not tweet:
         raise Exception(f"Not found the tweet with id {id}")
 
-      self.api.update_status(tweet.translated, media_ids = media)
+      default_text = self.generateDefaultText(tweet.to_dict())
+      print(f"[Default Text][Final] {default_text}")
+      attachment = self.getAttachment(tweet.to_dict(), initial = [])
+
+      self.api.update_status(f"{default_text} {tweet.translated}", media_ids = media, attachment_url = attachment)
 
       tweet.updated_at = datetime.utcnow()
       tweet.tweeted = 2
       db.session.commit()
       return True
     except Exception as e:
-      print(f"[TweetAction][Tweet] error: ", str(e))
+      print(f"[TweetAction][Tweet] error: ", str(e), e)
       db.session.commit()
       return False
 
@@ -93,11 +131,14 @@ class TweetAction():
       if not tweet:
         raise Exception(f"Not found the tweet with id {id}")
 
+      default_text = self.generateDefaultText(tweet.to_dict())
+      attachment = self.getAttachment(tweet.to_dict(), initial = [])
       comment = tweet.translated if not comment else comment
       self.api.update_status(
-        f"@{tweet.entities['user']['screen_name']} {comment}",
+        f"@{tweet.entities['user']['screen_name']} {default_text} {comment}",
         media_ids = media,
         in_reply_to_status_id = tweet.entities['id_str'],
+        attachment_url = attachment,
       )
       tweet.updated_at = datetime.utcnow()
       tweet.tweeted = 3
@@ -113,11 +154,14 @@ class TweetAction():
     try:
       if not tweet:
         raise Exception(f"Not found the tweet with id {id}")
+      default_text = self.generateDefaultText(tweet.to_dict())
       target_tweet_url = f"https://twitter.com/{tweet.entities['user']['screen_name']}/status/{tweet.entities['id_str']}"
+      attachment = self.getAttachment(tweet.to_dict(), initial = [target_tweet_url])
       comment = comment if comment else tweet.translated
       self.api.update_status(
-        f"{comment} {target_tweet_url}",
+        f"{default_text} {comment} {target_tweet_url}",
         media_ids = media,
+        attachment_url = attachment,
       )
       tweet.updated_at = datetime.utcnow()
       tweet.tweeted = 4
@@ -691,9 +735,10 @@ class BotThread(threading.Thread):
     # get all tweets(after cutout)
     tweets = Tweet.query.filter_by(bot_id = self.bot['id'], session = self.identifier).all()
     tweet_ids = list(map(lambda tweet: tweet.id, tweets)) if final_ids == False else final_ids
+    rank_indices = list(map(lambda tweet: str(tweet.rank_index), tweets))
     db.session.commit()
-    print(f"[Bot][{self.bot['name']}]", tweet_ids)
-    tweetAction = TweetAction(instance = self.apis[0], bot_object = self.bot)
+    print(f"[Bot][{self.bot['name']}]", tweet_ids, rank_indices)
+    tweetAction = TweetAction(instance = self.apis[0], bot_object = self.bot, ranks = rank_indices)
     for tweet_id in tweet_ids:
       tweetAction.makeAction(id = tweet_id, action = self.bot['auto_action'])
 

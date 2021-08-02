@@ -1,5 +1,6 @@
 from flask import request, jsonify
 from datetime import datetime
+from sqlalchemy.sql import text
 import requests
 import ast
 import uuid
@@ -12,6 +13,7 @@ from marketingBot.controllers.twitter import create_api
 from marketingBot.controllers.api.api_apps import get_tweepy_instance
 from marketingBot.controllers.task_manager import TweetAction
 from marketingBot.models.Tweet import db, Tweet
+from marketingBot.models.Bot import Bot
 from marketingBot.models.AppKey import AppKey
 from marketingBot.models.Media import Media
 from marketingBot.helpers.wrapper import session_required
@@ -107,6 +109,16 @@ def do_retweet(self, id):
 @session_required
 def do_tweet(self, id):
   payload = dict(request.get_json())
+  # update translated text
+  tweet = Tweet.query.filter_by(id = id).first()
+  tweet.translated = payload['translated']
+  tweet.updated_at = datetime.utcnow()
+  db.session.commit()
+
+  bot = Bot.query.filter_by(id = tweet.bot_id).first()
+  session_tweets = Tweet.query.filter_by(session = tweet.session).all()
+  rank_indices = list(map(lambda twit: str(twit.rank_index), session_tweets))
+  db.session.commit()
   # get a tweepy instanace
   _tweepy = get_tweepy_instance()
   if not _tweepy:
@@ -114,7 +126,7 @@ def do_tweet(self, id):
       "status": False,
       "message": "Cound not create API connection!",
     })
-  tweetAction = TweetAction(instance = _tweepy)
+  tweetAction = TweetAction(instance = _tweepy, bot_object = bot.to_dict(), ranks = rank_indices)
   try:
     result = tweetAction.tweet(id, media = payload['media'] if 'media' in payload else [])
     if not result:
@@ -247,13 +259,22 @@ def upload_media(self):
 def comment_to_tweet(self, id):
   payload = dict(request.get_json())
   comment_text = payload['comment']
-  
+  # update translated text
   tweet = Tweet.query.filter_by(id = id).first()
   if not tweet:
     return jsonify({
       'status': False,
       'message': 'Not found the target tweet!',
     })
+  # tweet.translated = comment_text
+  # tweet.updated_at = datetime.utcnow()
+  db.session.commit()
+
+  bot = Bot.query.filter_by(id = tweet.bot_id).first()
+  session_tweets = Tweet.query.filter_by(session = tweet.session).all()
+  rank_indices = list(map(lambda twit: str(twit.rank_index), session_tweets))
+  db.session.commit()
+
 
   _tweepy = get_tweepy_instance()
   if not _tweepy:
@@ -263,7 +284,7 @@ def comment_to_tweet(self, id):
     })
 
   try:
-    tweetAction = TweetAction(instance = _tweepy)
+    tweetAction = TweetAction(instance = _tweepy, bot_object = bot.to_dict(), ranks = rank_indices)
     result = tweetAction.comment(
       id = id,
       comment = comment_text,
@@ -291,6 +312,17 @@ def comment_to_tweet(self, id):
 def comment_with_quote(self, id):
   payload = dict(request.get_json())
   comment_text = payload['text']
+  # update translated text
+  tweet = Tweet.query.filter_by(id = id).first()
+  # tweet.translated = comment_text
+  # tweet.updated_at = datetime.utcnow()
+  # db.session.commit()
+
+  bot = Bot.query.filter_by(id = tweet.bot_id).first()
+  session_tweets = Tweet.query.filter_by(session = tweet.session).all()
+  rank_indices = list(map(lambda twit: str(twit.rank_index), session_tweets))
+  db.session.commit()
+
 
   _tweepy = get_tweepy_instance()
   if not _tweepy:
@@ -299,7 +331,7 @@ def comment_with_quote(self, id):
       "message": "Cound not create API connection!",
     })
   try:
-    tweetAction = TweetAction(instance = _tweepy)
+    tweetAction = TweetAction(instance = _tweepy, bot_object = bot.to_dict(), ranks = rank_indices)
     result = tweetAction.quote(
       id = id,
       comment = comment_text,
