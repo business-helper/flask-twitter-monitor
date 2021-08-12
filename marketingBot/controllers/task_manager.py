@@ -74,7 +74,7 @@ class TweetAction():
     link = f"https://twitter.com/{tweet_obj['entities']['user']['screen_name']}/status/{tweet_obj['entities']['id_str']}"
     if '$link$' in self.bot['default_text'] and link not in initial:
       initial.append(link)
-    return link
+    return initial[0] if len(initial) >= 0 else None
 
   def makeAction(self, id, action):
     if action == 'tweet':
@@ -157,6 +157,7 @@ class TweetAction():
       default_text = self.generateDefaultText(tweet.to_dict())
       target_tweet_url = f"https://twitter.com/{tweet.entities['user']['screen_name']}/status/{tweet.entities['id_str']}"
       attachment = self.getAttachment(tweet.to_dict(), initial = [target_tweet_url])
+      print(f"[Attachment]", attachment)
       comment = comment if comment else tweet.translated
       self.api.update_status(
         f"{default_text} {comment} {target_tweet_url}",
@@ -367,6 +368,7 @@ class BotThread(threading.Thread):
 
     # cutout by the limitation
     final_ids = self.process_cutout()
+    self.do_translation(final_ids)
     self.process_automation(final_ids)
     # after the bot is finished or stopped by error.
     bot = Bot.query.filter_by(id = self.bot['id']).first()
@@ -508,25 +510,19 @@ class BotThread(threading.Thread):
           #   "keyword_matched": self.matches_keywords(full_text),
           #   "entities": full_text._json,
           # }
-          lang = self.bot['target_langs'][screen_name] if screen_name in self.bot['target_langs'] else 'JA'
-          translate_method = translate if self.bot['translator'] == 'DEEPL' else translate_google
-          translated = translate_method(src_text = full_text, target_lang = lang) if self.bot['enable_translation'] and lang != 'NONE' else full_text
 
           if self.matches_keywords(full_text):
-            # twit = Tweet(
             twit_dict = dict(
               user_id = self.bot['user_id'],
               bot_id = self.bot['id'],
               target = screen_name,
               text = full_text,
-              translated = translated,
+              translated = full_text,
               entities = full_tweet._json,
               tweeted = 0,
               metrics = filtered_tweets[full_tweet.id_str]['metrics'],
             )
             self.check_insert_tweet(twit_dict)
-            # db.session.add(twit)
-            # db.session.commit()
         
         # print('[filtered Tweetes][Full]', filtered_tweets)
       # mark the target as analyzed.
@@ -710,15 +706,30 @@ class BotThread(threading.Thread):
       final_ids = list(map(lambda tweet: tweet.id, tweets))
       print('[Bot][Cutout] Will leave', final_ids)
       db.session.commit()
-      # bots = db.session.query(Bot).filter(Bot.id.notin_(final_ids))
-      delete_query = Tweet.__table__.delete().where(Tweet.id.notin_(final_ids)).where(Tweet.bot_id == self.bot['id']).where(Tweet.session == self.identifier)
 
-      db.session.execute(delete_query)
-      db.session.commit()
-      # db.session.flush()
+      if total > len(final_ids):
+        # bots = db.session.query(Bot).filter(Bot.id.notin_(final_ids))
+        delete_query = Tweet.__table__.delete().where(Tweet.id.notin_(final_ids)).where(Tweet.bot_id == self.bot['id']).where(Tweet.session == self.identifier)
+        db.session.execute(delete_query)
+        db.session.commit()
+        # db.session.flush()
       print('[Bot][Cutout] Finished')
       return final_ids
     return False
+
+  def do_translation(self, final_ids = False):
+    # get all tweets(after cutout)
+    tweets = Tweet.query.filter_by(bot_id = self.bot['id'], session = self.identifier).all()
+    tweet_ids = list(map(lambda tweet: tweet.id, tweets)) if final_ids == False else final_ids
+    print(f"[Translation] Will translate {len(tweet_ids)} tweets", tweet_ids)
+    for tweet_id in tweet_ids:
+      tweet = Tweet.query.filter_by(id = tweet_id).first()
+      lang = self.bot['target_langs'][tweet.target] if tweet.target in self.bot['target_langs'] else 'JA'
+      translation_method = translate if self.bot['translator'] == 'DEEPL' else translate_google
+      tweet.translated = translation_method(src_text = tweet.text, target_lang = lang) if self.bot['enable_translation'] and lang != 'NONE' else tweet.text    
+      tweet.updated_at = datetime.utcnow()
+      db.session.commit()
+    return tweet_ids
 
   def process_automation(self, final_ids = False):
     print(f"[Automation]")
