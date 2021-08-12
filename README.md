@@ -33,6 +33,10 @@ du -sh main.log
 du -sh main.log
 ```
 
+- [See live Log on Ubuntu](https://superuser.com/questions/316578/how-can-i-view-live-logs-on-a-linux-server-ubuntu)
+```bash
+tail -f main.log
+```
 
 # Database
 ## Tweet
