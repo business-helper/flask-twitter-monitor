@@ -26,6 +26,13 @@ python wsgi.py
 - Windows
 mysqlclient
 
+- [Empty Log File](https://www.tecmint.com/empty-delete-file-content-linux/)
+```bash
+du -sh main.log
+> main.Log
+du -sh main.log
+```
+
 
 # Database
 ## Tweet

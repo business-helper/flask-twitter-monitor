@@ -77,10 +77,11 @@ def modify_bot_schedule(bot):
       days=bot.schedule_interval if not CRON_TEST else 0,
       minutes=TEST_INTERVAL if CRON_TEST else 0,
     )
-    def run_bot():
-      run_bot_as_thread(bot.id)
+    def run_bot(bot_id):
+      print('[run_bot]', bot_id)
+      run_bot_as_thread(bot_id)
     print(f"[Schedule][Bot][Modify] {bot.id}")
-    scheduler.add_job(run_bot, trigger=trigger, id=str(bot.id), replace_existing=True)
+    scheduler.add_job(run_bot, trigger=trigger, id=str(bot.id), replace_existing=True, args=[ bot.id ])
 
     # notification of job added.
     notification = Notification(
