@@ -193,10 +193,10 @@ class BotThread(threading.Thread):
 
   def __init__(self, bot, from_schedule = False, identifier = 0, **args):
     threading.Thread.__init__(self)
-    self.name = bot.name
+    self.name = bot['name']
     self.identifier = identifier
-    self._interval = bot.period
-    self.bot = bot.to_dict()
+    self._interval = bot['period']
+    self.bot = bot
     # self.event = threading.Event()
     self.stopped = True
     self.from_schedule = from_schedule
@@ -357,45 +357,51 @@ class BotThread(threading.Thread):
 
   # @one-time
   def start_one_time_batch(self):
-    if len(self.apis_v2) > 0:
-      api_inst = self.apis_v2[0]
-      for screen_name in self.bot['targets']:
-        if self.stopped:
-          break
-        self.analyze_target(screen_name = screen_name, api_inst = api_inst)
-    else:
-      print(f"[Bot][{self.bot['name']}]No available API v2 instances")
+    try:
+      if len(self.apis_v2) > 0:
+        api_inst = self.apis_v2[0]
+        for screen_name in self.bot['targets']:
+          if self.stopped:
+            break
+          self.analyze_target(screen_name = screen_name, api_inst = api_inst)
+      else:
+        print(f"[Bot][{self.bot['name']}]No available API v2 instances")
 
-    # cutout by the limitation
-    final_ids = self.process_cutout()
-    self.do_translation(final_ids)
-    self.process_automation(final_ids)
-    # after the bot is finished or stopped by error.
-    bot = Bot.query.filter_by(id = self.bot['id']).first()
-    if bot:
-      bot.status = 'IDLE'
-      bot.updated_at = datetime.utcnow()
+      # cutout by the limitation
+      final_ids = self.process_cutout()
+      self.do_translation(final_ids)
+      self.process_automation(final_ids)
+      # after the bot is finished or stopped by error.
+      bot = Bot.query.filter_by(id = self.bot['id']).first()
+      if bot:
+        bot.status = 'IDLE'
+        bot.updated_at = datetime.utcnow()
+        db.session.commit()
+      print(f"[BotThread][One Time Bot][Finished] {bot.id}-{bot.name}")
+
+      notification_msg = f"The bot [{bot.name}] finished!"
+      notification = Notification(
+        user_id = bot.user_id,
+        text = notification_msg,
+        bot_id = bot.id,
+        payload = {
+          "type": "BOT_FINISHED",
+          "bot": bot.id,
+        },
+      )
+      db.session.add(notification)
       db.session.commit()
-    print(f"[BotThread][One Time Bot][Finished] {bot.id}-{bot.name}")
 
-    notification_msg = f"The bot [{bot.name}] finished!"
-    notification = Notification(
-      user_id = bot.user_id,
-      text = notification_msg,
-      bot_id = bot.id,
-      payload = {
-        "type": "BOT_FINISHED",
-        "bot": bot.id,
-      },
-    )
-    db.session.add(notification)
-    db.session.commit()
-
-    io_notify_user(
-      user_id = bot.user_id,
-      event = socket_event.BOT_FINISHED,
-      args = { "message": notification_msg },
-    )
+      io_notify_user(
+        user_id = bot.user_id,
+        event = socket_event.BOT_FINISHED,
+        args = { "message": notification_msg },
+      )
+      db.session.remove()
+    except Exception as e:
+      print(f"[One Time Bot Error]  {str(e)}")
+      db.session.remove()
+      pass
 
   # @one-time
   def analyze_target(self, screen_name, api_inst):
@@ -700,19 +706,20 @@ class BotThread(threading.Thread):
         "bot_id": self.bot['id'],
         "session": self.identifier,
       }
-      total = Tweet.query.filter_by(**condition).count()
+      total = db.session.query(Tweet).filter_by(**condition).count()
       print(f"[Bot][Cutout] collected {total} tweets")
-      tweets = Tweet.query.filter_by(**condition).order_by(order_by).limit(self.bot['cutout']).offset(0)
+      tweets = db.session.query(Tweet).filter_by(**condition).order_by(order_by).limit(self.bot['cutout']).offset(0)
       final_ids = list(map(lambda tweet: tweet.id, tweets))
       print('[Bot][Cutout] Will leave', final_ids)
       db.session.commit()
 
       if total > len(final_ids):
-        # bots = db.session.query(Bot).filter(Bot.id.notin_(final_ids))
-        delete_query = Tweet.__table__.delete().where(Tweet.id.notin_(final_ids)).where(Tweet.bot_id == self.bot['id']).where(Tweet.session == self.identifier)
-        db.session.execute(delete_query)
+        tweets_to_delete = db.session.query(Tweet).filter(Tweet.id.notin_(final_ids)).filter(Tweet.bot_id == self.bot['id']).filter(Tweet.session == self.identifier)
+        # tweets_to_delete.delete(synchronize_session=False)
+        for tweet in tweets_to_delete:
+          db.session.delete(tweet)
         db.session.commit()
-        # db.session.flush()
+        db.session.remove()
       print('[Bot][Cutout] Finished')
       return final_ids
     return False
@@ -846,22 +853,6 @@ def start_bot_execution(id):
   })
 
 
-@app.route('/tasks', methods=['POST'])
-def add_new_bot():
-  payload = request.get_json()
-  bot_id = str(payload['id'])
-  bot = BotDemo(name=payload['name'], interval=payload['interval'])
-  botThread = BotThread(bot=bot)
-  botThreads[bot_id] = botThread
-  botThreads[bot_id].start()
-
-  print('[PayLoad]', payload)
-  return jsonify({
-    "status": True,
-    "message": "success",
-  })
-
-
 @app.route('/translate', methods=['POST'])
 def test_translate():
   payload = request.get_json()
@@ -870,18 +861,19 @@ def test_translate():
 
 
 def run_bot_as_thread(id, from_schedule = True):
-  print('[Run Bot As Thread]', id)
-  bot = Bot.query.filter_by(id=id).first()
-  if not bot:
-    print(f"[Cron][Bot]{id} Not Fouond...")
-    return False
-
+  print(f"[Run Bot As Thread] {id} at {str(datetime.utcnow())}, [scheduled] {str(from_schedule)}")
   # to-do: analyze
   # if bot.status == 'RUNNING':
   #   print('[Run as Thread][Bot]', bot.to_dict())
   #   print(f"[Cron][BOt]{id} Stopped: already running")
   #   return True
   try:
+    bot = Bot.query.filter_by(id=id).first()
+    if not bot:
+      print(f"[Cron][Bot]{id} Not Fouond...")
+      raise Exception(f"[Cron][Bot]{id} Not Fouond...")
+      # return False
+
     bot_user_id = bot.user_id
     # update db
     bot.status = 'RUNNING'
@@ -904,12 +896,17 @@ def run_bot_as_thread(id, from_schedule = True):
     identifier = notification.id
     print('[Notification ID]', identifier)
     
-    def run_botThread():
-      bot = Bot.query.filter_by(id=id).first()
-      botThread = BotThread(bot= bot, from_schedule = from_schedule, identifier = identifier)
-      botThreads[str(id)] = botThread
+    def run_botThread(bot_id):
+      print(f"[run_botThread] bot {bot_id}")
+
+      bot = Bot.query.filter_by(id=bot_id).first()
+      bot_obj = bot.to_dict()
+      db.session.expire(bot)
+      
+      botThread = BotThread(bot= bot_obj, from_schedule = from_schedule, identifier = identifier)
+      botThreads[str(bot_id)] = botThread
       botThread.start()
-    threading.Thread(target = run_botThread).start()
+    threading.Thread(target = run_botThread, args=[id]).start()
 
     # emit socket event
     io_notify_user(
@@ -917,7 +914,6 @@ def run_bot_as_thread(id, from_schedule = True):
       event = socket_event.BOT_SCHEDULE_START if from_schedule else socket_event.BOT_MANUAL_START,
       args = { "message": notification_msg },
     )
-
 
   except Exception as e:
     print(f"[Cron][Bot]{id} Stopped By Error", str(e))

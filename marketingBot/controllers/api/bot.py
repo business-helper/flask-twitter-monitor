@@ -192,7 +192,10 @@ def create_bot_form(self):
 
     db.session.add(bot)
     db.session.commit()
-    schedule_bot_running(bot)
+    bot_obj = bot.to_dict()
+    db.session.expire(bot)
+
+    schedule_bot_running(bot = bot_obj)
     return jsonify({
       "status": True,
       "message": "A bot has been added!",
@@ -236,8 +239,9 @@ def update_bot_form(self, id):
   bot.auto_action = payload['auto_action']
   bot.default_text = payload['default_text']
 
+  bot_obj = bot.to_dict()
   db.session.commit()
-  modify_bot_schedule(bot)
+  modify_bot_schedule(bot = bot_obj)
   # start_bot_execution(id)
 
   return jsonify({
