@@ -413,9 +413,6 @@ class BotThread(threading.Thread):
     print('[Screen Name]', screen_name)
     target_info = api_inst.get_user(username = screen_name, user_fields=['public_metrics'])
 
-    # api_v2 = create_api_v2(bearer_token = BEARER_TOKEN)
-    # user_v2 = api_v2.get_user(username = 'Adweek')
-
     target_metrics = target_info.data.public_metrics.__dict__
     # print('[Target Info]', target_info, target_info.data)
     target_id = target_info.data.id

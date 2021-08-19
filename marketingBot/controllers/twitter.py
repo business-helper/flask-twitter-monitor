@@ -51,7 +51,7 @@ def create_api_v2(bearer_token):
   )
   return api
 
-api = create_api(CONSUMER_KEY, CONSUMER_SECRET, ACCESS_TOKEN, ACCESS_TOKEN_SECRET)
+# api = create_api(CONSUMER_KEY, CONSUMER_SECRET, ACCESS_TOKEN, ACCESS_TOKEN_SECRET)
 
 print('[App path]', app.root_path, app.instance_path)
 

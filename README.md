@@ -38,6 +38,13 @@ du -sh main.log
 tail -f main.log
 ```
 
+- Check MySQL Process LIST
+
+```mysql
+SHOW FULL PROCESSLIST
+```
+
+
 # Database
 ## Tweet
 ### tweeted
