@@ -5,8 +5,8 @@ from wtforms.validators import DataRequired
 from datetime import datetime, timedelta
 from flask import flash
 
-from marketingBot import app
-from marketingBot.models.User import db, User
+from marketingBot import db, app
+from marketingBot.models.User import User
 from marketingBot.helpers.common import set_login_session, unset_login_session, validate_session
 
 

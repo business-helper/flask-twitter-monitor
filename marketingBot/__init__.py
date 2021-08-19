@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 __version__ = '0.1'
 import os
-from flask import Flask, render_template
+from flask import Flask
+from flask_sqlalchemy import SQLAlchemy
 # from flask_crontab import Crontab
 from flask_debugtoolbar import DebugToolbarExtension
 
@@ -10,8 +11,9 @@ app = Flask('marketingBot')
 toolbar = DebugToolbarExtension(app)
 app.config.from_object('marketingBot.config.app.DBConfig')
 
-from marketingBot.models import db
-db.init_app(app)
+db = SQLAlchemy(app)
+# from marketingBot.models import db
+# db.init_app(app)
 
 # organizing routes
 from marketingBot.controllers.api import api

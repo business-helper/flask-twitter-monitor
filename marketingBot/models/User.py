@@ -1,8 +1,6 @@
 from datetime import datetime
-from flask_sqlalchemy import SQLAlchemy
 from flask_bcrypt import generate_password_hash, check_password_hash
-from marketingBot import app
-db = SQLAlchemy(app)
+from marketingBot import db
 
 class User(db.Model):
   __tablename__ = 'users'

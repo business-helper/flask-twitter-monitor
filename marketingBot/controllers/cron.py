@@ -9,10 +9,10 @@ import threading
 from datetime import datetime
 from pytz import timezone
 
+from marketingBot import app, db
 from marketingBot.controllers.task_manager import run_bot_as_thread
-from marketingBot.models.Notification import Notification, db
+from marketingBot.models.Notification import Notification
 from marketingBot.models.Bot import Bot
-from marketingBot import app
 
 TEST_INTERVAL = 2
 CRON_TEST = False

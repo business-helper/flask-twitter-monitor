@@ -1,7 +1,5 @@
 from datetime import datetime
-from flask_sqlalchemy import SQLAlchemy
-from marketingBot import app
-db = SQLAlchemy(app)
+from marketingBot import db
 
 from marketingBot.helpers.common import json_parse
 

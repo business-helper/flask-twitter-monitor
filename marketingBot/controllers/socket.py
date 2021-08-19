@@ -2,8 +2,8 @@ from datetime import datetime
 from flask import request, jsonify
 from flask_socketio import SocketIO
 
-from marketingBot import app
-from marketingBot.models.User import db, User
+from marketingBot import db, app
+from marketingBot.models.User import User
 from marketingBot.helpers.wrapper import session_required
 
 socketio = SocketIO(app)

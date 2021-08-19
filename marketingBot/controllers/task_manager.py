@@ -1,18 +1,16 @@
 from datetime import datetime
 from flask import jsonify, request
 from sqlalchemy.sql import text
-import pytz
 import threading
-import time, traceback, sys
 import tweepy
 import threading
 from pytwitter import Api
 # from uwsgidecorators import *
 
-from marketingBot import app
+from marketingBot import db, app
 from marketingBot.config.constants import socket_event
 from marketingBot.controllers.socket import io_notify_user
-from marketingBot.models.Bot import db, Bot
+from marketingBot.models.Bot import Bot
 from marketingBot.models.AppKey import AppKey
 from marketingBot.models.Notification import Notification
 from marketingBot.models.Tweet import Tweet

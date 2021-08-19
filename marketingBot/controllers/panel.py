@@ -1,18 +1,13 @@
-from flask import Flask, render_template, jsonify, redirect, url_for, escape, request
+from flask import render_template, jsonify, request
 from sqlalchemy.sql import text
-from flask_wtf import FlaskForm
-from wtforms import StringField
-from wtforms.validators import DataRequired
-from datetime import datetime, timedelta
-from flask import flash
 
-from marketingBot import app
+from marketingBot import db, app
 from marketingBot.controllers.cron import get_next_run_time
-from marketingBot.models.AppKey import db, AppKey
+from marketingBot.models.AppKey import AppKey
 from marketingBot.models.Bot import Bot
 from marketingBot.models.Notification import Notification
 from marketingBot.models.Tweet import Tweet
-from marketingBot.helpers.common import unset_login_session, validate_session, timestamp
+from marketingBot.helpers.common import timestamp
 from marketingBot.helpers.wrapper import session_required
 
 @app.context_processor
