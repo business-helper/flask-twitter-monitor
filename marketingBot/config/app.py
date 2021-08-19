@@ -12,3 +12,4 @@ class DBConfig(object):
   )
   SECRET_KEY = 'marketing_bot_!@#'
   SQLALCHEMY_TRACK_MODIFICATIONS = False
+  SQLALCHEMY_POOL_RECYCLE = 3600
