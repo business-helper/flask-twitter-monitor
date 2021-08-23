@@ -144,22 +144,25 @@ def split_tweet(text, default_text):
   MAX_LENGTH = 280
   tot_text = f"{default_text} {text}"
   tot_length = parse_tweet(tot_text).weightedLength
-
-  if (tot_length) < MAX_LENGTH:
-    return [
-      f"{default_text} {text}"
-    ]
-  else:
-    texts = []
-    skip = 0
-    length = MAX_LENGTH - len('i/n') - 20
-    while True:
-      result = tweet_substring(tot_text, length, skip)
-      texts.append(result['text'])
-      skip = result['pos']
-      if skip >= len(tot_text):
-        break
-    
-    for i, text in enumerate(texts):
-      texts[i] = f"{str(i + 1)}/{str(len(texts))} {texts[i]}"
-    return texts
+  try:
+    if (tot_length) < MAX_LENGTH:
+      return [
+        f"{default_text} {text}"
+      ]
+    else:
+      texts = []
+      skip = 0
+      length = MAX_LENGTH - len('i/n') - 20
+      while True:
+        result = tweet_substring(tot_text, length, skip)
+        texts.append(result['text'])
+        skip = result['pos']
+        if skip >= len(tot_text):
+          break
+      
+      print('[Texts]', texts)
+      for i, text in enumerate(texts):
+        texts[i] = f"{str(i + 1)}/{str(len(texts))} {texts[i]}"
+      return texts
+  except Exception as e:
+    print(f"[Error][Split Tweet]", e)

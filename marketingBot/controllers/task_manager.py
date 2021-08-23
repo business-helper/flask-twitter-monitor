@@ -62,17 +62,21 @@ class TweetAction():
         updated_text = updated_text.replace('$rank$', str(rank))
       else:
         updated_text = updated_text.replace('$rank$', '')
-      print(f"[Generate Default Text] from '{default_text}' to '{updated_text}']")
+      # print(f"[Generate Default Text] from '{default_text}' to '{updated_text}']")
       return updated_text
     except Exception as e:
       print(f"[Generate Default Text][Error] {str(e)}", e)
       return '';
 
   def getAttachment(self, tweet_obj, initial = []):
-    link = f"https://twitter.com/{tweet_obj['entities']['user']['screen_name']}/status/{tweet_obj['entities']['id_str']}"
-    if '$link$' in self.bot['default_text'] and link not in initial:
-      initial.append(link)
-    return initial[0] if len(initial) >= 0 else None
+    try:
+      link = f"https://twitter.com/{tweet_obj['entities']['user']['screen_name']}/status/{tweet_obj['entities']['id_str']}"
+      if '$link$' in self.bot['default_text'] and link not in initial:
+        initial.append(link)
+      return initial[0] if len(initial) > 0 else None
+    except Exception as e:
+      print(e)
+      return None
 
   def makeAction(self, id, action):
     if action == 'tweet':
@@ -93,7 +97,8 @@ class TweetAction():
         raise Exception(f"Not found the tweet with id {id}")
 
       default_text = self.generateDefaultText(tweet.to_dict())
-      print(f"[Default Text][Final] {default_text}")
+      # print(f"[Default Text][Final] {default_text}")
+      
       attachment = self.getAttachment(tweet.to_dict(), initial = [])
 
       texts = split_tweet(tweet.translated, default_text)
@@ -168,7 +173,7 @@ class TweetAction():
       default_text = self.generateDefaultText(tweet.to_dict())
       target_tweet_url = f"https://twitter.com/{tweet.entities['user']['screen_name']}/status/{tweet.entities['id_str']}"
       attachment = self.getAttachment(tweet.to_dict(), initial = [target_tweet_url])
-      print(f"[Attachment]", attachment)
+      # print(f"[Attachment]", attachment)
       comment = comment if comment else tweet.translated
 
       texts = split_tweet(comment, default_text)

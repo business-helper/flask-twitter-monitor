@@ -6,13 +6,13 @@ import ast
 import uuid
 import os, uuid
 
-from marketingBot import app
+from marketingBot import app, db
 from marketingBot.config.constants import mPath
 from marketingBot.controllers.api import api
 from marketingBot.controllers.twitter import create_api
 from marketingBot.controllers.api.api_apps import get_tweepy_instance
 from marketingBot.controllers.task_manager import TweetAction
-from marketingBot.models.Tweet import db, Tweet
+from marketingBot.models.Tweet import Tweet
 from marketingBot.models.Bot import Bot
 from marketingBot.models.AppKey import AppKey
 from marketingBot.models.Media import Media
@@ -117,12 +117,17 @@ def do_retweet(self, id):
 def do_tweet(self, id):
   payload = dict(request.get_json())
   # update translated text
-  tweet = Tweet.query.filter_by(id = id).first()
+  tweet = db.session.query(Tweet).filter_by(id = id).first()
   tweet.translated = payload['translated']
   tweet.updated_at = datetime.utcnow()
   db.session.commit()
 
-  bot = Bot.query.filter_by(id = tweet.bot_id).first()
+  bot = db.session.query(Bot).filter_by(id = tweet.bot_id).first()
+  if not bot:
+    return jsonify({
+      "status": False,
+      "message": "Bot does not exist for the tweet!",
+    })
   session_tweets = Tweet.query.filter_by(session = tweet.session).all()
   rank_indices = list(map(lambda twit: str(twit.rank_index), session_tweets))
   db.session.commit()
@@ -146,7 +151,7 @@ def do_tweet(self, id):
     print('[Tweet Error]', type(e.__dict__['reason']))
     return jsonify({
       'status': False,
-      'message': e.__dict__['reason'],
+      'message': str(e),
     })
 
 
