@@ -4,6 +4,7 @@ import requests
 import time
 import csv
 from googletrans import Translator
+from twitter_text import parse_tweet
 
 from marketingBot import app
 from marketingBot.config.constants import mPath
@@ -129,3 +130,36 @@ def download_csv(headers, data_array = [], file_name = 'Tweets.csv'):
       "Content-disposition": f"attachment; filename={file_name}"
     }
   )
+
+def tweet_substring(text, length, skip):
+  pos = skip + 1
+  while(parse_tweet(text[skip:pos]).weightedLength <= length and pos < len(text)):
+    pos = pos + 1
+  return {
+    "pos": pos,
+    "text": text[skip:pos],
+  }
+
+def split_tweet(text, default_text):
+  MAX_LENGTH = 280
+  tot_text = f"{default_text} {text}"
+  tot_length = parse_tweet(tot_text).weightedLength
+
+  if (tot_length) < MAX_LENGTH:
+    return [
+      f"{default_text} {text}"
+    ]
+  else:
+    texts = []
+    skip = 0
+    length = MAX_LENGTH - len('i/n') - 20
+    while True:
+      result = tweet_substring(tot_text, length, skip)
+      texts.append(result['text'])
+      skip = result['pos']
+      if skip >= len(tot_text):
+        break
+    
+    for i, text in enumerate(texts):
+      texts[i] = f"{str(i + 1)}/{str(len(texts))} {texts[i]}"
+    return texts

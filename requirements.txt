@@ -11,6 +11,7 @@ googletrans==4.0.0-rc1
 # MySQLdb
 python-dotenv
 python-twitter-v2
+twitter-text-parser
 PyJWT
 # pytwitter
 requests

@@ -14,7 +14,7 @@ from marketingBot.models.Bot import Bot
 from marketingBot.models.AppKey import AppKey
 from marketingBot.models.Notification import Notification
 from marketingBot.models.Tweet import Tweet
-from marketingBot.helpers.common import translate, translate_google
+from marketingBot.helpers.common import split_tweet, translate, translate_google
 
 botThreads = {}
 
@@ -87,7 +87,7 @@ class TweetAction():
       return False
 
   def tweet(self, id, media = []):
-    tweet = Tweet.query.filter_by(id = id).first()
+    tweet = db.session.query(Tweet).filter_by(id = id).first()
     try:
       if not tweet:
         raise Exception(f"Not found the tweet with id {id}")
@@ -96,7 +96,13 @@ class TweetAction():
       print(f"[Default Text][Final] {default_text}")
       attachment = self.getAttachment(tweet.to_dict(), initial = [])
 
-      self.api.update_status(f"{default_text} {tweet.translated}", media_ids = media, attachment_url = attachment)
+      texts = split_tweet(tweet.translated, default_text)
+
+      for text in texts:
+        try:
+          self.api.update_status(text, media_ids = media, attachment_url = attachment)
+        except Exception as e:
+          print(f"[Tweet][Error] {text} {str(e)}")
 
       tweet.updated_at = datetime.utcnow()
       tweet.tweeted = 2
@@ -108,7 +114,7 @@ class TweetAction():
       return False
 
   def retweet(self, id):
-    tweet = Tweet.query.filter_by(id = id).first()
+    tweet = db.session.query(Tweet).filter_by(id = id).first()
     try:
       if not tweet:
         raise Exception(f"Not found the tweet with id {id}")
@@ -124,7 +130,7 @@ class TweetAction():
       return False
 
   def comment(self, id, comment = False, media = []):
-    tweet = Tweet.query.filter_by(id = id).first()
+    tweet = db.session.query(Tweet).filter_by(id = id).first()
     try:
       if not tweet:
         raise Exception(f"Not found the tweet with id {id}")
@@ -132,12 +138,19 @@ class TweetAction():
       default_text = self.generateDefaultText(tweet.to_dict())
       attachment = self.getAttachment(tweet.to_dict(), initial = [])
       comment = tweet.translated if not comment else comment
-      self.api.update_status(
-        f"@{tweet.entities['user']['screen_name']} {default_text} {comment}",
-        media_ids = media,
-        in_reply_to_status_id = tweet.entities['id_str'],
-        attachment_url = attachment,
-      )
+
+      texts = split_tweet(text = comment, default_text = f"@{tweet.entities['user']['screen_name']} {default_text}")
+
+      for text in texts:
+        try:
+          self.api.update_status(
+            f"@{tweet.entities['user']['screen_name']} {default_text} {comment}",
+            media_ids = media,
+            in_reply_to_status_id = tweet.entities['id_str'],
+            attachment_url = attachment,
+          )
+        except Exception as e:
+          print(f"[Comment][Error] {text} {str(e)}")
       tweet.updated_at = datetime.utcnow()
       tweet.tweeted = 3
       db.session.commit()
@@ -148,7 +161,7 @@ class TweetAction():
       return False
 
   def quote(self, id, comment = False, media = []):
-    tweet = Tweet.query.filter_by(id = id).first()
+    tweet = db.session.query(Tweet).filter_by(id = id).first()
     try:
       if not tweet:
         raise Exception(f"Not found the tweet with id {id}")
@@ -157,11 +170,18 @@ class TweetAction():
       attachment = self.getAttachment(tweet.to_dict(), initial = [target_tweet_url])
       print(f"[Attachment]", attachment)
       comment = comment if comment else tweet.translated
-      self.api.update_status(
-        f"{default_text} {comment} {target_tweet_url}",
-        media_ids = media,
-        attachment_url = attachment,
-      )
+
+      texts = split_tweet(comment, default_text)
+
+      for text in texts:
+        try:
+          self.api.update_status(
+            text,
+            media_ids = media,
+            attachment_url = attachment,
+          )
+        except Exception as e:
+          print(f"[Quote][Error] {text} {str(e)}")
       tweet.updated_at = datetime.utcnow()
       tweet.tweeted = 4
       db.session.commit()
@@ -223,7 +243,7 @@ class BotThread(threading.Thread):
     print('[API Keys]', self.bot['api_keys'], type(self.bot['api_keys']))
     if len(self.bot['api_keys']) > 0:
       for api_key_id in self.bot['api_keys']:
-        api_key = AppKey.query.filter_by(id=api_key_id).first()
+        api_key = db.session.query(AppKey).filter_by(id=api_key_id).first()
 
         api_instance = self.create_tweepy_instance(api_key.consumer_key, api_key.consumer_secret, api_key.access_token, api_key.access_token_secret)
         if not api_instance:
@@ -234,7 +254,7 @@ class BotThread(threading.Thread):
   def create_v2_apis(self):
     if len(self.bot['api_keys']) > 0:
       for api_key_id in self.bot['api_keys']:
-        api_key = AppKey.query.filter_by(id=api_key_id).first()
+        api_key = db.session.query(AppKey).filter_by(id=api_key_id).first()
         if not api_key.bearer_token:
           continue
         try:
@@ -370,7 +390,7 @@ class BotThread(threading.Thread):
       self.do_translation(final_ids)
       self.process_automation(final_ids)
       # after the bot is finished or stopped by error.
-      bot = Bot.query.filter_by(id = self.bot['id']).first()
+      bot = db.session.query(Bot).filter_by(id = self.bot['id']).first()
       if bot:
         bot.status = 'IDLE'
         bot.updated_at = datetime.utcnow()
@@ -746,7 +766,7 @@ class BotThread(threading.Thread):
       return False
 
     # get all tweets(after cutout)
-    tweets = Tweet.query.filter_by(bot_id = self.bot['id'], session = self.identifier).all()
+    tweets = db.session.query(Tweet).filter_by(bot_id = self.bot['id'], session = self.identifier).all()
     tweet_ids = list(map(lambda tweet: tweet.id, tweets)) if final_ids == False else final_ids
     # get rank indices
     rank_indices = []
@@ -762,7 +782,7 @@ class BotThread(threading.Thread):
 
   def stop_bot_by_error(self, e):
     self.stopped = True
-    bot = Bot.query.filter_by(id = self.bot['id']).first()
+    bot = db.session.query(Bot).filter_by(id = self.bot['id']).first()
     bot.status = 'IDLE'
     bot.updated_at = datetime.utcnow()
     db.session.commit()
@@ -809,7 +829,7 @@ def stop_bot_execution(id):
     botThreads[str(id)].stop()
     # del botThreads[str(id)]
 
-    bot = Bot.query.filter_by(id=id).first()
+    bot = db.session.query(Bot).filter_by(id=id).first()
     if bot:
       bot.status = 'IDLE'
       bot.updated_at = datetime.utcnow()
@@ -827,7 +847,7 @@ def stop_bot_execution(id):
 
 @app.route('/tasks/<id>/start', methods=['GET', 'POST'])
 def start_bot_execution(id):
-  bot = Bot.query.filter_by(id=id).first()
+  bot = db.session.query(Bot).filter_by(id=id).first()
   if not bot:
     return jsonify({
       "status": False,
@@ -863,7 +883,7 @@ def run_bot_as_thread(id, from_schedule = True):
   #   print(f"[Cron][BOt]{id} Stopped: already running")
   #   return True
   try:
-    bot = Bot.query.filter_by(id=id).first()
+    bot = db.session.query(Bot).filter_by(id=id).first()
     if not bot:
       print(f"[Cron][Bot]{id} Not Fouond...")
       raise Exception(f"[Cron][Bot]{id} Not Fouond...")
@@ -894,7 +914,7 @@ def run_bot_as_thread(id, from_schedule = True):
     def run_botThread(bot_id):
       print(f"[run_botThread] bot {bot_id}")
 
-      bot = Bot.query.filter_by(id=bot_id).first()
+      bot = db.session.query(Bot).filter_by(id=bot_id).first()
       bot_obj = bot.to_dict()
       db.session.expire(bot)
       
@@ -912,9 +932,10 @@ def run_bot_as_thread(id, from_schedule = True):
 
   except Exception as e:
     print(f"[Cron][Bot]{id} Stopped By Error", str(e))
-    bot = Bot.query.filter_by(id=id).first()
+    bot = db.session.query(Bot).filter_by(id=id).first()
     bot.status = 'IDLE'
     bot.updated_at = datetime.utcnow()
     # db.session.add(bot)
     db.session.commit()
+    db.session.remove()
     return False
