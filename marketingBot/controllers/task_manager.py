@@ -420,10 +420,10 @@ class BotThread(threading.Thread):
         event = socket_event.BOT_FINISHED,
         args = { "message": notification_msg },
       )
-      db.session.remove()
+      # db.session.remove()
     except Exception as e:
       print(f"[One Time Bot Error]  {str(e)}")
-      db.session.remove()
+      # db.session.remove()
       pass
 
   # @one-time
@@ -739,7 +739,7 @@ class BotThread(threading.Thread):
         for tweet in tweets_to_delete:
           db.session.delete(tweet)
         db.session.commit()
-        db.session.remove()
+        # db.session.remove()
       print('[Bot][Cutout] Finished')
       return final_ids
     return False
@@ -942,5 +942,5 @@ def run_bot_as_thread(id, from_schedule = True):
     bot.updated_at = datetime.utcnow()
     # db.session.add(bot)
     db.session.commit()
-    db.session.remove()
+    # db.session.remove()
     return False
