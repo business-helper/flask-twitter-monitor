@@ -42,8 +42,26 @@ tail -f main.log
 
 ```mysql
 SHOW FULL PROCESSLIST
+show variables like '%timeout%';
+SET GLOBAL wait_timeout=30;
+
 ```
 
+- Error 'The client was disconnected by the server because of inactivity. See wait_timeout and interactive_timeout for configuring this behavior.'
+fixed by [How do I set wait_timeout to unlnmited in msyql?](https://askubuntu.com/a/892859/1083662)
+
+update mysql config and restart the mysql service.
+
+```
+[mysqld]
+wait_timeout = 31536000
+interactive_timeout = 31536000
+```
+
+```bash
+sudo nano /etc/mysql/mysql.conf.d/mysqld.cnf
+sudo systemctl restart mysql.service
+```
 
 # Database
 ## Tweet
