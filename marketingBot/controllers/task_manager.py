@@ -21,7 +21,7 @@ botThreads = {}
 @app.before_first_request
 def initialize_bots():
   print(f"[Tasks] initializing statuses...")
-  Bot.query.update({ Bot.status: 'IDLE' });
+  db.session.query(Bot).update({ Bot.status: 'IDLE' })
   db.session.commit()
 
 
@@ -852,25 +852,34 @@ def stop_bot_execution(id):
 
 @app.route('/tasks/<id>/start', methods=['GET', 'POST'])
 def start_bot_execution(id):
-  bot = db.session.query(Bot).filter_by(id=id).first()
-  if not bot:
-    return jsonify({
-      "status": False,
-      "message": "Not found the bot!",
-    })
-  if bot.status == 'RUNNING':
+  try:
+    bot = db.session.query(Bot).filter_by(id=id).first()
+    if not bot:
+      return jsonify({
+        "status": False,
+        "message": "Not found the bot!",
+      })
+    if bot.status == 'RUNNING':
+      return jsonify({
+        "status": True,
+        "message": "Bot already running!",
+      })
+
+    run_bot_as_thread(id = id, from_schedule = False)
+    
+    # botThread.start()
     return jsonify({
       "status": True,
-      "message": "Bot already running!",
+      "message": "Success. Bot started.",
+    })
+  except Exception as e:
+    db.session.rollback()
+    print(f"[start_bot_execution][Error][Rollback] {id} {str(e)}")
+    return jsonify({
+      "status": False,
+      "message": "Failed to start the bot",
     })
 
-  run_bot_as_thread(id = id, from_schedule = False)
-  
-  # botThread.start()
-  return jsonify({
-    "status": True,
-    "message": "Success. Bot started.",
-  })
 
 
 @app.route('/translate', methods=['POST'])
