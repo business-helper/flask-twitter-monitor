@@ -14,7 +14,7 @@ from marketingBot.helpers.wrapper import session_required
 
 @api.route('/ping-bot', methods=['GET'])
 def api_ping_bot():
-  bot = Bot.query.filter_by(id=1).first()
+  bot = db.session.query(Bot).filter_by(id=1).first()
   return jsonify({
     "status": True,
     "message": "pong",
@@ -31,8 +31,8 @@ def load_bots(self):
   user_id = self.id
   # keyword = request.args.get('search[value]')
 
-  bots = Bot.query.filter_by(user_id=user_id).limit(limit).offset(skip)
-  app_keys = AppKey.query.filter_by(user_id=user_id).all()
+  bots = db.session.query(Bot).filter_by(user_id=user_id).limit(limit).offset(skip)
+  app_keys = db.session.query(AppKey).filter_by(user_id=user_id).all()
   dict_keys = {}
   print('[App Keys]', app_keys)
   for app_key in app_keys:
@@ -90,7 +90,7 @@ def update_bot_by_id(self, id):
 
   stop_bot_execution(id)
 
-  bot = Bot.query.filter_by(id=id).first()
+  bot = db.session.query(Bot).filter_by(id=id).first()
   bot.name = payload['name']
   bot.targets = payload['targets'] if 'targets' in payload else '[]'
   bot.api_keys = payload['api_keys'] if 'api_keys' in payload else '[]'
@@ -113,7 +113,7 @@ def update_bot_by_id(self, id):
 @api.route('/bots/<id>', methods=['GET'])
 @session_required
 def get_bot_by_id(self, id):
-  bot = Bot.query.filter_by(id=id).first()
+  bot = db.session.query(Bot).filter_by(id=id).first()
   if not bot:
     return jsonify({
       "status": False,
@@ -129,7 +129,7 @@ def get_bot_by_id(self, id):
 # @session_required
 def get_sessions_of_bot(bot_id):
   # db.session.query(Notification.column1.distinct()).filter_by(column2 = 'some_column2_value').all();
-  notifications = Notification.query.filter(Notification.bot_id == bot_id, or_(Notification.payload['type']=='SCHEDULE_RUN', Notification.payload['type']=="BOT_RUN")).all()
+  notifications = db.session.query(Notification).filter(Notification.bot_id == bot_id, or_(Notification.payload['type']=='SCHEDULE_RUN', Notification.payload['type']=="BOT_RUN")).all()
   print('[Notifications]', notifications)
   return jsonify({
     "status": True,
@@ -140,7 +140,7 @@ def get_sessions_of_bot(bot_id):
 @api.route('/bots/<id>', methods=['DELETE'])
 @session_required
 def delete_bot_by_id(self, id):
-  bot = Bot.query.filter_by(id=id).one()
+  bot = db.session.query(Bot).filter_by(id=id).one()
   if not bot:
     return jsonify({
       "status": False,
@@ -215,7 +215,7 @@ def update_bot_form(self, id):
   str_in_keywords = request.files.get('inclusion_keywords').read().decode('utf-8') if 'inclusion_keywords' in request.files else payload['inclusion_keywords']
   str_ex_keywords = request.files.get('exclusion_keywords').read().decode('utf-8') if 'exclusion_keywords' in request.files else payload['exclusion_keywords']
 
-  bot = Bot.query.filter_by(id=id).first()
+  bot = db.session.query(Bot).filter_by(id=id).first()
   bot.name = payload['name']
   bot.type = payload['type']
   bot.targets = (splitString2Array(str_targets))

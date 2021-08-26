@@ -20,7 +20,7 @@ def api_ping():
 
 @session_required
 def get_tweepy_instance(self):
-  apps = AppKey.query.filter_by(user_id = self.id)
+  apps = db.session.query(AppKey).filter_by(user_id = self.id)
   for app in apps:
     print('[App]', app.id, app.consumer_key, app.consumer_secret, app.access_token, app.access_token_secret)
     instance = create_tweepy_instance(consumer_key = app.consumer_key, consumer_secret = app.consumer_secret, access_token = app.access_token, access_token_secret = app.access_token_secret)
@@ -33,7 +33,7 @@ def get_tweepy_instance(self):
 
 @api.route('/api-apps/<id>', methods=['GET'])
 def get_api_app_by_id(id):
-  api_key = AppKey.query.filter_by(id=id).first()
+  api_key = db.session.query(AppKey).filter_by(id=id).first()
   return jsonify({
     "status": True,
     "message": "success",
@@ -44,7 +44,7 @@ def get_api_app_by_id(id):
 def update_api_app_by_id(id):
   payload = dict(request.get_json())
   print('[Payload]', payload)
-  api_key = AppKey.query.filter_by(id=id).first()
+  api_key = db.session.query(AppKey).filter_by(id=id).first()
   if not api_key:
     return jsonify({
       "status": False,
@@ -71,7 +71,7 @@ def update_api_app_by_id(id):
 
 @api.route('/api-apps/<id>', methods=['DELETE'])
 def delete_api_app_by_id(id):
-  api_key = AppKey.query.filter_by(id=id).one()
+  api_key = db.session.query(AppKey).filter_by(id=id).one()
   if not api_key:
     return jsonify({
       "status": False,

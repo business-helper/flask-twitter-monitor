@@ -33,7 +33,7 @@ def login():
 @app.route('/register', methods=['GET', 'POST'])
 def register():
   if request.method == 'POST':
-    user_with_email = User.query.filter_by(email=request.form['email']).first()
+    user_with_email = db.session.query(User).filter_by(email=request.form['email']).first()
     if user_with_email:
       flash("Email already exists with other account!")
       print(request.form)

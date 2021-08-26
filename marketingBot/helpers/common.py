@@ -6,7 +6,7 @@ import csv
 from googletrans import Translator
 from twitter_text import parse_tweet
 
-from marketingBot import app
+from marketingBot import app, db
 from marketingBot.config.constants import mPath
 from marketingBot.models.User import User
 
@@ -38,7 +38,7 @@ def validate_session():
     unset_login_session()
     return False
   elif 'user_email' in session:
-    user = User.query.filter_by(email=session['user_email']).first()
+    user = db.session.query(User).filter_by(email=session['user_email']).first()
     if user:
       return user
     else:

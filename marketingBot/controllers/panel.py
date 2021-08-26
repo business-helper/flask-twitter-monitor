@@ -27,10 +27,10 @@ def ping():
 @app.route('/dashboard', methods=['GET'])
 @session_required
 def dashboard(self):
-  apps = AppKey.query.filter_by(user_id = self.id).count()
-  bots = Bot.query.filter_by(user_id = self.id).count()
-  tweets = Tweet.query.filter_by(user_id = self.id).count()
-  notifications = Notification.query.filter_by(user_id = self.id).count()
+  apps = db.session.query(AppKey).filter_by(user_id = self.id).count()
+  bots = db.session.query(Bot).filter_by(user_id = self.id).count()
+  tweets = db.session.query(Tweet).filter_by(user_id = self.id).count()
+  notifications = db.session.query(Notification).filter_by(user_id = self.id).count()
   data = {
     "apps": apps,
     "bots": bots,
@@ -55,7 +55,7 @@ def load_api_apps(self):
   user_id = self.id
   keyword = request.args.get('search[value]')
 
-  apps = AppKey.query.filter_by(user_id=user_id).limit(limit).offset(skip)
+  apps = db.session.query(AppKey).filter_by(user_id=user_id).limit(limit).offset(skip)
   
   data = []
   for idx, app in enumerate(apps):
@@ -75,7 +75,7 @@ def load_api_apps(self):
 def add_api_app(self):
   payload = request.get_json()
   print('[Payload]', payload)
-  isExist = AppKey.query.filter_by(consumer_key=payload['consumer_key'], consumer_secret=payload['consumer_secret']).first()
+  isExist = db.session.query(AppKey).filter_by(consumer_key=payload['consumer_key'], consumer_secret=payload['consumer_secret']).first()
   if (isExist):
     # flash('This API app already exists!')
     # return render_template('panel/api-apps.html')
@@ -106,7 +106,7 @@ def add_api_app(self):
 @app.route('/bots', methods=['GET'])
 @session_required
 def bots_page(self):
-  api_keys = AppKey.query.filter_by(user_id=self.id,valid=True).all()
+  api_keys = db.session.query(AppKey).filter_by(user_id=self.id,valid=True).all()
   apps = []
   for api_key in api_keys:
     apps.append(api_key.to_dict())
@@ -132,9 +132,9 @@ def load_bots_root(self):
   order_by = text(f"{columns[int(sortCol)]} {sortDir}")
 
   print('[Sort]', sortCol, sortDir)
-  bots = Bot.query.filter_by(user_id=user_id).order_by(order_by).limit(limit).offset(skip)
-  total = Bot.query.filter_by(user_id = user_id).count()
-  app_keys = AppKey.query.filter_by(user_id=user_id).all()
+  bots = db.session.query(Bot).filter_by(user_id=user_id).order_by(order_by).limit(limit).offset(skip)
+  total = db.session.query(Bot).filter_by(user_id = user_id).count()
+  app_keys = db.session.query(AppKey).filter_by(user_id=user_id).all()
   dict_keys = {}
 
   for app_key in app_keys:
@@ -175,7 +175,7 @@ def load_bots_root(self):
 @app.route('/tweets', methods=['GET'])
 @session_required
 def tweets_page(self):
-  bots = Bot.query.filter_by(user_id=self.id).all()
+  bots = db.session.query(Bot).filter_by(user_id=self.id).all()
   bots_dict = []
   for bot in bots:
     bots_dict.append(bot.to_dict())
@@ -237,7 +237,7 @@ def load_tweets_root(self):
     total = total.filter(Tweet.session == session_id)
   total = total.count()
 
-  bots = Bot.query.filter_by(user_id = user_id).all()
+  bots = db.session.query(Bot).filter_by(user_id = user_id).all()
   dict_bots = {}
   for bot in bots:
     dict_bots[str(bot.id)] = bot.to_dict()

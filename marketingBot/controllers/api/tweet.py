@@ -46,7 +46,7 @@ def api_ping_tweet():
 @api.route('/tweets/<id>', methods=['GET'])
 @session_required
 def get_tweet_by_id(self, id):
-  tweet = Tweet.query.filter_by(id=id).first()
+  tweet = db.session.query(Tweet).filter_by(id=id).first()
   if not tweet:
     return jsonify({
       "status": False,
@@ -159,7 +159,7 @@ def do_tweet(self, id):
 @session_required
 def save_tweet_translation(self, id):
   payload = dict(request.get_json())
-  tweet = Tweet.query.filter_by(id = id).first()
+  tweet = db.session.query(Tweet).filter_by(id = id).first()
   if not tweet:
     return jsonify({
       "status": False,
@@ -177,7 +177,7 @@ def save_tweet_translation(self, id):
 @api.route('/tweets/<id>', methods=['DELETE'])
 @session_required
 def delete_tweet_by_id(self, id):
-  tweet = Tweet.query.filter_by(id = id).first()
+  tweet = db.session.query(Tweet).filter_by(id = id).first()
   if not tweet:
     return jsonify({
       "status": False,
@@ -272,7 +272,7 @@ def comment_to_tweet(self, id):
   payload = dict(request.get_json())
   comment_text = payload['comment']
   # update translated text
-  tweet = Tweet.query.filter_by(id = id).first()
+  tweet = db.session.query(Tweet).filter_by(id = id).first()
   if not tweet:
     return jsonify({
       'status': False,
@@ -282,8 +282,8 @@ def comment_to_tweet(self, id):
   # tweet.updated_at = datetime.utcnow()
   db.session.commit()
 
-  bot = Bot.query.filter_by(id = tweet.bot_id).first()
-  session_tweets = Tweet.query.filter_by(session = tweet.session).all()
+  bot = db.session.query(Bot).filter_by(id = tweet.bot_id).first()
+  session_tweets = db.session.query(Tweet).filter_by(session = tweet.session).all()
   rank_indices = list(map(lambda twit: str(twit.rank_index), session_tweets))
   db.session.commit()
 
@@ -325,13 +325,13 @@ def comment_with_quote(self, id):
   payload = dict(request.get_json())
   comment_text = payload['text']
   # update translated text
-  tweet = Tweet.query.filter_by(id = id).first()
+  tweet = db.session.query(Tweet).filter_by(id = id).first()
   # tweet.translated = comment_text
   # tweet.updated_at = datetime.utcnow()
   # db.session.commit()
 
-  bot = Bot.query.filter_by(id = tweet.bot_id).first()
-  session_tweets = Tweet.query.filter_by(session = tweet.session).all()
+  bot = db.session.query(Bot).filter_by(id = tweet.bot_id).first()
+  session_tweets = db.session.query(Tweet).filter_by(session = tweet.session).all()
   rank_indices = list(map(lambda twit: str(twit.rank_index), session_tweets))
   db.session.commit()
 

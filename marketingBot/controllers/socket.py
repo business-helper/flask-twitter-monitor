@@ -33,7 +33,7 @@ def socket_connected(self):
   io_clients[str_user_id] = request.sid #request.namespace
   # print('[IO Clients]', io_clients)
 
-  user = User.query.filter_by(id=self.id).first()
+  user = db.session.query(User).filter_by(id=self.id).first()
   user.socket_id = request.sid
   user.updated_at = datetime.utcnow()
   db.session.commit()

@@ -27,14 +27,6 @@ def initialize_bots():
 
 initialize_bots()
 
-class BotDemo:
-  name = None
-  interval = 5
-
-  def __init__(self, name, interval):
-    self.name = name
-    self.interval = interval
-
 class TweetAction():
   def __init__(self, instance, bot_object = {}, ranks = []):
     self.api = instance
@@ -75,7 +67,7 @@ class TweetAction():
         initial.append(link)
       return initial[0] if len(initial) > 0 else None
     except Exception as e:
-      print(e)
+      print('[getAttachment]', e)
       return None
 
   def makeAction(self, id, action):
@@ -193,6 +185,7 @@ class TweetAction():
       return True
     except Exception as e:
       print(f"[TweetAction][Quote]{id} error: {str(e)}", e)
+      db.session.rollback()
       db.session.commit()
       return False
 
@@ -746,11 +739,11 @@ class BotThread(threading.Thread):
 
   def do_translation(self, final_ids = False):
     # get all tweets(after cutout)
-    tweets = Tweet.query.filter_by(bot_id = self.bot['id'], session = self.identifier).all()
+    tweets = db.session.query(Tweet).filter_by(bot_id = self.bot['id'], session = self.identifier).all()
     tweet_ids = list(map(lambda tweet: tweet.id, tweets)) if final_ids == False else final_ids
     print(f"[Translation] Will translate {len(tweet_ids)} tweets", tweet_ids)
     for tweet_id in tweet_ids:
-      tweet = Tweet.query.filter_by(id = tweet_id).first()
+      tweet = db.session.query(Tweet).filter_by(id = tweet_id).first()
       lang = self.bot['target_langs'][tweet.target] if tweet.target in self.bot['target_langs'] else 'JA'
       translation_method = translate if self.bot['translator'] == 'DEEPL' else translate_google
       tweet.translated = translation_method(src_text = tweet.text, target_lang = lang) if self.bot['enable_translation'] and lang != 'NONE' else tweet.text    
@@ -786,6 +779,10 @@ class BotThread(threading.Thread):
       tweetAction.makeAction(id = tweet_id, action = self.bot['auto_action'])
 
   def stop_bot_by_error(self, e):
+    print(f"The bot '{self.bot['name']}' has been stopped by error {str(e)}", e)
+    print(f"At {str(datetime.utcnow())}, will rollback")
+    db.session.rollback()
+
     self.stopped = True
     bot = db.session.query(Bot).filter_by(id = self.bot['id']).first()
     bot.status = 'IDLE'
@@ -844,6 +841,9 @@ def stop_bot_execution(id):
       "message": "Bot has been stopped!",
     })
   except Exception as e:
+    print(f"[StopBot] Error: {str(e)}, [WillRollback]")
+    db.session.rollback()
+
     return jsonify({
       "status": False,
       "message": str(e)
@@ -873,8 +873,8 @@ def start_bot_execution(id):
       "message": "Success. Bot started.",
     })
   except Exception as e:
+    print(f"[start_bot_execution][Error][Rollback] {id} [Time] {str(datetime.utcnow())} {str(e)}")
     db.session.rollback()
-    print(f"[start_bot_execution][Error][Rollback] {id} {str(e)}")
     return jsonify({
       "status": False,
       "message": "Failed to start the bot",
@@ -946,6 +946,9 @@ def run_bot_as_thread(id, from_schedule = True):
 
   except Exception as e:
     print(f"[Cron][Bot]{id} Stopped By Error", str(e))
+    db.session.rollback()
+    print(f"[Cron][Bot][Rollback] {id}")
+    
     bot = db.session.query(Bot).filter_by(id=id).first()
     bot.status = 'IDLE'
     bot.updated_at = datetime.utcnow()

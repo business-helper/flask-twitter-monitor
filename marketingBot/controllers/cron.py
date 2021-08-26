@@ -104,7 +104,7 @@ def initialize_schedule():
   for job in scheduler.get_jobs():
     job.remove()
   
-  one_time_bots = Bot.query.filter_by(type='ONE_TIME').all()
+  one_time_bots = db.session.query(Bot).filter_by(type='ONE_TIME').all()
   print(f"[Found {len(one_time_bots)} One-Time Bots]")
   for bot in one_time_bots:
     bot_obj = bot.to_dict()

@@ -7,7 +7,7 @@ from marketingBot.helpers.wrapper import session_required
 @api.route('/notifications/<id>', methods=['DELETE'])
 @session_required
 def delete_notification_by_id(self, id):
-  notification = Notification.query.filter_by(id=id).one()
+  notification = db.session.query(Notification).filter_by(id=id).one()
   if not notification:
     return jsonify({
       "status": False,
