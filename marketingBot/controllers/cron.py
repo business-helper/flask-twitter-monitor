@@ -8,6 +8,7 @@ from apscheduler.triggers.cron import CronTrigger
 import threading
 from datetime import datetime
 from pytz import timezone
+import atexit
 
 from marketingBot import app, db
 from marketingBot.controllers.task_manager import run_bot_as_thread
@@ -18,6 +19,13 @@ TEST_INTERVAL = 2
 CRON_TEST = False
 
 scheduler = BackgroundScheduler()
+
+def touch_database():
+  bots = db.session.query(Bot).count()
+  notifications = db.session.query(Notification).count()
+
+  print(f"[Touch Database] at {str(datetime.utcnow())} [Bot] {bots} [Notification] {notifications}")
+
 
 def convert_string_JST(str_datetime):
   try:
@@ -104,6 +112,9 @@ def initialize_schedule():
   for job in scheduler.get_jobs():
     job.remove()
   
+
+  scheduler.add_job(func=touch_database, trigger="interval", seconds=60)
+
   one_time_bots = db.session.query(Bot).filter_by(type='ONE_TIME').all()
   print(f"[Found {len(one_time_bots)} One-Time Bots]")
   for bot in one_time_bots:
@@ -113,7 +124,13 @@ def initialize_schedule():
   print('[Booting System] Initialized schedule for one-time bots...')
   scheduler.start()
 
+
+# @app.before_first_request
+# def wakeup_database():
+print(f"[Tasks] initializing cron jobs...")
 initialize_schedule()
+atexit.register(lambda: scheduler.shutdown)
+
 
 def remove_bot_from_schedule(bot):
   try:
