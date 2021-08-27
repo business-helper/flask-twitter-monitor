@@ -93,7 +93,9 @@ class TweetAction():
       
       attachment = self.getAttachment(tweet.to_dict(), initial = [])
 
-      texts = split_tweet(tweet.translated, default_text)
+      content = tweet.translated.replace('@', '')
+
+      texts = split_tweet(content, default_text)
 
       for text in texts:
         try:
@@ -135,6 +137,8 @@ class TweetAction():
       default_text = self.generateDefaultText(tweet.to_dict())
       attachment = self.getAttachment(tweet.to_dict(), initial = [])
       comment = tweet.translated if not comment else comment
+      # remove '@'
+      comment = comment.replace('@', '')
 
       texts = split_tweet(text = comment, default_text = f"@{tweet.entities['user']['screen_name']} {default_text}")
 
@@ -167,6 +171,8 @@ class TweetAction():
       attachment = self.getAttachment(tweet.to_dict(), initial = [target_tweet_url])
       # print(f"[Attachment]", attachment)
       comment = comment if comment else tweet.translated
+      # remove '@'
+      comment = comment.replace('@', '')
 
       texts = split_tweet(comment, default_text)
 
