@@ -2,6 +2,7 @@ from datetime import datetime
 from flask import jsonify, request
 from sqlalchemy.sql import text
 import threading
+from sqlalchemy.sql.expression import null
 import tweepy
 import threading
 from pytwitter import Api
@@ -96,10 +97,13 @@ class TweetAction():
       content = tweet.translated.replace('@', '')
 
       texts = split_tweet(content, default_text)
-
+      prev_tweet_id = null
       for text in texts:
         try:
-          self.api.update_status(text, media_ids = media, attachment_url = attachment)
+          self.api.update_status(text,
+            media_ids = media,
+            attachment_url = attachment, 
+            in_reply_to_status_id = prev_tweet_id)
         except Exception as e:
           print(f"[Tweet][Error] {text} {str(e)}")
 
@@ -176,13 +180,16 @@ class TweetAction():
 
       texts = split_tweet(comment, default_text)
 
+      prev_tweet_id = null
       for text in texts:
         try:
-          self.api.update_status(
+          twit = self.api.update_status(
             text,
             media_ids = media,
             attachment_url = attachment,
+            in_reply_to_status_id = prev_tweet_id
           )
+          prev_tweet_id = twit.id
         except Exception as e:
           print(f"[Quote][Error] {text} {str(e)}")
       tweet.updated_at = datetime.utcnow()

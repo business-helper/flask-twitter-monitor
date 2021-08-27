@@ -27,7 +27,7 @@ class Bot(db.Model):
   cutout = db.Column(db.Integer, default = 0)
   enable_automation = db.Column(db.Boolean, default = False)
   auto_action = db.Column(db.String(10), nullable=True)
-  default_text = db.Column(db.String(200), nullable = True)
+  default_text = db.Column(db.String(500), nullable = True)
   last_tweets = db.Column(db.JSON)
   status = db.Column(db.String(20), default='IDLE')
   created_at = db.Column(db.String(30), nullable=True)
