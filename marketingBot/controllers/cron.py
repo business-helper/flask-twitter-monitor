@@ -113,7 +113,7 @@ def initialize_schedule():
     job.remove()
   
 
-  scheduler.add_job(func=touch_database, trigger="interval", seconds=60)
+  scheduler.add_job(func=touch_database, trigger="interval", seconds=3600)
 
   one_time_bots = db.session.query(Bot).filter_by(type='ONE_TIME').all()
   print(f"[Found {len(one_time_bots)} One-Time Bots]")

@@ -14,7 +14,7 @@ class Tweet(db.Model):
   translated = db.Column(db.String(600), nullable=False)
   tweeted = db.Column(db.SmallInteger, default=0)
   metrics = db.Column(db.JSON)
-  rank_index = db.Column(db.Numeric(10, 8))
+  rank_index = db.Column(db.Numeric(15, 8))
   media = db.Column(db.JSON)
 
   created_at = db.Column(db.String(30), nullable=True)

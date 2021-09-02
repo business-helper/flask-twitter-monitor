@@ -8,7 +8,7 @@ class Notification(db.Model):
   id = db.Column(db.Integer, primary_key=True, autoincrement=True)
   user_id = db.Column(db.Integer, nullable=False, default = 0)
   bot_id = db.Column(db.Integer, nullable=False, default = 0)
-  text = db.Column(db.String(255), nullable=False)
+  text = db.Column(db.Text, nullable=False)
   payload = db.Column(db.JSON)
   created_at = db.Column(db.String(30), nullable=True)
 
